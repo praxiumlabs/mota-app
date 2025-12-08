@@ -59,9 +59,8 @@ function InvestorMarketingView() {
     Linking.openURL('https://macauoftheamericas.com');
   };
 
-  // Visible tiers (Silver, Gold, Platinum, Diamond)
+  // Visible tiers (Gold is entry level - no Silver)
   const visibleTiers = [
-    InvestorTier.SILVER,
     InvestorTier.GOLD,
     InvestorTier.PLATINUM,
     InvestorTier.DIAMOND,

@@ -1,6 +1,8 @@
 /**
  * MOTA Authentication Context
  * Manages user authentication, access levels, and investor tiers
+ * 
+ * TIERS: Gold (entry) → Platinum → Diamond → Black → Founders
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -17,8 +19,8 @@ export const AccessLevel = {
   INVESTOR: 'investor',
 } as const;
 
+// NO SILVER - Gold is entry level
 export const InvestorTier = {
-  SILVER: 'silver',
   GOLD: 'gold',
   PLATINUM: 'platinum',
   DIAMOND: 'diamond',
@@ -57,14 +59,13 @@ export interface TierBenefit {
   description: string;
 }
 
-// Tier thresholds (investment amounts)
+// Tier thresholds - Gold is now entry level
 export const TierThresholds: Record<string, number | null> = {
-  [InvestorTier.SILVER]: 0,
-  [InvestorTier.GOLD]: 100000,
+  [InvestorTier.GOLD]: 0,           // Entry level (was Silver)
   [InvestorTier.PLATINUM]: 250000,
   [InvestorTier.DIAMOND]: 500000,
-  [InvestorTier.BLACK]: null,     // Invitation only
-  [InvestorTier.FOUNDERS]: null,  // Invitation only
+  [InvestorTier.BLACK]: null,       // Invitation only
+  [InvestorTier.FOUNDERS]: null,    // Invitation only
 };
 
 // Tier configuration
@@ -75,27 +76,23 @@ export const TierConfig: Record<string, {
   icon: string;
   textColor?: string;
   benefits: string[];
+  discountPercent: number;
 }> = {
-  [InvestorTier.SILVER]: {
-    name: 'Silver Card',
-    color: '#C0C0C0',
-    bgGradient: ['#C0C0C0', '#A8A8A8'],
-    icon: 'credit-card',
-    benefits: ['Priority restaurant reservations', 'Member events access', 'Quarterly investor updates'],
-  },
   [InvestorTier.GOLD]: {
     name: 'Gold Card',
     color: '#D4AF37',
     bgGradient: ['#D4AF37', '#B8960C'],
     icon: 'award',
-    benefits: ['All Silver benefits', 'VIP event invitations', 'Dedicated support line', 'Complimentary spa credits'],
+    benefits: ['Priority restaurant reservations', 'Member events access', 'Quarterly investor updates', 'VIP event invitations'],
+    discountPercent: 10,
   },
   [InvestorTier.PLATINUM]: {
     name: 'Platinum Card',
     color: '#E5E4E2',
     bgGradient: ['#E5E4E2', '#C9C9C9'],
     icon: 'shield',
-    benefits: ['All Gold benefits', 'Helicopter transfers', 'Private yacht access', 'Platinum-only events'],
+    benefits: ['All Gold benefits', 'Helicopter transfers', 'Private yacht access', 'Platinum-only events', 'Complimentary spa credits'],
+    discountPercent: 15,
   },
   [InvestorTier.DIAMOND]: {
     name: 'Diamond Card',
@@ -103,6 +100,7 @@ export const TierConfig: Record<string, {
     bgGradient: ['#B9F2FF', '#87CEEB'],
     icon: 'diamond',
     benefits: ['All Platinum benefits', 'Private jet access', 'Dedicated personal team', '24/7 global concierge'],
+    discountPercent: 25,
   },
   [InvestorTier.BLACK]: {
     name: 'Black Card',
@@ -111,6 +109,7 @@ export const TierConfig: Record<string, {
     textColor: '#D4AF37',
     icon: 'shield',
     benefits: ['All Diamond benefits', 'Invitation-only experiences', 'Board meeting access', 'Ultimate priority'],
+    discountPercent: 35,
   },
   [InvestorTier.FOUNDERS]: {
     name: 'Founders Card',
@@ -118,16 +117,12 @@ export const TierConfig: Record<string, {
     bgGradient: ['#D4AF37', '#1a1a1a'],
     icon: 'star',
     benefits: ['Ultimate access', 'Original investor recognition', 'Lifetime benefits', 'Legacy privileges'],
+    discountPercent: 50,
   },
 };
 
 // Benefits unlocked at each tier (for FOMO teasers)
 export const TierBenefitsUnlock: Record<string, TierBenefit[]> = {
-  [InvestorTier.GOLD]: [
-    { icon: 'gift', title: 'VIP Event Access', description: 'Exclusive investor galas & networking' },
-    { icon: 'phone', title: 'Priority Support', description: 'Dedicated investor hotline' },
-    { icon: 'heart', title: 'Spa Credits', description: '$500 annual spa & wellness credits' },
-  ],
   [InvestorTier.PLATINUM]: [
     { icon: 'navigation', title: 'Helicopter Transfers', description: 'Complimentary airport transfers' },
     { icon: 'anchor', title: 'Private Yacht Access', description: 'Reserve MOTA yacht for day trips' },
@@ -157,7 +152,12 @@ export const InvestorBenefits: TierBenefit[] = [
 ];
 
 // ============================================
-// MOCK DATABASE
+// API BASE URL - Change this for production
+// ============================================
+export const API_BASE_URL = 'http://localhost:3001/api';
+
+// ============================================
+// MOCK DATABASE (Will be replaced by API calls)
 // ============================================
 
 const mockUsers: User[] = [
@@ -171,26 +171,16 @@ const mockUsers: User[] = [
   },
   {
     id: '2',
-    email: 'silver@mota.com',
-    name: 'Michael Torres',
-    accessLevel: AccessLevel.INVESTOR,
-    investorTier: InvestorTier.SILVER,
-    investmentAmount: 50000,
-    portfolioValue: 54000,
-    memberSince: '2024-06-15',
-  },
-  {
-    id: '3',
     email: 'gold@mota.com',
     name: 'James Wilson',
     accessLevel: AccessLevel.INVESTOR,
     investorTier: InvestorTier.GOLD,
-    investmentAmount: 175000,
-    portfolioValue: 198000,
+    investmentAmount: 150000,
+    portfolioValue: 172000,
     memberSince: '2024-01-20',
   },
   {
-    id: '4',
+    id: '3',
     email: 'platinum@mota.com',
     name: 'Victoria Chang',
     accessLevel: AccessLevel.INVESTOR,
@@ -200,7 +190,7 @@ const mockUsers: User[] = [
     memberSince: '2023-09-10',
   },
   {
-    id: '5',
+    id: '4',
     email: 'diamond@mota.com',
     name: 'Robert Sterling',
     accessLevel: AccessLevel.INVESTOR,
@@ -210,7 +200,7 @@ const mockUsers: User[] = [
     memberSince: '2023-03-05',
   },
   {
-    id: '6',
+    id: '5',
     email: 'founder@mota.com',
     name: 'Alexander Reyes',
     accessLevel: AccessLevel.INVESTOR,
@@ -224,7 +214,6 @@ const mockUsers: User[] = [
 // Password storage (in production, use proper backend auth)
 const mockPasswords: Record<string, string> = {
   'member@mota.com': 'member123',
-  'silver@mota.com': 'silver123',
   'gold@mota.com': 'gold123',
   'platinum@mota.com': 'plat123',
   'diamond@mota.com': 'diamond123',
@@ -274,7 +263,6 @@ export const BiometricService = {
     }
   },
 
-  // Store auth token securely (unlocked by biometric)
   storeCredentials: async (email: string, token: string): Promise<boolean> => {
     try {
       await SecureStore.setItemAsync(`mota_biometric_${email}`, token);
@@ -337,6 +325,7 @@ interface AuthContextType {
   // Access control
   canAccess: (feature: string) => boolean;
   getNextTierInfo: () => NextTierInfo | null;
+  getDiscountPercent: () => number;
   
   // Helpers
   isGuest: boolean;
@@ -370,13 +359,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [lastLoggedInEmail, setLastLoggedInEmail] = useState<string | null>(null);
 
-  // Initialize - check biometrics and set guest user
   useEffect(() => {
     initializeAuth();
   }, []);
 
   const initializeAuth = async () => {
-    // Check biometric availability
     const available = await BiometricService.isAvailable();
     setBiometricAvailable(available);
     
@@ -385,7 +372,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setBiometricType(type);
     }
 
-    // Load last logged in email from storage
     try {
       const savedEmail = await SecureStore.getItemAsync('mota_last_email');
       if (savedEmail) {
@@ -393,7 +379,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch {}
 
-    // Start as guest (can browse without login)
+    // Start as guest
     setUser({
       id: 'guest_session',
       email: '',
@@ -402,12 +388,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   };
 
-  // Login with email/password
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     setError(null);
 
-    // Simulate API delay
     await new Promise(r => setTimeout(r, 800));
 
     const correctPassword = mockPasswords[email.toLowerCase()];
@@ -427,7 +411,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(foundUser);
     setLastLoggedInEmail(email);
     
-    // Save last email
     try {
       await SecureStore.setItemAsync('mota_last_email', email);
     } catch {}
@@ -436,7 +419,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { success: true };
   };
 
-  // Login with biometrics
   const loginWithBiometric = async (): Promise<{ success: boolean; error?: string }> => {
     if (!lastLoggedInEmail) {
       return { success: false, error: 'No previous login found' };
@@ -450,7 +432,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     setError(null);
 
-    // Authenticate with biometrics
     const biometricResult = await BiometricService.authenticate(
       biometricType === 'faceId' 
         ? 'Verify your identity to login to MOTA'
@@ -463,7 +444,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { success: false, error: biometricResult.error };
     }
 
-    // Biometric verified - get the stored token and find user
     const foundUser = mockUsers.find(u => u.email.toLowerCase() === lastLoggedInEmail.toLowerCase());
     if (!foundUser) {
       setIsLoading(false);
@@ -475,7 +455,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { success: true };
   };
 
-  // Register new user
   const register = async (
     name: string,
     email: string,
@@ -487,14 +466,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     await new Promise(r => setTimeout(r, 800));
 
-    // Check if email exists
     if (mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase())) {
       setError('Email already exists');
       setIsLoading(false);
       return { success: false, error: 'Email already exists' };
     }
 
-    // Create new user (starts as Member)
     const newUser: User = {
       id: String(mockUsers.length + 1),
       email,
@@ -508,7 +485,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     mockUsers.push(newUser);
     mockPasswords[email.toLowerCase()] = password;
 
-    // Store biometric credentials if enabled
     if (enableBiometric) {
       const token = `mota_auth_${newUser.id}_${Date.now()}`;
       await BiometricService.storeCredentials(email, token);
@@ -525,7 +501,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { success: true };
   };
 
-  // Logout
   const logout = () => {
     setUser({
       id: 'guest_session',
@@ -536,13 +511,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
   };
 
-  // Enable biometric for current user
   const enableBiometric = async (): Promise<boolean> => {
     if (!user || user.accessLevel === AccessLevel.GUEST) return false;
 
     setIsLoading(true);
-
-    // Verify identity first
     const result = await BiometricService.authenticate('Verify to enable biometric login');
     
     if (result.success) {
@@ -557,7 +529,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return false;
   };
 
-  // Disable biometric
   const disableBiometric = async (): Promise<boolean> => {
     if (!user) return false;
 
@@ -568,13 +539,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return true;
   };
 
-  // Check if can use biometric
   const canUseBiometric = async (): Promise<boolean> => {
     if (!biometricAvailable || !lastLoggedInEmail) return false;
     return await BiometricService.hasStoredCredentials(lastLoggedInEmail);
   };
 
-  // Access control
   const canAccess = (feature: string): boolean => {
     if (!user) return false;
 
@@ -596,23 +565,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const requirements = featureRequirements[feature];
     if (!requirements) return true;
 
-    // Check access level
     if (requirements.includes(user.accessLevel)) return true;
-
-    // Check investor tier
     if (user.investorTier && requirements.includes(user.investorTier)) return true;
 
     return false;
   };
 
-  // Get next tier info for progress display
   const getNextTierInfo = (): NextTierInfo | null => {
     if (!user || user.accessLevel !== AccessLevel.INVESTOR || !user.investorTier) return null;
 
-    const tierOrder = [InvestorTier.SILVER, InvestorTier.GOLD, InvestorTier.PLATINUM, InvestorTier.DIAMOND];
+    const tierOrder = [InvestorTier.GOLD, InvestorTier.PLATINUM, InvestorTier.DIAMOND];
     const currentIndex = tierOrder.indexOf(user.investorTier as typeof tierOrder[number]);
 
-    // Black and Founders don't show progression
     if (user.investorTier === InvestorTier.BLACK || user.investorTier === InvestorTier.FOUNDERS) {
       return null;
     }
@@ -636,6 +600,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   };
 
+  // Get discount percentage based on tier
+  const getDiscountPercent = (): number => {
+    if (!user || !user.investorTier) return 0;
+    return TierConfig[user.investorTier]?.discountPercent || 0;
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -652,6 +622,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     canUseBiometric,
     canAccess,
     getNextTierInfo,
+    getDiscountPercent,
     isGuest: user?.accessLevel === AccessLevel.GUEST,
     isMember: user?.accessLevel === AccessLevel.MEMBER,
     isInvestor: user?.accessLevel === AccessLevel.INVESTOR,

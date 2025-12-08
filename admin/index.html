@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOTA Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --navy: #0A122A;
+      --navy-light: #162038;
+      --gold: #D4AF37;
+      --gold-dark: #B8960C;
+      --white: #FFFFFF;
+      --grey: #A0A8B8;
+      --grey-dark: #6B7280;
+      --success: #10B981;
+      --error: #EF4444;
+      --warning: #F59E0B;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    
+    /* Login Screen */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-card {
+      background: var(--navy-light);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .login-logo i {
+      font-size: 48px;
+      color: var(--gold);
+    }
+    
+    .login-logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin-top: 12px;
+    }
+    
+    .login-logo p {
+      color: var(--grey);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: var(--grey);
+      margin-bottom: 8px;
+    }
+    
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--navy);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 8px;
+      color: var(--white);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--gold);
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: var(--navy);
+      width: 100%;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-secondary {
+      background: var(--navy);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+    }
+    
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+    
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+    
+    .error-msg {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    /* Dashboard Layout */
+    .dashboard {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      width: 260px;
+      background: var(--navy-light);
+      border-right: 1px solid rgba(212, 175, 55, 0.1);
+      padding: 24px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .sidebar-logo {
+      padding: 0 24px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .sidebar-logo i {
+      font-size: 28px;
+      color: var(--gold);
+    }
+    
+    .sidebar-logo span {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+    
+    .sidebar-nav {
+      list-style: none;
+    }
+    
+    .sidebar-nav li {
+      margin-bottom: 4px;
+    }
+    
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      color: var(--grey);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      background: rgba(212, 175, 55, 0.1);
+      color: var(--gold);
+      border-left-color: var(--gold);
+    }
+    
+    .sidebar-nav a i {
+      width: 20px;
+      text-align: center;
+    }
+    
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      padding: 24px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--navy-light);
+      border-radius: 8px;
+    }
+    
+    .user-info span {
+      font-size: 14px;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    .stat-card {
+      background: var(--navy-light);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.1);
+    }
+    
+    .stat-card .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(212, 175, 55, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    
+    .stat-card .stat-icon i {
+      font-size: 20px;
+      color: var(--gold);
+    }
+    
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    
+    .stat-card .stat-label {
+      font-size: 14px;
+      color: var(--grey);
+      margin-top: 4px;
+    }
+    
+    /* Table */
+    .card {
+      background: var(--navy-light);
+      border-radius: 12px;
+      border: 1px solid rgba(212, 175, 55, 0.1);
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.05);
+    }
+    
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--grey);
+      background: rgba(0,0,0,0.2);
+    }
+    
+    td {
+      font-size: 14px;
+    }
+    
+    tr:hover {
+      background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .badge-gold { background: rgba(212, 175, 55, 0.2); color: var(--gold); }
+    .badge-platinum { background: rgba(229, 228, 226, 0.2); color: #E5E4E2; }
+    .badge-diamond { background: rgba(185, 242, 255, 0.2); color: #B9F2FF; }
+    .badge-black { background: rgba(255, 255, 255, 0.1); color: var(--white); }
+    .badge-founders { background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(0,0,0,0.3)); color: var(--gold); }
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .actions button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .actions .edit {
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--gold);
+    }
+    
+    .actions .delete {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    
+    .modal {
+      background: var(--navy-light);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h3 {
+      font-size: 18px;
+    }
+    
+    .modal-header .close {
+      background: none;
+      border: none;
+      color: var(--grey);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid rgba(212, 175, 55, 0.1);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    
+    /* Form Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .form-grid .full-width {
+      grid-column: 1 / -1;
+    }
+    
+    /* Hidden */
+    .hidden { display: none !important; }
+    
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--grey);
+    }
+    
+    .loading i {
+      font-size: 32px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Image preview */
+    .image-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    
+    /* Tier prices */
+    .tier-prices {
+      background: var(--navy);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+    
+    .tier-prices h4 {
+      font-size: 14px;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    
+    .tier-prices .price-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+      font-size: 14px;
+    }
+    
+    .tier-prices .price-row:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        <i class="fas fa-gem"></i>
+        <h1>MOTA</h1>
+        <p>Admin Dashboard</p>
+      </div>
+      <div id="loginError" class="error-msg hidden"></div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" value="admin@mota.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" value="admin123" required>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="dashboard hidden">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-gem"></i>
+        <span>MOTA</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="#" data-page="overview" class="active"><i class="fas fa-chart-line"></i> Overview</a></li>
+        <li><a href="#" data-page="restaurants"><i class="fas fa-utensils"></i> Restaurants</a></li>
+        <li><a href="#" data-page="activities"><i class="fas fa-umbrella-beach"></i> Activities</a></li>
+        <li><a href="#" data-page="events"><i class="fas fa-calendar-alt"></i> Events</a></li>
+        <li><a href="#" data-page="offers"><i class="fas fa-tags"></i> Offers</a></li>
+        <li><a href="#" data-page="users"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="#" data-page="bookings"><i class="fas fa-book"></i> Bookings</a></li>
+        <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <!-- Overview Page -->
+      <div id="page-overview" class="page">
+        <div class="header">
+          <h1>Dashboard Overview</h1>
+          <div class="user-info">
+            <i class="fas fa-user-shield"></i>
+            <span id="adminName">Admin</span>
+          </div>
+        </div>
+        <div id="statsGrid" class="stats-grid">
+          <div class="loading"><i class="fas fa-spinner"></i><p>Loading stats...</p></div>
+        </div>
+      </div>
+
+      <!-- Restaurants Page -->
+      <div id="page-restaurants" class="page hidden">
+        <div class="header">
+          <h1>Restaurants</h1>
+          <button class="btn btn-primary" onclick="openModal('restaurant')">
+            <i class="fas fa-plus"></i> Add Restaurant
+          </button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="restaurantsTable">
+              <tr><td colspan="7" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activities Page -->
+      <div id="page-activities" class="page hidden">
+        <div class="header">
+          <h1>Activities</h1>
+          <button class="btn btn-primary" onclick="openModal('activity')">
+            <i class="fas fa-plus"></i> Add Activity
+          </button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Duration</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="activitiesTable">
+              <tr><td colspan="7" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Events Page -->
+      <div id="page-events" class="page hidden">
+        <div class="header">
+          <h1>Events</h1>
+          <button class="btn btn-primary" onclick="openModal('event')">
+            <i class="fas fa-plus"></i> Add Event
+          </button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Capacity</th>
+                <th>VIP Only</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="eventsTable">
+              <tr><td colspan="6" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Offers Page -->
+      <div id="page-offers" class="page hidden">
+        <div class="header">
+          <h1>Offers & Discounts</h1>
+          <button class="btn btn-primary" onclick="openModal('offer')">
+            <i class="fas fa-plus"></i> Add Offer
+          </button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Discount</th>
+                <th>Min Tier</th>
+                <th>Code</th>
+                <th>Valid Until</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="offersTable">
+              <tr><td colspan="7" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Page -->
+      <div id="page-users" class="page hidden">
+        <div class="header">
+          <h1>Users</h1>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Access Level</th>
+                <th>Tier</th>
+                <th>Investment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="6" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bookings Page -->
+      <div id="page-bookings" class="page hidden">
+        <div class="header">
+          <h1>Bookings</h1>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Type</th>
+                <th>Item</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTable">
+              <tr><td colspan="6" class="loading"><i class="fas fa-spinner"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Item</h3>
+        <button class="close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Form content will be injected here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modalSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // CONFIG
+    // ============================================
+    const API_URL = 'http://localhost:3001/api';
+    let token = localStorage.getItem('mota_admin_token');
+    let currentPage = 'overview';
+    let editingId = null;
+    let editingType = null;
+
+    // ============================================
+    // AUTH
+    // ============================================
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('loginError');
+
+      try {
+        const res = await fetch(`${API_URL}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorEl.textContent = data.error || 'Login failed';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        token = data.token;
+        localStorage.setItem('mota_admin_token', token);
+        document.getElementById('adminName').textContent = data.admin.name;
+        showDashboard();
+      } catch (err) {
+        errorEl.textContent = 'Cannot connect to server. Make sure backend is running.';
+        errorEl.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      token = null;
+      localStorage.removeItem('mota_admin_token');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+    });
+
+    function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadStats();
+      loadRestaurants();
+      loadActivities();
+      loadEvents();
+      loadOffers();
+      loadUsers();
+      loadBookings();
+    }
+
+    // Check if already logged in
+    if (token) {
+      fetch(`${API_URL}/admin/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(res => {
+        if (res.ok) {
+          res.json().then(admin => {
+            document.getElementById('adminName').textContent = admin.name;
+            showDashboard();
+          });
+        } else {
+          localStorage.removeItem('mota_admin_token');
+          token = null;
+        }
+      }).catch(() => {});
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    document.querySelectorAll('.sidebar-nav a[data-page]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = e.currentTarget.dataset.page;
+        showPage(page);
+      });
+    });
+
+    function showPage(page) {
+      currentPage = page;
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`page-${page}`).classList.remove('hidden');
+      document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+    }
+
+    // ============================================
+    // API HELPERS
+    // ============================================
+    async function apiGet(endpoint) {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return res.json();
+    }
+
+    async function apiPost(endpoint, data) {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return res.json();
+    }
+
+    async function apiPut(endpoint, data) {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return res.json();
+    }
+
+    async function apiDelete(endpoint) {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return res.json();
+    }
+
+    // ============================================
+    // STATS
+    // ============================================
+    async function loadStats() {
+      try {
+        const stats = await apiGet('/admin/stats');
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value">${stats.totalUsers}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+            <div class="stat-value">${stats.totalMembers}</div>
+            <div class="stat-label">Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-gem"></i></div>
+            <div class="stat-value">${stats.totalInvestors}</div>
+            <div class="stat-label">Investors</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-utensils"></i></div>
+            <div class="stat-value">${stats.totalRestaurants}</div>
+            <div class="stat-label">Restaurants</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-umbrella-beach"></i></div>
+            <div class="stat-value">${stats.totalActivities}</div>
+            <div class="stat-label">Activities</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="stat-value">${stats.totalEvents}</div>
+            <div class="stat-label">Events</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-book"></i></div>
+            <div class="stat-value">${stats.totalBookings}</div>
+            <div class="stat-label">Bookings</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-value">$${(stats.totalInvestment / 1000000).toFixed(1)}M</div>
+            <div class="stat-label">Total Investment</div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    // ============================================
+    // RESTAURANTS
+    // ============================================
+    async function loadRestaurants() {
+      try {
+        const restaurants = await apiGet('/restaurants');
+        const tbody = document.getElementById('restaurantsTable');
+        if (restaurants.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No restaurants found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = restaurants.map(r => `
+          <tr>
+            <td><img src="${r.image}" class="image-preview" alt="${r.name}"></td>
+            <td><strong>${r.name}</strong><br><small style="color:var(--grey)">${r.description?.substring(0, 50)}...</small></td>
+            <td>${r.category}</td>
+            <td>$${r.regularPrice}</td>
+            <td>⭐ ${r.rating}</td>
+            <td><span class="badge ${r.isActive ? 'badge-success' : 'badge-error'}">${r.isActive ? 'Active' : 'Inactive'}</span></td>
+            <td class="actions">
+              <button class="edit" onclick="editItem('restaurant', '${r.id}')"><i class="fas fa-edit"></i></button>
+              <button class="delete" onclick="deleteItem('restaurant', '${r.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load restaurants:', err);
+      }
+    }
+
+    // ============================================
+    // ACTIVITIES
+    // ============================================
+    async function loadActivities() {
+      try {
+        const activities = await apiGet('/activities');
+        const tbody = document.getElementById('activitiesTable');
+        if (activities.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No activities found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = activities.map(a => `
+          <tr>
+            <td><img src="${a.image}" class="image-preview" alt="${a.name}"></td>
+            <td><strong>${a.name}</strong></td>
+            <td>${a.category}</td>
+            <td>${a.duration}</td>
+            <td>$${a.regularPrice}</td>
+            <td>⭐ ${a.rating}</td>
+            <td class="actions">
+              <button class="edit" onclick="editItem('activity', '${a.id}')"><i class="fas fa-edit"></i></button>
+              <button class="delete" onclick="deleteItem('activity', '${a.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load activities:', err);
+      }
+    }
+
+    // ============================================
+    // EVENTS
+    // ============================================
+    async function loadEvents() {
+      try {
+        const events = await apiGet('/events');
+        const tbody = document.getElementById('eventsTable');
+        if (events.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">No events found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = events.map(e => `
+          <tr>
+            <td><strong>${e.name}</strong><br><small style="color:var(--grey)">${e.description?.substring(0, 50)}...</small></td>
+            <td>${e.date}${e.endDate !== e.date ? ' - ' + e.endDate : ''}</td>
+            <td>${e.venue}</td>
+            <td>${e.registeredCount || 0}/${e.capacity}</td>
+            <td><span class="badge ${e.isVipOnly ? 'badge-gold' : 'badge-success'}">${e.isVipOnly ? 'VIP Only' : 'Public'}</span></td>
+            <td class="actions">
+              <button class="edit" onclick="editItem('event', '${e.id}')"><i class="fas fa-edit"></i></button>
+              <button class="delete" onclick="deleteItem('event', '${e.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load events:', err);
+      }
+    }
+
+    // ============================================
+    // OFFERS
+    // ============================================
+    async function loadOffers() {
+      try {
+        const offers = await apiGet('/offers');
+        const tbody = document.getElementById('offersTable');
+        if (offers.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No offers found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = offers.map(o => `
+          <tr>
+            <td><strong>${o.title}</strong><br><small style="color:var(--grey)">${o.description}</small></td>
+            <td><span class="badge badge-gold">${o.type}</span></td>
+            <td>${o.discountPercent}%</td>
+            <td><span class="badge badge-${o.minTier}">${o.minTier}</span></td>
+            <td><code>${o.code}</code></td>
+            <td>${o.validUntil}</td>
+            <td class="actions">
+              <button class="edit" onclick="editItem('offer', '${o.id}')"><i class="fas fa-edit"></i></button>
+              <button class="delete" onclick="deleteItem('offer', '${o.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load offers:', err);
+      }
+    }
+
+    // ============================================
+    // USERS
+    // ============================================
+    async function loadUsers() {
+      try {
+        const users = await apiGet('/admin/users');
+        const tbody = document.getElementById('usersTable');
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">No users found</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.email}</td>
+            <td><span class="badge ${u.accessLevel === 'investor' ? 'badge-gold' : 'badge-success'}">${u.accessLevel}</span></td>
+            <td>${u.investorTier ? `<span class="badge badge-${u.investorTier}">${u.investorTier}</span>` : '-'}</td>
+            <td>${u.investmentAmount ? '$' + u.investmentAmount.toLocaleString() : '-'}</td>
+            <td class="actions">
+              <button class="edit" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
+              ${u.accessLevel === 'member' ? `<button class="edit" onclick="upgradeToInvestor('${u.id}')" title="Upgrade to Investor"><i class="fas fa-gem"></i></button>` : ''}
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    }
+
+    // ============================================
+    // BOOKINGS
+    // ============================================
+    async function loadBookings() {
+      try {
+        const bookings = await apiGet('/admin/bookings');
+        const tbody = document.getElementById('bookingsTable');
+        if (bookings.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">No bookings yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = bookings.map(b => `
+          <tr>
+            <td>#${b.id.substring(0, 8)}</td>
+            <td>${b.userId}</td>
+            <td>${b.type}</td>
+            <td>${b.itemName || b.itemId}</td>
+            <td>${new Date(b.createdAt).toLocaleDateString()}</td>
+            <td><span class="badge badge-success">${b.status}</span></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load bookings:', err);
+      }
+    }
+
+    // ============================================
+    // MODALS
+    // ============================================
+    function openModal(type, data = null) {
+      editingType = type;
+      editingId = data?.id || null;
+      
+      const title = editingId ? `Edit ${type}` : `Add ${type}`;
+      document.getElementById('modalTitle').textContent = title.charAt(0).toUpperCase() + title.slice(1);
+      
+      let formHtml = '';
+      
+      if (type === 'restaurant') {
+        formHtml = `
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="formName" value="${data?.name || ''}" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <input type="text" id="formCategory" value="${data?.category || ''}" placeholder="Fine Dining, Seafood...">
+            </div>
+            <div class="form-group full-width">
+              <label>Description</label>
+              <textarea id="formDescription" rows="2">${data?.description || ''}</textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Image URL</label>
+              <input type="text" id="formImage" value="${data?.image || ''}" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label>Regular Price ($)</label>
+              <input type="number" id="formRegularPrice" value="${data?.regularPrice || ''}" required>
+            </div>
+            <div class="form-group">
+              <label>Rating (1-5)</label>
+              <input type="number" id="formRating" value="${data?.rating || '4.5'}" step="0.1" min="1" max="5">
+            </div>
+            <div class="form-group">
+              <label>Open Hours</label>
+              <input type="text" id="formOpenHours" value="${data?.openHours || ''}" placeholder="6:00 PM - 11:00 PM">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="formLocation" value="${data?.location || ''}" placeholder="Beachfront">
+            </div>
+          </div>
+          <div class="tier-prices">
+            <h4>💎 Tier-Based Pricing (Auto-calculated)</h4>
+            <div class="price-row"><span>Member Price (10% off)</span><span id="calcMember">-</span></div>
+            <div class="price-row"><span>Platinum Price (15% off)</span><span id="calcPlatinum">-</span></div>
+            <div class="price-row"><span>Diamond Price (25% off)</span><span id="calcDiamond">-</span></div>
+          </div>
+        `;
+      } else if (type === 'activity') {
+        formHtml = `
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="formName" value="${data?.name || ''}" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <input type="text" id="formCategory" value="${data?.category || ''}" placeholder="Snorkeling, Diving...">
+            </div>
+            <div class="form-group full-width">
+              <label>Description</label>
+              <textarea id="formDescription" rows="2">${data?.description || ''}</textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Image URL</label>
+              <input type="text" id="formImage" value="${data?.image || ''}" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label>Duration</label>
+              <input type="text" id="formDuration" value="${data?.duration || ''}" placeholder="3 hours">
+            </div>
+            <div class="form-group">
+              <label>Regular Price ($)</label>
+              <input type="number" id="formRegularPrice" value="${data?.regularPrice || ''}" required>
+            </div>
+            <div class="form-group">
+              <label>Rating (1-5)</label>
+              <input type="number" id="formRating" value="${data?.rating || '4.5'}" step="0.1" min="1" max="5">
+            </div>
+          </div>
+        `;
+      } else if (type === 'event') {
+        formHtml = `
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Event Name</label>
+              <input type="text" id="formName" value="${data?.name || ''}" required>
+            </div>
+            <div class="form-group full-width">
+              <label>Description</label>
+              <textarea id="formDescription" rows="2">${data?.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="formDate" value="${data?.date || ''}">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="formEndDate" value="${data?.endDate || ''}">
+            </div>
+            <div class="form-group">
+              <label>Venue</label>
+              <input type="text" id="formVenue" value="${data?.venue || ''}" placeholder="MOTA Ballroom">
+            </div>
+            <div class="form-group">
+              <label>Capacity</label>
+              <input type="number" id="formCapacity" value="${data?.capacity || ''}">
+            </div>
+            <div class="form-group">
+              <label>VIP Only?</label>
+              <select id="formIsVipOnly">
+                <option value="false" ${!data?.isVipOnly ? 'selected' : ''}>No - Public Event</option>
+                <option value="true" ${data?.isVipOnly ? 'selected' : ''}>Yes - Investors Only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Min Tier Required</label>
+              <select id="formMinTier">
+                <option value="">None</option>
+                <option value="gold" ${data?.investorTierRequired === 'gold' ? 'selected' : ''}>Gold</option>
+                <option value="platinum" ${data?.investorTierRequired === 'platinum' ? 'selected' : ''}>Platinum</option>
+                <option value="diamond" ${data?.investorTierRequired === 'diamond' ? 'selected' : ''}>Diamond</option>
+              </select>
+            </div>
+          </div>
+        `;
+      } else if (type === 'offer') {
+        formHtml = `
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Offer Title</label>
+              <input type="text" id="formTitle" value="${data?.title || ''}" required>
+            </div>
+            <div class="form-group full-width">
+              <label>Description</label>
+              <textarea id="formDescription" rows="2">${data?.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="formType">
+                <option value="restaurant" ${data?.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
+                <option value="activity" ${data?.type === 'activity' ? 'selected' : ''}>Activity</option>
+                <option value="event" ${data?.type === 'event' ? 'selected' : ''}>Event</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Discount %</label>
+              <input type="number" id="formDiscountPercent" value="${data?.discountPercent || ''}" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label>Promo Code</label>
+              <input type="text" id="formCode" value="${data?.code || ''}" style="text-transform: uppercase">
+            </div>
+            <div class="form-group">
+              <label>Minimum Tier</label>
+              <select id="formMinTier">
+                <option value="member" ${data?.minTier === 'member' ? 'selected' : ''}>Member</option>
+                <option value="gold" ${data?.minTier === 'gold' ? 'selected' : ''}>Gold</option>
+                <option value="platinum" ${data?.minTier === 'platinum' ? 'selected' : ''}>Platinum</option>
+                <option value="diamond" ${data?.minTier === 'diamond' ? 'selected' : ''}>Diamond</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Valid From</label>
+              <input type="date" id="formValidFrom" value="${data?.validFrom || ''}">
+            </div>
+            <div class="form-group">
+              <label>Valid Until</label>
+              <input type="date" id="formValidUntil" value="${data?.validUntil || ''}">
+            </div>
+            <div class="form-group">
+              <label>Max Uses</label>
+              <input type="number" id="formMaxUses" value="${data?.maxUses || 100}">
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modalBody').innerHTML = formHtml;
+      document.getElementById('modalOverlay').classList.remove('hidden');
+
+      // Price calculation listener
+      const priceInput = document.getElementById('formRegularPrice');
+      if (priceInput) {
+        priceInput.addEventListener('input', updateTierPrices);
+        updateTierPrices();
+      }
+    }
+
+    function updateTierPrices() {
+      const price = parseFloat(document.getElementById('formRegularPrice')?.value) || 0;
+      const calcMember = document.getElementById('calcMember');
+      const calcPlatinum = document.getElementById('calcPlatinum');
+      const calcDiamond = document.getElementById('calcDiamond');
+      
+      if (calcMember) calcMember.textContent = '$' + (price * 0.9).toFixed(0);
+      if (calcPlatinum) calcPlatinum.textContent = '$' + (price * 0.85).toFixed(0);
+      if (calcDiamond) calcDiamond.textContent = '$' + (price * 0.75).toFixed(0);
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+      editingId = null;
+      editingType = null;
+    }
+
+    document.getElementById('modalSaveBtn').addEventListener('click', saveItem);
+
+    async function saveItem() {
+      let data = {};
+      
+      if (editingType === 'restaurant') {
+        const regularPrice = parseFloat(document.getElementById('formRegularPrice').value);
+        data = {
+          name: document.getElementById('formName').value,
+          category: document.getElementById('formCategory').value,
+          description: document.getElementById('formDescription').value,
+          image: document.getElementById('formImage').value,
+          regularPrice,
+          memberPrice: Math.round(regularPrice * 0.9),
+          platinumPrice: Math.round(regularPrice * 0.85),
+          diamondPrice: Math.round(regularPrice * 0.75),
+          rating: parseFloat(document.getElementById('formRating').value),
+          openHours: document.getElementById('formOpenHours').value,
+          location: document.getElementById('formLocation').value
+        };
+      } else if (editingType === 'activity') {
+        const regularPrice = parseFloat(document.getElementById('formRegularPrice').value);
+        data = {
+          name: document.getElementById('formName').value,
+          category: document.getElementById('formCategory').value,
+          description: document.getElementById('formDescription').value,
+          image: document.getElementById('formImage').value,
+          duration: document.getElementById('formDuration').value,
+          regularPrice,
+          memberPrice: Math.round(regularPrice * 0.9),
+          platinumPrice: Math.round(regularPrice * 0.85),
+          diamondPrice: Math.round(regularPrice * 0.75),
+          rating: parseFloat(document.getElementById('formRating').value)
+        };
+      } else if (editingType === 'event') {
+        data = {
+          name: document.getElementById('formName').value,
+          description: document.getElementById('formDescription').value,
+          date: document.getElementById('formDate').value,
+          endDate: document.getElementById('formEndDate').value,
+          venue: document.getElementById('formVenue').value,
+          capacity: parseInt(document.getElementById('formCapacity').value),
+          isVipOnly: document.getElementById('formIsVipOnly').value === 'true',
+          investorTierRequired: document.getElementById('formMinTier').value || null
+        };
+      } else if (editingType === 'offer') {
+        data = {
+          title: document.getElementById('formTitle').value,
+          description: document.getElementById('formDescription').value,
+          type: document.getElementById('formType').value,
+          discountPercent: parseInt(document.getElementById('formDiscountPercent').value),
+          code: document.getElementById('formCode').value.toUpperCase(),
+          minTier: document.getElementById('formMinTier').value,
+          validFrom: document.getElementById('formValidFrom').value,
+          validUntil: document.getElementById('formValidUntil').value,
+          maxUses: parseInt(document.getElementById('formMaxUses').value)
+        };
+      }
+
+      try {
+        const endpoint = `/admin/${editingType}s${editingId ? '/' + editingId : ''}`;
+        if (editingId) {
+          await apiPut(endpoint, data);
+        } else {
+          await apiPost(endpoint, data);
+        }
+        closeModal();
+        // Reload the appropriate data
+        if (editingType === 'restaurant') loadRestaurants();
+        else if (editingType === 'activity') loadActivities();
+        else if (editingType === 'event') loadEvents();
+        else if (editingType === 'offer') loadOffers();
+        loadStats();
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+      }
+    }
+
+    async function editItem(type, id) {
+      const data = await apiGet(`/${type}s/${id}`);
+      openModal(type, data);
+    }
+
+    async function deleteItem(type, id) {
+      if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+      
+      try {
+        await apiDelete(`/admin/${type}s/${id}`);
+        if (type === 'restaurant') loadRestaurants();
+        else if (type === 'activity') loadActivities();
+        else if (type === 'event') loadEvents();
+        else if (type === 'offer') loadOffers();
+        loadStats();
+      } catch (err) {
+        alert('Failed to delete: ' + err.message);
+      }
+    }
+
+    async function upgradeToInvestor(userId) {
+      const tier = prompt('Select tier (gold, platinum, diamond):');
+      if (!tier || !['gold', 'platinum', 'diamond'].includes(tier)) {
+        alert('Invalid tier');
+        return;
+      }
+      
+      const amount = prompt('Investment amount ($):');
+      if (!amount || isNaN(amount)) {
+        alert('Invalid amount');
+        return;
+      }
+
+      try {
+        await apiPost(`/admin/users/${userId}/upgrade-to-investor`, {
+          investorTier: tier,
+          investmentAmount: parseFloat(amount)
+        });
+        loadUsers();
+        loadStats();
+      } catch (err) {
+        alert('Failed to upgrade: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,34 +1,26 @@
 /**
  * MOTA Bottom Sheet Modal
  * Non-disruptive modal that slides up from bottom
- * Used for sign-up prompts and other actions
+ * Fixed keyboard handling
  */
 
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   Pressable,
   Animated,
   Dimensions,
   PanResponder,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Colors
 const Colors = {
-  deepNavy: '#0A122A',
   cardDark: '#0D1729',
-  cardElevated: '#162038',
-  gold: '#D4AF37',
-  goldSubtle: 'rgba(212, 175, 55, 0.12)',
-  white: '#FFFFFF',
-  softGrey: '#A0A8B8',
   mutedGrey: '#6B7280',
   overlay: 'rgba(0, 0, 0, 0.6)',
 };
@@ -51,12 +43,10 @@ export function BottomSheet({
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
-  // Calculate sheet height
   const sheetHeight = typeof height === 'string' 
     ? (parseFloat(height) / 100) * SCREEN_HEIGHT 
     : height;
 
-  // Pan responder for drag-to-dismiss
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -106,6 +96,7 @@ export function BottomSheet({
   };
 
   const closeSheet = () => {
+    Keyboard.dismiss();
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SCREEN_HEIGHT,
@@ -134,16 +125,13 @@ export function BottomSheet({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        {/* Overlay - tap to dismiss */}
+      <View style={styles.container}>
+        {/* Overlay */}
         <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
         </Animated.View>
 
-        {/* Sheet */}
+        {/* Sheet - NO KeyboardAvoidingView wrapper */}
         <Animated.View
           style={[
             styles.sheet,
@@ -153,17 +141,15 @@ export function BottomSheet({
             },
           ]}
         >
-          {/* Drag handle */}
           {showHandle && (
             <View style={styles.handleContainer} {...panResponder.panHandlers}>
               <View style={styles.handle} />
             </View>
           )}
 
-          {/* Content */}
           <View style={styles.content}>{children}</View>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

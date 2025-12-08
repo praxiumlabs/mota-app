@@ -1,6 +1,7 @@
 /**
  * MOTA FOMO Components
  * Banners, locked features, and tier progression displays
+ * Updated: Gold is now entry level (no Silver tier)
  */
 
 import React from 'react';
@@ -38,7 +39,6 @@ const Colors = {
 
 // ============================================
 // GUEST FOMO BANNER
-// Shows to guests to encourage sign up
 // ============================================
 
 interface GuestFomoBannerProps {
@@ -64,7 +64,6 @@ export function GuestFomoBanner({ onSignUp }: GuestFomoBannerProps) {
 
 // ============================================
 // MEMBER FOMO BANNER
-// Shows to members to encourage investor upgrade
 // ============================================
 
 interface MemberFomoBannerProps {
@@ -94,7 +93,6 @@ export function MemberFomoBanner({ onPress }: MemberFomoBannerProps) {
 
 // ============================================
 // LOCKED FEATURE CARD
-// Shows locked features with required access level
 // ============================================
 
 interface LockedFeatureCardProps {
@@ -123,7 +121,6 @@ export function LockedFeatureCard({ icon, title, requiredLevel, onPress }: Locke
 
 // ============================================
 // ACTION BUTTON WITH LOCK
-// For booking/RSVP buttons that require auth
 // ============================================
 
 interface ActionButtonProps {
@@ -164,8 +161,47 @@ export function ActionButton({ label, isLocked, onPress, variant = 'primary' }: 
 }
 
 // ============================================
+// PRICE DISPLAY WITH TIER DISCOUNT
+// ============================================
+
+interface PriceDisplayProps {
+  regularPrice: number;
+  memberPrice?: number;
+  showDiscount?: boolean;
+}
+
+export function PriceDisplay({ regularPrice, memberPrice, showDiscount = true }: PriceDisplayProps) {
+  const { user, getDiscountPercent } = useAuth();
+  const discount = getDiscountPercent();
+  
+  // Calculate user's price based on their tier
+  const userPrice = discount > 0 
+    ? Math.round(regularPrice * (1 - discount / 100))
+    : (memberPrice || regularPrice);
+
+  const hasDiscount = userPrice < regularPrice;
+
+  return (
+    <View style={styles.priceContainer}>
+      {hasDiscount && showDiscount ? (
+        <>
+          <Text style={styles.priceOriginal}>${regularPrice}</Text>
+          <Text style={styles.priceDiscounted}>${userPrice}</Text>
+          {discount > 0 && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>{discount}% OFF</Text>
+            </View>
+          )}
+        </>
+      ) : (
+        <Text style={styles.priceNormal}>${regularPrice}</Text>
+      )}
+    </View>
+  );
+}
+
+// ============================================
 // TIER CARD DISPLAY
-// Visual representation of investor tier card
 // ============================================
 
 interface TierCardProps {
@@ -208,6 +244,14 @@ export function TierCard({ user }: TierCardProps) {
             {user.memberSince}
           </Text>
         </View>
+        <View>
+          <Text style={[styles.tierCardLabel, { color: tierConfig.textColor || 'rgba(0,0,0,0.5)' }]}>
+            Discount
+          </Text>
+          <Text style={[styles.tierCardValue, { color: tierConfig.textColor || 'rgba(0,0,0,0.8)' }]}>
+            {tierConfig.discountPercent}% OFF
+          </Text>
+        </View>
         <Text style={[styles.tierCardLogo, { color: tierConfig.textColor || 'rgba(0,0,0,0.3)' }]}>
           MOTA
         </Text>
@@ -218,7 +262,6 @@ export function TierCard({ user }: TierCardProps) {
 
 // ============================================
 // TIER BADGE (Small)
-// For headers and profile displays
 // ============================================
 
 interface TierBadgeProps {
@@ -261,7 +304,6 @@ export function TierBadge({ tier, size = 'small' }: TierBadgeProps) {
 
 // ============================================
 // TIER PROGRESS CARD
-// Shows progression to next tier
 // ============================================
 
 interface TierProgressCardProps {
@@ -488,6 +530,39 @@ const styles = StyleSheet.create({
     color: Colors.gold,
   },
 
+  // Price Display
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  priceOriginal: {
+    fontSize: 14,
+    color: Colors.mutedGrey,
+    textDecorationLine: 'line-through',
+  },
+  priceDiscounted: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.gold,
+  },
+  priceNormal: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  discountBadge: {
+    backgroundColor: Colors.success,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  discountText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+
   // Tier Card
   tierCard: {
     borderRadius: 16,
@@ -681,6 +756,7 @@ export default {
   MemberFomoBanner,
   LockedFeatureCard,
   ActionButton,
+  PriceDisplay,
   TierCard,
   TierBadge,
   TierProgressCard,
