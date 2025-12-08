@@ -25,9 +25,7 @@ import {
   InvestorBenefits,
 } from '../context/AuthContext';
 import {
-  TierCard,
   TierBadge,
-  TierProgressCard,
 } from '../components/FomoComponents';
 
 // Colors
@@ -48,6 +46,68 @@ const Colors = {
 };
 
 // ============================================
+// INLINE TIER CARD (to avoid prop mismatch)
+// ============================================
+
+function InlineTierCard({ user, discount }: { user: any; discount: number }) {
+  return (
+    <View style={styles.tierCard}>
+      <View style={styles.tierCardHeader}>
+        <TierBadge tier={user.investorTier || 'member'} size="medium" />
+        <Text style={styles.tierDiscount}>{discount}% discount</Text>
+      </View>
+      {user.portfolioValue && (
+        <View style={styles.tierCardStats}>
+          <View style={styles.tierStat}>
+            <Text style={styles.tierStatValue}>${(user.portfolioValue / 1000).toFixed(0)}K</Text>
+            <Text style={styles.tierStatLabel}>Portfolio</Text>
+          </View>
+          <View style={styles.tierStat}>
+            <Text style={styles.tierStatValue}>${((user.investmentAmount || 0) / 1000).toFixed(0)}K</Text>
+            <Text style={styles.tierStatLabel}>Invested</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ============================================
+// INLINE TIER PROGRESS CARD
+// ============================================
+
+function InlineTierProgressCard({ user, nextTierInfo }: { user: any; nextTierInfo: any }) {
+  if (!nextTierInfo) return null;
+
+  const threshold = nextTierInfo.threshold || nextTierInfo.minInvestment || 0;
+  const progress = threshold > 0 ? ((user.investmentAmount || 0) / threshold) * 100 : 0;
+  const remaining = threshold - (user.investmentAmount || 0);
+  const benefits = nextTierInfo.benefits || [];
+
+  return (
+    <View style={styles.progressCard}>
+      <Text style={styles.progressTitle}>Next Tier: {nextTierInfo.name}</Text>
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
+      </View>
+      <Text style={styles.progressText}>
+        ${remaining > 0 ? remaining.toLocaleString() : 0} more to unlock
+      </Text>
+      {benefits.length > 0 && (
+        <View style={styles.benefitsListSmall}>
+          {benefits.slice(0, 3).map((benefit: string, index: number) => (
+            <View key={index} style={styles.benefitItemSmall}>
+              <Feather name="check-circle" size={14} color={Colors.gold} />
+              <Text style={styles.benefitTextSmall}>{benefit}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ============================================
 // INVESTOR MARKETING VIEW (Non-Investor)
 // ============================================
 
@@ -55,7 +115,6 @@ function InvestorMarketingView() {
   const insets = useSafeAreaInsets();
 
   const handleRequestDeck = () => {
-    // Open external website for investor deck request
     Linking.openURL('https://macauoftheamericas.com');
   };
 
@@ -128,11 +187,12 @@ function InvestorMarketingView() {
           {visibleTiers.map((tier) => {
             const config = TierConfig[tier];
             const threshold = TierThresholds[tier];
+            if (!config) return null;
             return (
               <View key={tier} style={styles.tierPreviewRow}>
                 <View style={styles.tierPreviewBadge}>
                   <LinearGradient
-                    colors={config.bgGradient}
+                    colors={config.bgGradient as [string, string]}
                     style={StyleSheet.absoluteFill}
                   />
                   <Feather
@@ -206,9 +266,16 @@ function InvestorMarketingView() {
 // ============================================
 
 function InvestorDashboardView() {
-  const { user, getNextTierInfo } = useAuth();
+  const { user, getNextTierInfo, getDiscountPercent } = useAuth();
   const insets = useSafeAreaInsets();
-  const nextTierInfo = getNextTierInfo();
+  
+  // Safely get next tier info
+  let nextTierInfo: any = null;
+  try {
+    nextTierInfo = getNextTierInfo();
+  } catch (e) {
+    // Ignore if not available
+  }
 
   if (!user || user.accessLevel !== AccessLevel.INVESTOR) return null;
 
@@ -219,6 +286,7 @@ function InvestorDashboardView() {
     ? ((portfolioValue - investmentAmount) / investmentAmount * 100).toFixed(1)
     : '0';
   const gain = portfolioValue - investmentAmount;
+  const discount = getDiscountPercent();
 
   return (
     <ScrollView
@@ -237,7 +305,7 @@ function InvestorDashboardView() {
 
       {/* Tier Card */}
       <View style={styles.section}>
-        <TierCard user={user} />
+        <InlineTierCard user={user} discount={discount} />
       </View>
 
       {/* Portfolio Card */}
@@ -272,15 +340,17 @@ function InvestorDashboardView() {
         </View>
         <View style={styles.statCard}>
           <Feather name="calendar" size={20} color={Colors.purple} />
-          <Text style={styles.statCardValue}>{user.memberSince?.split('-')[0]}</Text>
+          <Text style={styles.statCardValue}>{user.memberSince?.split('-')[0] || '2024'}</Text>
           <Text style={styles.statCardLabel}>Since</Text>
         </View>
       </View>
 
       {/* Tier Progress */}
-      <View style={styles.section}>
-        <TierProgressCard user={user} nextTierInfo={nextTierInfo} />
-      </View>
+      {nextTierInfo && (
+        <View style={styles.section}>
+          <InlineTierProgressCard user={user} nextTierInfo={nextTierInfo} />
+        </View>
+      )}
 
       {/* Quick Actions */}
       <View style={styles.section}>
@@ -306,11 +376,11 @@ function InvestorDashboardView() {
       </View>
 
       {/* VIP Benefits */}
-      {tierConfig && (
+      {tierConfig && tierConfig.benefits && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Benefits</Text>
           <View style={styles.benefitsList}>
-            {tierConfig.benefits.map((benefit, idx) => (
+            {tierConfig.benefits.map((benefit: string, idx: number) => (
               <View key={idx} style={styles.benefitRow}>
                 <Feather name="check-circle" size={18} color={Colors.success} />
                 <Text style={styles.benefitRowText}>{benefit}</Text>
@@ -355,6 +425,83 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.white,
     marginBottom: 14,
+  },
+
+  // Tier Card
+  tierCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 15,
+  },
+  tierCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  tierDiscount: {
+    color: Colors.success,
+    fontWeight: '600',
+  },
+  tierCardStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  tierStat: {
+    alignItems: 'center',
+  },
+  tierStatValue: {
+    color: Colors.gold,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  tierStatLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  // Progress Card
+  progressCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 15,
+    padding: 20,
+  },
+  progressTitle: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.gold,
+    borderRadius: 4,
+  },
+  progressText: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  benefitsListSmall: {
+    marginTop: 15,
+  },
+  benefitItemSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  benefitTextSmall: {
+    color: '#ccc',
+    fontSize: 13,
+    marginLeft: 8,
   },
 
   // Marketing View
@@ -416,12 +563,6 @@ const styles = StyleSheet.create({
   benefitCard: {
     width: '50%',
     padding: 6,
-  },
-  benefitCardInner: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
   },
   benefitIconBox: {
     width: 48,

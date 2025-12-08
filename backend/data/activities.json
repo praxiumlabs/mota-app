@@ -1,0 +1,63 @@
+[
+  {
+    "id": "1",
+    "name": "Hol Chan Marine Reserve",
+    "category": "Snorkeling",
+    "description": "Explore vibrant coral reefs and swim with sea turtles",
+    "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
+    "rating": 4.9,
+    "duration": "3 hours",
+    "regularPrice": 75,
+    "memberPrice": 68,
+    "platinumPrice": 64,
+    "diamondPrice": 56,
+    "included": [
+      "Equipment",
+      "Guide",
+      "Refreshments"
+    ],
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.212Z"
+  },
+  {
+    "id": "2",
+    "name": "Great Blue Hole",
+    "category": "Diving",
+    "description": "Dive into one of the world's most famous dive sites",
+    "image": "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800",
+    "rating": 4.8,
+    "duration": "Full day",
+    "regularPrice": 350,
+    "memberPrice": 315,
+    "platinumPrice": 298,
+    "diamondPrice": 263,
+    "included": [
+      "Equipment",
+      "Certified guide",
+      "Lunch",
+      "Transport"
+    ],
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.212Z"
+  },
+  {
+    "id": "3",
+    "name": "Sunset Catamaran",
+    "category": "Sailing",
+    "description": "Romantic sunset sail with champagne and appetizers",
+    "image": "https://images.unsplash.com/photo-1500514966906-fe245eea9344?w=800",
+    "rating": 4.8,
+    "duration": "2 hours",
+    "regularPrice": 95,
+    "memberPrice": 86,
+    "platinumPrice": 81,
+    "diamondPrice": 71,
+    "included": [
+      "Champagne",
+      "Appetizers",
+      "Music"
+    ],
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.212Z"
+  }
+]

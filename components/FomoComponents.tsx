@@ -1,7 +1,6 @@
 /**
- * MOTA FOMO Components
- * Banners, locked features, and tier progression displays
- * Updated: Gold is now entry level (no Silver tier)
+ * FOMO Components for MOTA App
+ * Creates urgency and exclusivity
  */
 
 import React from 'react';
@@ -9,33 +8,173 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
+  TouchableOpacity,
 } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  useAuth,
-  TierConfig,
-  TierBenefit,
-  NextTierInfo,
-  User,
-} from '../context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 
-// Colors
-const Colors = {
-  deepNavy: '#0A122A',
-  cardDark: '#0D1729',
-  cardElevated: '#162038',
-  gold: '#D4AF37',
-  goldDark: '#B8960C',
-  goldSubtle: 'rgba(212, 175, 55, 0.12)',
-  goldMuted: 'rgba(212, 175, 55, 0.3)',
-  white: '#FFFFFF',
-  softGrey: '#A0A8B8',
-  mutedGrey: '#6B7280',
-  success: '#10B981',
-  blue: '#60A5FA',
-};
+// ============================================
+// EXCLUSIVE BADGE
+// ============================================
+
+export function ExclusiveBadge() {
+  return (
+    <View style={styles.exclusiveBadge}>
+      <Ionicons name="star" size={10} color="#D4AF37" />
+      <Text style={styles.exclusiveText}>EXCLUSIVE</Text>
+    </View>
+  );
+}
+
+// ============================================
+// COUNTDOWN TIMER
+// ============================================
+
+interface CountdownTimerProps {
+  endDate: Date;
+  label?: string;
+}
+
+export function CountdownTimer({ endDate, label = 'Offer ends in' }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = React.useState('');
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const end = new Date(endDate).getTime();
+      const distance = end - now;
+
+      if (distance < 0) {
+        setTimeLeft('Expired');
+        clearInterval(timer);
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h`);
+      } else {
+        setTimeLeft(`${hours}h ${minutes}m`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [endDate]);
+
+  return (
+    <View style={styles.countdownContainer}>
+      <Ionicons name="time-outline" size={14} color="#FF6B6B" />
+      <Text style={styles.countdownLabel}>{label}: </Text>
+      <Text style={styles.countdownTime}>{timeLeft}</Text>
+    </View>
+  );
+}
+
+// ============================================
+// SPOTS LEFT
+// ============================================
+
+interface SpotsLeftProps {
+  current: number;
+  total: number;
+}
+
+export function SpotsLeft({ current, total }: SpotsLeftProps) {
+  const spotsLeft = total - current;
+  const percentage = (current / total) * 100;
+  const isLow = spotsLeft <= total * 0.2;
+
+  return (
+    <View style={styles.spotsContainer}>
+      <View style={styles.spotsBar}>
+        <View style={[styles.spotsFill, { width: `${percentage}%` }]} />
+      </View>
+      <Text style={[styles.spotsText, isLow && styles.spotsTextUrgent]}>
+        {spotsLeft <= 0 ? 'SOLD OUT' : `Only ${spotsLeft} spots left!`}
+      </Text>
+    </View>
+  );
+}
+
+// ============================================
+// MEMBER DISCOUNT
+// ============================================
+
+interface MemberDiscountProps {
+  percent: number;
+}
+
+export function MemberDiscount({ percent }: MemberDiscountProps) {
+  return (
+    <View style={styles.discountBadge}>
+      <Text style={styles.discountText}>{percent}% OFF</Text>
+    </View>
+  );
+}
+
+// ============================================
+// VIP ONLY OVERLAY
+// ============================================
+
+interface VIPOnlyOverlayProps {
+  tierRequired?: string | null;
+}
+
+export function VIPOnlyOverlay({ tierRequired }: VIPOnlyOverlayProps) {
+  return (
+    <View style={styles.vipOverlay}>
+      <Ionicons name="lock-closed" size={16} color="#D4AF37" />
+      <Text style={styles.vipText}>
+        {tierRequired ? `${tierRequired.toUpperCase()}+ ONLY` : 'VIP ONLY'}
+      </Text>
+    </View>
+  );
+}
+
+// ============================================
+// PRICE DISPLAY - Updated with flexible props
+// ============================================
+
+interface PriceDisplayProps {
+  originalPrice?: number;
+  discountedPrice?: number;
+  regularPrice?: number;
+  memberPrice?: number;
+  showDiscount?: boolean;
+}
+
+export function PriceDisplay({ 
+  originalPrice, 
+  discountedPrice, 
+  regularPrice, 
+  memberPrice, 
+  showDiscount = true 
+}: PriceDisplayProps) {
+  // Support both prop naming conventions
+  const basePrice = originalPrice ?? regularPrice ?? 0;
+  const finalPrice = discountedPrice ?? memberPrice ?? basePrice;
+  const hasDiscount = basePrice > finalPrice;
+
+  if (!showDiscount || !hasDiscount) {
+    return <Text style={styles.priceText}>${finalPrice}</Text>;
+  }
+
+  const discountPercent = Math.round(((basePrice - finalPrice) / basePrice) * 100);
+
+  return (
+    <View style={styles.priceContainer}>
+      <Text style={styles.originalPrice}>${basePrice}</Text>
+      <Text style={styles.discountedPrice}>${finalPrice}</Text>
+      <View style={styles.saveBadge}>
+        <Text style={styles.saveText}>{discountPercent}% OFF</Text>
+      </View>
+    </View>
+  );
+}
 
 // ============================================
 // GUEST FOMO BANNER
@@ -47,18 +186,21 @@ interface GuestFomoBannerProps {
 
 export function GuestFomoBanner({ onSignUp }: GuestFomoBannerProps) {
   return (
-    <Pressable style={styles.guestBanner} onPress={onSignUp}>
-      <View style={styles.bannerContent}>
-        <MaterialCommunityIcons name="star-four-points" size={20} color={Colors.gold} />
-        <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>Sign up FREE to unlock bookings</Text>
-          <Text style={styles.bannerSubtitle}>Save favorites, RSVP events & more</Text>
+    <TouchableOpacity onPress={onSignUp}>
+      <LinearGradient 
+        colors={['rgba(212, 175, 55, 0.2)', 'rgba(212, 175, 55, 0.1)']}
+        style={styles.guestBanner}
+      >
+        <View style={styles.bannerContent}>
+          <Ionicons name="gift-outline" size={24} color="#D4AF37" />
+          <View style={styles.bannerText}>
+            <Text style={styles.bannerTitle}>Unlock Exclusive Benefits</Text>
+            <Text style={styles.bannerSubtitle}>Sign up now and get 10% off your first booking</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.bannerButton}>
-        <Text style={styles.bannerButtonText}>Join Free</Text>
-      </View>
-    </Pressable>
+        <Ionicons name="chevron-forward" size={20} color="#D4AF37" />
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 
@@ -67,27 +209,24 @@ export function GuestFomoBanner({ onSignUp }: GuestFomoBannerProps) {
 // ============================================
 
 interface MemberFomoBannerProps {
-  onPress?: () => void;
+  onPress: () => void;
 }
 
 export function MemberFomoBanner({ onPress }: MemberFomoBannerProps) {
   return (
-    <Pressable style={styles.memberBanner} onPress={onPress}>
-      <LinearGradient
-        colors={[Colors.goldSubtle, 'rgba(22, 32, 56, 0.8)']}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      />
-      <View style={styles.bannerContent}>
-        <MaterialCommunityIcons name="diamond-stone" size={20} color={Colors.gold} />
-        <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>Investors get VIP concierge & perks</Text>
-          <Text style={styles.bannerSubtitle}>Explore investment opportunities</Text>
+    <TouchableOpacity onPress={onPress}>
+      <LinearGradient 
+        colors={['rgba(212, 175, 55, 0.3)', 'rgba(184, 134, 11, 0.2)']}
+        style={styles.memberBanner}
+      >
+        <Ionicons name="trending-up" size={24} color="#D4AF37" />
+        <View style={styles.bannerText}>
+          <Text style={styles.bannerTitle}>Become an Investor</Text>
+          <Text style={styles.bannerSubtitle}>Unlock up to 50% discounts & exclusive perks</Text>
         </View>
-      </View>
-      <Feather name="chevron-right" size={20} color={Colors.gold} />
-    </Pressable>
+        <Ionicons name="chevron-forward" size={20} color="#D4AF37" />
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 
@@ -98,29 +237,27 @@ export function MemberFomoBanner({ onPress }: MemberFomoBannerProps) {
 interface LockedFeatureCardProps {
   icon: string;
   title: string;
-  requiredLevel: 'member' | 'investor';
-  onPress?: () => void;
+  requiredLevel: string;
+  onPress: () => void;
 }
 
 export function LockedFeatureCard({ icon, title, requiredLevel, onPress }: LockedFeatureCardProps) {
   return (
-    <Pressable style={styles.lockedCard} onPress={onPress}>
-      <View style={styles.lockedIconWrapper}>
-        <Feather name={icon as any} size={24} color={Colors.mutedGrey} />
+    <TouchableOpacity style={styles.lockedCard} onPress={onPress}>
+      <View style={styles.lockedIconContainer}>
+        <Ionicons name={icon as any} size={24} color="#666" />
         <View style={styles.lockBadge}>
-          <Feather name="lock" size={10} color={Colors.gold} />
+          <Ionicons name="lock-closed" size={10} color="#D4AF37" />
         </View>
       </View>
       <Text style={styles.lockedTitle}>{title}</Text>
-      <Text style={styles.lockedHint}>
-        {requiredLevel === 'member' ? 'Members only' : 'Investors only'}
-      </Text>
-    </Pressable>
+      <Text style={styles.lockedRequirement}>{requiredLevel} required</Text>
+    </TouchableOpacity>
   );
 }
 
 // ============================================
-// ACTION BUTTON WITH LOCK
+// ACTION BUTTON
 // ============================================
 
 interface ActionButtonProps {
@@ -133,171 +270,99 @@ interface ActionButtonProps {
 export function ActionButton({ label, isLocked, onPress, variant = 'primary' }: ActionButtonProps) {
   if (isLocked) {
     return (
-      <Pressable style={styles.lockedButton} onPress={onPress}>
-        <Feather name="lock" size={14} color={Colors.mutedGrey} />
-        <Text style={styles.lockedButtonText}>{label}</Text>
-      </Pressable>
-    );
-  }
-
-  if (variant === 'primary') {
-    return (
-      <Pressable style={styles.actionButton} onPress={onPress}>
-        <LinearGradient
-          colors={[Colors.gold, Colors.goldDark]}
-          style={styles.actionButtonGradient}
-        >
-          <Text style={styles.actionButtonText}>{label}</Text>
-        </LinearGradient>
-      </Pressable>
+      <TouchableOpacity style={styles.lockedButton} onPress={onPress}>
+        <Ionicons name="lock-closed" size={16} color="#D4AF37" />
+        <Text style={styles.lockedButtonText}>Unlock to {label}</Text>
+      </TouchableOpacity>
     );
   }
 
   return (
-    <Pressable style={styles.actionButtonSecondary} onPress={onPress}>
-      <Text style={styles.actionButtonSecondaryText}>{label}</Text>
-    </Pressable>
-  );
-}
-
-// ============================================
-// PRICE DISPLAY WITH TIER DISCOUNT
-// ============================================
-
-interface PriceDisplayProps {
-  regularPrice: number;
-  memberPrice?: number;
-  showDiscount?: boolean;
-}
-
-export function PriceDisplay({ regularPrice, memberPrice, showDiscount = true }: PriceDisplayProps) {
-  const { user, getDiscountPercent } = useAuth();
-  const discount = getDiscountPercent();
-  
-  // Calculate user's price based on their tier
-  const userPrice = discount > 0 
-    ? Math.round(regularPrice * (1 - discount / 100))
-    : (memberPrice || regularPrice);
-
-  const hasDiscount = userPrice < regularPrice;
-
-  return (
-    <View style={styles.priceContainer}>
-      {hasDiscount && showDiscount ? (
-        <>
-          <Text style={styles.priceOriginal}>${regularPrice}</Text>
-          <Text style={styles.priceDiscounted}>${userPrice}</Text>
-          {discount > 0 && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{discount}% OFF</Text>
-            </View>
-          )}
-        </>
-      ) : (
-        <Text style={styles.priceNormal}>${regularPrice}</Text>
-      )}
-    </View>
-  );
-}
-
-// ============================================
-// TIER CARD DISPLAY
-// ============================================
-
-interface TierCardProps {
-  user: User;
-}
-
-export function TierCard({ user }: TierCardProps) {
-  if (!user.investorTier) return null;
-
-  const tierConfig = TierConfig[user.investorTier];
-  const cardNumber = `•••• •••• •••• ${Math.floor(1000 + Math.random() * 9000)}`;
-
-  return (
-    <View style={styles.tierCard}>
-      <LinearGradient
-        colors={tierConfig.bgGradient}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      <View style={styles.tierCardHeader}>
-        <Feather
-          name={tierConfig.icon as any}
-          size={28}
-          color={tierConfig.textColor || Colors.deepNavy}
-        />
-        <Text style={[styles.tierCardName, { color: tierConfig.textColor || Colors.deepNavy }]}>
-          {tierConfig.name}
+    <TouchableOpacity onPress={onPress}>
+      <LinearGradient 
+        colors={variant === 'primary' ? ['#D4AF37', '#B8860B'] : ['#333', '#222']}
+        style={styles.actionButton}
+      >
+        <Text style={[styles.actionButtonText, variant === 'secondary' && { color: '#D4AF37' }]}>
+          {label}
         </Text>
-      </View>
-      <Text style={[styles.tierCardNumber, { color: tierConfig.textColor || 'rgba(0,0,0,0.6)' }]}>
-        {cardNumber}
-      </Text>
-      <View style={styles.tierCardFooter}>
-        <View>
-          <Text style={[styles.tierCardLabel, { color: tierConfig.textColor || 'rgba(0,0,0,0.5)' }]}>
-            Member Since
-          </Text>
-          <Text style={[styles.tierCardValue, { color: tierConfig.textColor || 'rgba(0,0,0,0.8)' }]}>
-            {user.memberSince}
-          </Text>
-        </View>
-        <View>
-          <Text style={[styles.tierCardLabel, { color: tierConfig.textColor || 'rgba(0,0,0,0.5)' }]}>
-            Discount
-          </Text>
-          <Text style={[styles.tierCardValue, { color: tierConfig.textColor || 'rgba(0,0,0,0.8)' }]}>
-            {tierConfig.discountPercent}% OFF
-          </Text>
-        </View>
-        <Text style={[styles.tierCardLogo, { color: tierConfig.textColor || 'rgba(0,0,0,0.3)' }]}>
-          MOTA
-        </Text>
-      </View>
-    </View>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 
 // ============================================
-// TIER BADGE (Small)
+// TIER BADGE
 // ============================================
 
 interface TierBadgeProps {
   tier: string;
-  size?: 'small' | 'medium';
+  size?: 'small' | 'medium' | 'large';
 }
 
 export function TierBadge({ tier, size = 'small' }: TierBadgeProps) {
-  const tierConfig = TierConfig[tier];
-  if (!tierConfig) return null;
+  const getColors = (): [string, string] => {
+    switch (tier) {
+      case 'founders': return ['#FFD700', '#FFA500'];
+      case 'black': return ['#000000', '#333333'];
+      case 'diamond': return ['#B9F2FF', '#E0FFFF'];
+      case 'platinum': return ['#E5E4E2', '#C9C9C9'];
+      case 'gold': return ['#D4AF37', '#B8860B'];
+      default: return ['#666', '#444'];
+    }
+  };
 
-  const isSmall = size === 'small';
+  const sizeStyles = {
+    small: { paddingVertical: 4, paddingHorizontal: 10, fontSize: 10 },
+    medium: { paddingVertical: 6, paddingHorizontal: 14, fontSize: 12 },
+    large: { paddingVertical: 8, paddingHorizontal: 18, fontSize: 14 },
+  };
+
+  const textColor = ['diamond', 'platinum'].includes(tier) ? '#0a0a0a' : '#fff';
 
   return (
-    <View style={[styles.tierBadge, isSmall && styles.tierBadgeSmall]}>
-      <LinearGradient
-        colors={tierConfig.bgGradient}
-        style={styles.tierBadgeGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      >
-        <Feather
-          name={tierConfig.icon as any}
-          size={isSmall ? 12 : 14}
-          color={tierConfig.textColor || Colors.deepNavy}
-        />
-        <Text
-          style={[
-            styles.tierBadgeText,
-            isSmall && styles.tierBadgeTextSmall,
-            { color: tierConfig.textColor || Colors.deepNavy },
-          ]}
-        >
-          {isSmall ? tierConfig.name.split(' ')[0] : tierConfig.name}
-        </Text>
-      </LinearGradient>
+    <LinearGradient colors={getColors()} style={[styles.tierBadge, sizeStyles[size]]}>
+      <Text style={[styles.tierBadgeText, { fontSize: sizeStyles[size].fontSize, color: textColor }]}>
+        {tier.toUpperCase()}
+      </Text>
+    </LinearGradient>
+  );
+}
+
+// ============================================
+// TIER CARD
+// ============================================
+
+interface TierCardProps {
+  user: {
+    investorTier?: string;
+    portfolioValue?: number;
+    investmentAmount?: number;
+  };
+}
+
+export function TierCard({ user }: TierCardProps) {
+  const { getDiscountPercent } = useAuth();
+  const discount = getDiscountPercent();
+
+  return (
+    <View style={styles.tierCard}>
+      <View style={styles.tierCardHeader}>
+        <TierBadge tier={user.investorTier || 'member'} size="medium" />
+        <Text style={styles.tierDiscount}>{discount}% discount</Text>
+      </View>
+      {user.portfolioValue && (
+        <View style={styles.tierCardStats}>
+          <View style={styles.tierStat}>
+            <Text style={styles.tierStatValue}>${(user.portfolioValue / 1000).toFixed(0)}K</Text>
+            <Text style={styles.tierStatLabel}>Portfolio</Text>
+          </View>
+          <View style={styles.tierStat}>
+            <Text style={styles.tierStatValue}>${(user.investmentAmount || 0 / 1000).toFixed(0)}K</Text>
+            <Text style={styles.tierStatLabel}>Invested</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -307,85 +372,37 @@ export function TierBadge({ tier, size = 'small' }: TierBadgeProps) {
 // ============================================
 
 interface TierProgressCardProps {
-  user: User;
-  nextTierInfo: NextTierInfo | null;
+  user: {
+    investorTier?: string;
+    investmentAmount?: number;
+  };
+  nextTierInfo?: {
+    name: string;
+    threshold: number;
+    benefits: string[];
+  };
 }
 
 export function TierProgressCard({ user, nextTierInfo }: TierProgressCardProps) {
-  if (!user.investorTier) return null;
+  if (!nextTierInfo) return null;
 
-  const tierConfig = TierConfig[user.investorTier];
-
-  // User at max visible tier (Diamond) or hidden tiers (Black/Founders)
-  if (!nextTierInfo) {
-    return (
-      <View style={styles.progressCard}>
-        <View style={styles.tierAchieved}>
-          <MaterialCommunityIcons name="crown" size={32} color={Colors.gold} />
-          <Text style={styles.tierAchievedTitle}>Top Tier Achieved!</Text>
-          <Text style={styles.tierAchievedText}>
-            You have ultimate access to all MOTA benefits
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  const progress = ((user.investmentAmount || 0) / nextTierInfo.threshold) * 100;
+  const remaining = nextTierInfo.threshold - (user.investmentAmount || 0);
 
   return (
     <View style={styles.progressCard}>
-      {/* Header */}
-      <View style={styles.progressHeader}>
-        <View style={styles.currentTierBadge}>
-          <Feather name={tierConfig.icon as any} size={18} color={tierConfig.color} />
-          <Text style={[styles.currentTierText, { color: tierConfig.color }]}>
-            {tierConfig.name} Holder
-          </Text>
-        </View>
-        <Text style={styles.investedAmount}>
-          ${user.investmentAmount?.toLocaleString()} invested
-        </Text>
+      <Text style={styles.progressTitle}>Next Tier: {nextTierInfo.name}</Text>
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
       </View>
-
-      {/* Progress Bar */}
-      <View style={styles.progressBarContainer}>
-        <View style={styles.progressBarBg}>
-          <LinearGradient
-            colors={[Colors.gold, Colors.goldDark]}
-            style={[styles.progressBarFill, { width: `${nextTierInfo.progress}%` }]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          />
-        </View>
-        <Text style={styles.progressPercent}>{Math.round(nextTierInfo.progress)}%</Text>
-      </View>
-
-      {/* Amount to next */}
       <Text style={styles.progressText}>
-        <Text style={styles.progressTextBold}>
-          ${nextTierInfo.amountToNext.toLocaleString()}
-        </Text>
-        {' '}more to reach {nextTierInfo.nextTierName}
+        ${remaining.toLocaleString()} more to unlock
       </Text>
-
-      {/* Benefits Preview */}
-      <View style={styles.unlockPreview}>
-        <View style={styles.unlockLabel}>
-          <MaterialCommunityIcons name="star-four-points" size={14} color={Colors.gold} />
-          <Text style={styles.unlockLabelText}>
-            Unlock with {nextTierInfo.nextTierName}:
-          </Text>
-        </View>
-
-        {nextTierInfo.benefits.map((benefit, idx) => (
-          <View key={idx} style={styles.unlockBenefitRow}>
-            <View style={styles.unlockBenefitIcon}>
-              <Feather name={benefit.icon as any} size={18} color={Colors.gold} />
-            </View>
-            <View style={styles.unlockBenefitText}>
-              <Text style={styles.unlockBenefitTitle}>{benefit.title}</Text>
-              <Text style={styles.unlockBenefitDesc}>{benefit.description}</Text>
-            </View>
-            <Feather name="lock" size={14} color={Colors.mutedGrey} />
+      <View style={styles.benefitsList}>
+        {nextTierInfo.benefits.map((benefit, index) => (
+          <View key={index} style={styles.benefitItem}>
+            <Ionicons name="checkmark-circle" size={14} color="#D4AF37" />
+            <Text style={styles.benefitText}>{benefit}</Text>
           </View>
         ))}
       </View>
@@ -398,136 +415,98 @@ export function TierProgressCard({ user, nextTierInfo }: TierProgressCardProps) 
 // ============================================
 
 const styles = StyleSheet.create({
-  // Guest Banner
-  guestBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.goldSubtle,
-    borderRadius: 12,
-    padding: 14,
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  bannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  bannerTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  bannerTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  bannerSubtitle: {
-    fontSize: 11,
-    color: Colors.softGrey,
-    marginTop: 2,
-  },
-  bannerButton: {
-    backgroundColor: Colors.gold,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  bannerButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.deepNavy,
-  },
-
-  // Member Banner
-  memberBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    padding: 14,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.goldMuted,
-    overflow: 'hidden',
-  },
-
-  // Locked Card
-  lockedCard: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(107, 114, 128, 0.3)',
-  },
-  lockedIconWrapper: {
-    position: 'relative',
-    marginBottom: 10,
-  },
-  lockBadge: {
+  // Exclusive Badge
+  exclusiveBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -8,
-    backgroundColor: Colors.cardDark,
-    borderRadius: 8,
-    padding: 2,
-  },
-  lockedTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  lockedHint: {
-    fontSize: 11,
-    color: Colors.mutedGrey,
-  },
-
-  // Action Buttons
-  lockedButton: {
+    top: 10,
+    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.mutedGrey,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    gap: 4,
   },
-  lockedButtonText: {
+  exclusiveText: {
+    color: '#D4AF37',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+
+  // Countdown
+  countdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  countdownLabel: {
+    color: '#888',
     fontSize: 12,
-    color: Colors.mutedGrey,
     marginLeft: 4,
   },
-  actionButton: {
-    borderRadius: 8,
+  countdownTime: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+
+  // Spots Left
+  spotsContainer: {
+    marginTop: 10,
+  },
+  spotsBar: {
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  actionButtonGradient: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  spotsFill: {
+    height: '100%',
+    backgroundColor: '#D4AF37',
   },
-  actionButtonText: {
+  spotsText: {
+    color: '#888',
     fontSize: 12,
-    fontWeight: '700',
-    color: Colors.deepNavy,
+    marginTop: 4,
   },
-  actionButtonSecondary: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.gold,
+  spotsTextUrgent: {
+    color: '#FF6B6B',
+    fontWeight: 'bold',
   },
-  actionButtonSecondaryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.gold,
+
+  // Discount Badge
+  discountBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  discountText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+
+  // VIP Overlay
+  vipOverlay: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    gap: 5,
+  },
+  vipText: {
+    color: '#D4AF37',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
 
   // Price Display
@@ -536,228 +515,234 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  priceOriginal: {
+  priceText: {
+    color: '#D4AF37',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  originalPrice: {
+    color: '#888',
     fontSize: 14,
-    color: Colors.mutedGrey,
     textDecorationLine: 'line-through',
   },
-  priceDiscounted: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.gold,
+  discountedPrice: {
+    color: '#D4AF37',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  priceNormal: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  discountBadge: {
-    backgroundColor: Colors.success,
-    borderRadius: 4,
+  saveBadge: {
+    backgroundColor: '#4CAF50',
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: 4,
   },
-  discountText: {
+  saveText: {
+    color: '#fff',
     fontSize: 10,
-    fontWeight: '700',
-    color: Colors.white,
+    fontWeight: 'bold',
   },
 
-  // Tier Card
-  tierCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  tierCardHeader: {
+  // Banners
+  guestBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
-  },
-  tierCardName: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginLeft: 10,
-  },
-  tierCardNumber: {
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: 3,
-    marginBottom: 20,
-  },
-  tierCardFooter: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    padding: 15,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginVertical: 10,
   },
-  tierCardLabel: {
-    fontSize: 10,
-    textTransform: 'uppercase',
-    marginBottom: 2,
+  memberBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    gap: 12,
   },
-  tierCardValue: {
-    fontSize: 13,
+  bannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  bannerText: {
+    flex: 1,
+  },
+  bannerTitle: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
-  tierCardLogo: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 2,
+  bannerSubtitle: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // Locked Card
+  lockedCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    width: 140,
+  },
+  lockedIconContainer: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  lockBadge: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 10,
+    padding: 3,
+  },
+  lockedTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  lockedRequirement: {
+    color: '#D4AF37',
+    fontSize: 11,
+    marginTop: 4,
+  },
+
+  // Buttons
+  lockedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    gap: 8,
+  },
+  lockedButtonText: {
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#0a0a0a',
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   // Tier Badge
   tierBadge: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  tierBadgeSmall: {
-    borderRadius: 6,
-  },
-  tierBadgeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
   },
   tierBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginLeft: 6,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
-  tierBadgeTextSmall: {
-    fontSize: 11,
+
+  // Tier Card
+  tierCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 15,
+  },
+  tierCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  tierDiscount: {
+    color: '#4CAF50',
+    fontWeight: '600',
+  },
+  tierCardStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  tierStat: {
+    alignItems: 'center',
+  },
+  tierStatValue: {
+    color: '#D4AF37',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  tierStatLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
   },
 
   // Progress Card
   progressCard: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 15,
     padding: 20,
-    marginBottom: 20,
   },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+  progressTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
   },
-  currentTierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  currentTierText: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-  investedAmount: {
-    fontSize: 13,
-    color: Colors.softGrey,
-  },
-  progressBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  progressBarBg: {
-    flex: 1,
-    height: 10,
-    backgroundColor: Colors.cardDark,
-    borderRadius: 5,
+  progressBar: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 4,
     overflow: 'hidden',
   },
-  progressBarFill: {
+  progressFill: {
     height: '100%',
-    borderRadius: 5,
-  },
-  progressPercent: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.gold,
-    marginLeft: 12,
-    minWidth: 40,
+    backgroundColor: '#D4AF37',
+    borderRadius: 4,
   },
   progressText: {
-    fontSize: 13,
-    color: Colors.softGrey,
-    marginBottom: 20,
-  },
-  progressTextBold: {
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  unlockPreview: {
-    backgroundColor: Colors.cardDark,
-    borderRadius: 12,
-    padding: 14,
-  },
-  unlockLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  unlockLabelText: {
+    color: '#888',
     fontSize: 12,
-    fontWeight: '600',
-    color: Colors.gold,
-    marginLeft: 6,
+    marginTop: 8,
   },
-  unlockBenefitRow: {
+  benefitsList: {
+    marginTop: 15,
+  },
+  benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardElevated,
-  },
-  unlockBenefitIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.goldSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unlockBenefitText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  unlockBenefitTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  unlockBenefitDesc: {
-    fontSize: 11,
-    color: Colors.softGrey,
-    marginTop: 2,
-  },
-  tierAchieved: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  tierAchievedTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.gold,
-    marginTop: 12,
     marginBottom: 8,
+    gap: 8,
   },
-  tierAchievedText: {
+  benefitText: {
+    color: '#ccc',
     fontSize: 13,
-    color: Colors.softGrey,
-    textAlign: 'center',
   },
 });
 
 export default {
+  ExclusiveBadge,
+  CountdownTimer,
+  SpotsLeft,
+  MemberDiscount,
+  VIPOnlyOverlay,
+  PriceDisplay,
   GuestFomoBanner,
   MemberFomoBanner,
   LockedFeatureCard,
   ActionButton,
-  PriceDisplay,
-  TierCard,
   TierBadge,
+  TierCard,
   TierProgressCard,
 };

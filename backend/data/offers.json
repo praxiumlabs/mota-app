@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "title": "Early Bird Dining",
+    "description": "20% off dinner before 6 PM",
+    "type": "restaurant",
+    "targetId": "1",
+    "discountPercent": 20,
+    "validFrom": "2025-01-01",
+    "validUntil": "2025-12-31",
+    "minTier": "member",
+    "code": "EARLYBIRD20",
+    "maxUses": 100,
+    "usedCount": 0,
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.216Z"
+  },
+  {
+    "id": "2",
+    "title": "Platinum Exclusive Spa",
+    "description": "Complimentary spa treatment with any booking",
+    "type": "activity",
+    "targetId": null,
+    "discountPercent": 0,
+    "freeAddon": "Spa Treatment",
+    "validFrom": "2025-01-01",
+    "validUntil": "2025-12-31",
+    "minTier": "platinum",
+    "code": "PLATINUMSPA",
+    "maxUses": 50,
+    "usedCount": 0,
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.216Z"
+  }
+]

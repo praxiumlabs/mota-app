@@ -1,0 +1,53 @@
+[
+  {
+    "id": "1",
+    "name": "Hidden Treasure",
+    "category": "Fine Dining",
+    "description": "Award-winning Caribbean seafood with ocean views",
+    "image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+    "rating": 4.7,
+    "priceRange": "$$$",
+    "regularPrice": 150,
+    "memberPrice": 135,
+    "platinumPrice": 127,
+    "diamondPrice": 112,
+    "openHours": "6:00 PM - 11:00 PM",
+    "location": "Beachfront",
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.211Z"
+  },
+  {
+    "id": "2",
+    "name": "Elvi's Kitchen",
+    "category": "Belizean",
+    "description": "Legendary local cuisine since 1974",
+    "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+    "rating": 4.5,
+    "priceRange": "$$",
+    "regularPrice": 75,
+    "memberPrice": 68,
+    "platinumPrice": 64,
+    "diamondPrice": 56,
+    "openHours": "11:00 AM - 10:00 PM",
+    "location": "Town Center",
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.211Z"
+  },
+  {
+    "id": "3",
+    "name": "Blue Water Grill",
+    "category": "Sushi & Seafood",
+    "description": "Oceanfront dining with world-class sushi",
+    "image": "https://images.unsplash.com/photo-1579027989536-b7b1f875659b?w=800",
+    "rating": 4.6,
+    "priceRange": "$$$",
+    "regularPrice": 120,
+    "memberPrice": 108,
+    "platinumPrice": 102,
+    "diamondPrice": 90,
+    "openHours": "5:00 PM - 10:00 PM",
+    "location": "Oceanfront",
+    "isActive": true,
+    "createdAt": "2025-12-08T07:55:46.211Z"
+  }
+]

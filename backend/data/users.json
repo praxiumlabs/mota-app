@@ -1,0 +1,71 @@
+[
+  {
+    "id": "1",
+    "email": "member@mota.com",
+    "password": "$2a$10$vgf8FVJpVBCbJcjAMuRIL.w6SvmTS.M.XL09XdoM0rEdP4Ypt4qDy",
+    "name": "Sarah Chen",
+    "accessLevel": "member",
+    "investorTier": null,
+    "investmentAmount": 0,
+    "portfolioValue": 0,
+    "favorites": [],
+    "bookings": [],
+    "createdAt": "2025-12-08T07:55:46.266Z"
+  },
+  {
+    "id": "2",
+    "email": "gold@mota.com",
+    "password": "$2a$10$WarsL5684CFxvNbDAAMMyeSO/Hn3Vb/L4G3EZ1evdpaLh/VyyHJry",
+    "name": "James Wilson",
+    "accessLevel": "investor",
+    "investorTier": "gold",
+    "investmentAmount": 150000,
+    "portfolioValue": 172000,
+    "memberSince": "2024-01-20",
+    "favorites": [],
+    "bookings": [],
+    "createdAt": "2025-12-08T07:55:46.315Z"
+  },
+  {
+    "id": "3",
+    "email": "platinum@mota.com",
+    "password": "$2a$10$h6fKAKvu4sda5q6aYzBmB.NOc0yc9BvJla2S2QYsgRKdeU2oeO7SS",
+    "name": "Victoria Chang",
+    "accessLevel": "investor",
+    "investorTier": "platinum",
+    "investmentAmount": 350000,
+    "portfolioValue": 412000,
+    "memberSince": "2023-09-10",
+    "favorites": [],
+    "bookings": [],
+    "createdAt": "2025-12-08T07:55:46.364Z"
+  },
+  {
+    "id": "4",
+    "email": "diamond@mota.com",
+    "password": "$2a$10$Qx1iafkpbjcnLrw.iRikJOlUD0mtHe2koTH3CDSzdGN73nc//pc3.",
+    "name": "Robert Sterling",
+    "accessLevel": "investor",
+    "investorTier": "diamond",
+    "investmentAmount": 750000,
+    "portfolioValue": 892000,
+    "memberSince": "2023-03-05",
+    "favorites": [],
+    "bookings": [],
+    "createdAt": "2025-12-08T07:55:46.414Z"
+  },
+  {
+    "id": "5",
+    "email": "founder@mota.com",
+    "password": "$2a$10$B2N22XdSnfm/zabZrGRU1eutevTd.iCWijwq/jGOrLfZvWIYdDDOy",
+    "name": "Alexander Reyes",
+    "accessLevel": "investor",
+    "investorTier": "founders",
+    "investmentAmount": 2500000,
+    "portfolioValue": 3200000,
+    "memberSince": "2022-01-01",
+    "favorites": [],
+    "bookings": [],
+    "createdAt": "2025-12-08T07:55:46.464Z"
+  }
+]
