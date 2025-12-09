@@ -1,6 +1,7 @@
 /**
  * FOMO Components for MOTA App
  * Creates urgency and exclusivity
+ * ERROR FREE VERSION - No gap properties
  */
 
 import React from 'react';
@@ -12,7 +13,6 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
 
 // ============================================
 // EXCLUSIVE BADGE
@@ -91,10 +91,10 @@ export function SpotsLeft({ current, total }: SpotsLeftProps) {
   return (
     <View style={styles.spotsContainer}>
       <View style={styles.spotsBar}>
-        <View style={[styles.spotsFill, { width: `${percentage}%` }]} />
+        <View style={[styles.spotsFill, { width: `${Math.min(percentage, 100)}%` }]} />
       </View>
       <Text style={[styles.spotsText, isLow && styles.spotsTextUrgent]}>
-        {spotsLeft <= 0 ? 'SOLD OUT' : `Only ${spotsLeft} spots left!`}
+        {spotsLeft <= 0 ? 'Sold Out!' : `${spotsLeft} spots left`}
       </Text>
     </View>
   );
@@ -110,8 +110,9 @@ interface MemberDiscountProps {
 
 export function MemberDiscount({ percent }: MemberDiscountProps) {
   return (
-    <View style={styles.discountBadge}>
-      <Text style={styles.discountText}>{percent}% OFF</Text>
+    <View style={styles.memberDiscount}>
+      <Ionicons name="pricetag" size={12} color="#4CAF50" />
+      <Text style={styles.memberDiscountText}>{percent}% Member Discount</Text>
     </View>
   );
 }
@@ -121,22 +122,22 @@ export function MemberDiscount({ percent }: MemberDiscountProps) {
 // ============================================
 
 interface VIPOnlyOverlayProps {
-  tierRequired?: string | null;
+  tierRequired?: string;
 }
 
 export function VIPOnlyOverlay({ tierRequired }: VIPOnlyOverlayProps) {
   return (
     <View style={styles.vipOverlay}>
       <Ionicons name="lock-closed" size={16} color="#D4AF37" />
-      <Text style={styles.vipText}>
-        {tierRequired ? `${tierRequired.toUpperCase()}+ ONLY` : 'VIP ONLY'}
+      <Text style={styles.vipOverlayText}>
+        {tierRequired ? `${tierRequired}+ Only` : 'VIP Only'}
       </Text>
     </View>
   );
 }
 
 // ============================================
-// PRICE DISPLAY - Updated with flexible props
+// PRICE DISPLAY
 // ============================================
 
 interface PriceDisplayProps {
@@ -144,34 +145,26 @@ interface PriceDisplayProps {
   discountedPrice?: number;
   regularPrice?: number;
   memberPrice?: number;
-  showDiscount?: boolean;
 }
 
 export function PriceDisplay({ 
   originalPrice, 
-  discountedPrice, 
-  regularPrice, 
-  memberPrice, 
-  showDiscount = true 
+  discountedPrice,
+  regularPrice,
+  memberPrice 
 }: PriceDisplayProps) {
-  // Support both prop naming conventions
-  const basePrice = originalPrice ?? regularPrice ?? 0;
-  const finalPrice = discountedPrice ?? memberPrice ?? basePrice;
-  const hasDiscount = basePrice > finalPrice;
-
-  if (!showDiscount || !hasDiscount) {
-    return <Text style={styles.priceText}>${finalPrice}</Text>;
-  }
-
-  const discountPercent = Math.round(((basePrice - finalPrice) / basePrice) * 100);
-
+  const original = originalPrice ?? regularPrice ?? 0;
+  const discounted = discountedPrice ?? memberPrice ?? original;
+  const hasDiscount = discounted < original;
+  
   return (
     <View style={styles.priceContainer}>
-      <Text style={styles.originalPrice}>${basePrice}</Text>
-      <Text style={styles.discountedPrice}>${finalPrice}</Text>
-      <View style={styles.saveBadge}>
-        <Text style={styles.saveText}>{discountPercent}% OFF</Text>
-      </View>
+      {hasDiscount ? (
+        <Text style={styles.originalPrice}>${original}</Text>
+      ) : null}
+      <Text style={[styles.currentPrice, hasDiscount && styles.discountedPrice]}>
+        ${discounted}
+      </Text>
     </View>
   );
 }
@@ -186,16 +179,16 @@ interface GuestFomoBannerProps {
 
 export function GuestFomoBanner({ onSignUp }: GuestFomoBannerProps) {
   return (
-    <TouchableOpacity onPress={onSignUp}>
-      <LinearGradient 
-        colors={['rgba(212, 175, 55, 0.2)', 'rgba(212, 175, 55, 0.1)']}
-        style={styles.guestBanner}
+    <TouchableOpacity style={styles.fomoBanner} onPress={onSignUp}>
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.05)']}
+        style={styles.fomoBannerGradient}
       >
-        <View style={styles.bannerContent}>
-          <Ionicons name="gift-outline" size={24} color="#D4AF37" />
-          <View style={styles.bannerText}>
-            <Text style={styles.bannerTitle}>Unlock Exclusive Benefits</Text>
-            <Text style={styles.bannerSubtitle}>Sign up now and get 10% off your first booking</Text>
+        <View style={styles.fomoBannerContent}>
+          <Ionicons name="gift" size={24} color="#D4AF37" />
+          <View style={styles.fomoBannerText}>
+            <Text style={styles.fomoBannerTitle}>Unlock Member Pricing</Text>
+            <Text style={styles.fomoBannerSubtitle}>Sign up free and save 10% on everything</Text>
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#D4AF37" />
@@ -209,20 +202,22 @@ export function GuestFomoBanner({ onSignUp }: GuestFomoBannerProps) {
 // ============================================
 
 interface MemberFomoBannerProps {
-  onPress: () => void;
+  onLearnMore: () => void;
 }
 
-export function MemberFomoBanner({ onPress }: MemberFomoBannerProps) {
+export function MemberFomoBanner({ onLearnMore }: MemberFomoBannerProps) {
   return (
-    <TouchableOpacity onPress={onPress}>
-      <LinearGradient 
-        colors={['rgba(212, 175, 55, 0.3)', 'rgba(184, 134, 11, 0.2)']}
-        style={styles.memberBanner}
+    <TouchableOpacity style={styles.fomoBanner} onPress={onLearnMore}>
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.2)', 'rgba(212, 175, 55, 0.05)']}
+        style={styles.fomoBannerGradient}
       >
-        <Ionicons name="trending-up" size={24} color="#D4AF37" />
-        <View style={styles.bannerText}>
-          <Text style={styles.bannerTitle}>Become an Investor</Text>
-          <Text style={styles.bannerSubtitle}>Unlock up to 50% discounts & exclusive perks</Text>
+        <View style={styles.fomoBannerContent}>
+          <Ionicons name="diamond" size={24} color="#D4AF37" />
+          <View style={styles.fomoBannerText}>
+            <Text style={styles.fomoBannerTitle}>Become an Investor</Text>
+            <Text style={styles.fomoBannerSubtitle}>Up to 50% off + exclusive VIP perks</Text>
+          </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#D4AF37" />
       </LinearGradient>
@@ -235,23 +230,25 @@ export function MemberFomoBanner({ onPress }: MemberFomoBannerProps) {
 // ============================================
 
 interface LockedFeatureCardProps {
-  icon: string;
   title: string;
-  requiredLevel: string;
-  onPress: () => void;
+  description: string;
+  requiredTier?: string;
+  onUnlock: () => void;
 }
 
-export function LockedFeatureCard({ icon, title, requiredLevel, onPress }: LockedFeatureCardProps) {
+export function LockedFeatureCard({ title, description, requiredTier, onUnlock }: LockedFeatureCardProps) {
   return (
-    <TouchableOpacity style={styles.lockedCard} onPress={onPress}>
+    <TouchableOpacity style={styles.lockedCard} onPress={onUnlock}>
       <View style={styles.lockedIconContainer}>
-        <Ionicons name={icon as any} size={24} color="#666" />
-        <View style={styles.lockBadge}>
-          <Ionicons name="lock-closed" size={10} color="#D4AF37" />
-        </View>
+        <Ionicons name="lock-closed" size={28} color="#D4AF37" />
       </View>
       <Text style={styles.lockedTitle}>{title}</Text>
-      <Text style={styles.lockedRequirement}>{requiredLevel} required</Text>
+      <Text style={styles.lockedDescription}>{description}</Text>
+      <View style={styles.lockedBadge}>
+        <Text style={styles.lockedBadgeText}>
+          {requiredTier ? `${requiredTier}+ Required` : 'Upgrade to Unlock'}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -261,31 +258,36 @@ export function LockedFeatureCard({ icon, title, requiredLevel, onPress }: Locke
 // ============================================
 
 interface ActionButtonProps {
-  label: string;
-  isLocked: boolean;
+  title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary';
+  disabled?: boolean;
 }
 
-export function ActionButton({ label, isLocked, onPress, variant = 'primary' }: ActionButtonProps) {
-  if (isLocked) {
+export function ActionButton({ title, onPress, variant = 'primary', disabled }: ActionButtonProps) {
+  if (variant === 'secondary') {
     return (
-      <TouchableOpacity style={styles.lockedButton} onPress={onPress}>
-        <Ionicons name="lock-closed" size={16} color="#D4AF37" />
-        <Text style={styles.lockedButtonText}>Unlock to {label}</Text>
+      <TouchableOpacity 
+        style={[styles.secondaryButton, disabled && styles.buttonDisabled]} 
+        onPress={onPress}
+        disabled={disabled}
+      >
+        <Text style={styles.secondaryButtonText}>{title}</Text>
       </TouchableOpacity>
     );
   }
 
   return (
-    <TouchableOpacity onPress={onPress}>
-      <LinearGradient 
-        colors={variant === 'primary' ? ['#D4AF37', '#B8860B'] : ['#333', '#222']}
-        style={styles.actionButton}
+    <TouchableOpacity 
+      style={[styles.primaryButton, disabled && styles.buttonDisabled]} 
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <LinearGradient
+        colors={disabled ? ['#666', '#444'] : ['#D4AF37', '#B8960C']}
+        style={styles.primaryButtonGradient}
       >
-        <Text style={[styles.actionButtonText, variant === 'secondary' && { color: '#D4AF37' }]}>
-          {label}
-        </Text>
+        <Text style={styles.primaryButtonText}>{title}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -300,29 +302,25 @@ interface TierBadgeProps {
   size?: 'small' | 'medium' | 'large';
 }
 
+const tierColors: Record<string, { bg: string[]; text: string }> = {
+  gold: { bg: ['#D4AF37', '#B8960C'], text: '#000' },
+  platinum: { bg: ['#E5E4E2', '#C9C9C9'], text: '#000' },
+  diamond: { bg: ['#B9F2FF', '#E0FFFF'], text: '#000' },
+  black: { bg: ['#000000', '#333333'], text: '#D4AF37' },
+  founders: { bg: ['#D4AF37', '#000000'], text: '#fff' },
+};
+
 export function TierBadge({ tier, size = 'small' }: TierBadgeProps) {
-  const getColors = (): [string, string] => {
-    switch (tier) {
-      case 'founders': return ['#FFD700', '#FFA500'];
-      case 'black': return ['#000000', '#333333'];
-      case 'diamond': return ['#B9F2FF', '#E0FFFF'];
-      case 'platinum': return ['#E5E4E2', '#C9C9C9'];
-      case 'gold': return ['#D4AF37', '#B8860B'];
-      default: return ['#666', '#444'];
-    }
-  };
-
-  const sizeStyles = {
-    small: { paddingVertical: 4, paddingHorizontal: 10, fontSize: 10 },
-    medium: { paddingVertical: 6, paddingHorizontal: 14, fontSize: 12 },
-    large: { paddingVertical: 8, paddingHorizontal: 18, fontSize: 14 },
-  };
-
-  const textColor = ['diamond', 'platinum'].includes(tier) ? '#0a0a0a' : '#fff';
+  const colors = tierColors[tier] || tierColors.gold;
+  const fontSize = size === 'large' ? 14 : size === 'medium' ? 12 : 10;
+  const padding = size === 'large' ? 12 : size === 'medium' ? 10 : 8;
 
   return (
-    <LinearGradient colors={getColors()} style={[styles.tierBadge, sizeStyles[size]]}>
-      <Text style={[styles.tierBadgeText, { fontSize: sizeStyles[size].fontSize, color: textColor }]}>
+    <LinearGradient
+      colors={colors.bg as [string, string]}
+      style={[styles.tierBadge, { paddingHorizontal: padding, paddingVertical: padding / 2 }]}
+    >
+      <Text style={[styles.tierBadgeText, { fontSize, color: colors.text }]}>
         {tier.toUpperCase()}
       </Text>
     </LinearGradient>
@@ -336,33 +334,33 @@ export function TierBadge({ tier, size = 'small' }: TierBadgeProps) {
 interface TierCardProps {
   user: {
     investorTier?: string;
-    portfolioValue?: number;
     investmentAmount?: number;
+    portfolioValue?: number;
   };
+  discountPercent: number;
 }
 
-export function TierCard({ user }: TierCardProps) {
-  const { getDiscountPercent } = useAuth();
-  const discount = getDiscountPercent();
-
+export function TierCard({ user, discountPercent }: TierCardProps) {
   return (
     <View style={styles.tierCard}>
       <View style={styles.tierCardHeader}>
-        <TierBadge tier={user.investorTier || 'member'} size="medium" />
-        <Text style={styles.tierDiscount}>{discount}% discount</Text>
+        <TierBadge tier={user.investorTier || 'gold'} size="medium" />
+        <Text style={styles.tierDiscount}>{discountPercent}% off all bookings</Text>
       </View>
-      {user.portfolioValue && (
-        <View style={styles.tierCardStats}>
-          <View style={styles.tierStat}>
-            <Text style={styles.tierStatValue}>${(user.portfolioValue / 1000).toFixed(0)}K</Text>
-            <Text style={styles.tierStatLabel}>Portfolio</Text>
-          </View>
-          <View style={styles.tierStat}>
-            <Text style={styles.tierStatValue}>${(user.investmentAmount || 0 / 1000).toFixed(0)}K</Text>
-            <Text style={styles.tierStatLabel}>Invested</Text>
-          </View>
+      <View style={styles.tierCardStats}>
+        <View style={styles.tierStat}>
+          <Text style={styles.tierStatValue}>
+            ${(user.investmentAmount || 0).toLocaleString()}
+          </Text>
+          <Text style={styles.tierStatLabel}>Invested</Text>
         </View>
-      )}
+        <View style={styles.tierStat}>
+          <Text style={styles.tierStatValue}>
+            ${(user.portfolioValue || 0).toLocaleString()}
+          </Text>
+          <Text style={styles.tierStatLabel}>Portfolio</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -380,7 +378,7 @@ interface TierProgressCardProps {
     name: string;
     threshold: number;
     benefits: string[];
-  };
+  } | null;
 }
 
 export function TierProgressCard({ user, nextTierInfo }: TierProgressCardProps) {
@@ -426,13 +424,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    gap: 4,
   },
   exclusiveText: {
     color: '#D4AF37',
     fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 1,
+    marginLeft: 4,
   },
 
   // Countdown
@@ -444,7 +442,7 @@ const styles = StyleSheet.create({
   countdownLabel: {
     color: '#888',
     fontSize: 12,
-    marginLeft: 4,
+    marginLeft: 5,
   },
   countdownTime: {
     color: '#FF6B6B',
@@ -452,9 +450,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // Spots Left
+  // Spots
   spotsContainer: {
-    marginTop: 10,
+    marginTop: 8,
   },
   spotsBar: {
     height: 4,
@@ -464,29 +462,34 @@ const styles = StyleSheet.create({
   },
   spotsFill: {
     height: '100%',
-    backgroundColor: '#D4AF37',
+    backgroundColor: '#FF6B6B',
+    borderRadius: 2,
   },
   spotsText: {
     color: '#888',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
   spotsTextUrgent: {
     color: '#FF6B6B',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 
-  // Discount Badge
-  discountBadge: {
-    backgroundColor: '#4CAF50',
+  // Member Discount
+  memberDiscount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 4,
+    alignSelf: 'flex-start',
   },
-  discountText: {
-    color: '#fff',
+  memberDiscountText: {
+    color: '#4CAF50',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginLeft: 4,
   },
 
   // VIP Overlay
@@ -499,83 +502,62 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.8)',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 4,
-    gap: 5,
+    borderRadius: 12,
   },
-  vipText: {
+  vipOverlayText: {
     color: '#D4AF37',
-    fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 5,
   },
 
-  // Price Display
+  // Price
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  priceText: {
-    color: '#D4AF37',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   originalPrice: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 13,
     textDecorationLine: 'line-through',
+    marginRight: 6,
   },
-  discountedPrice: {
-    color: '#D4AF37',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  saveBadge: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  saveText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-
-  // Banners
-  guestBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginVertical: 10,
-  },
-  memberBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginVertical: 10,
-    gap: 12,
-  },
-  bannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  bannerText: {
-    flex: 1,
-  },
-  bannerTitle: {
+  currentPrice: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  discountedPrice: {
+    color: '#4CAF50',
+  },
+
+  // FOMO Banner
+  fomoBanner: {
+    marginHorizontal: 20,
+    marginVertical: 10,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  fomoBannerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+  },
+  fomoBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fomoBannerText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  fomoBannerTitle: {
+    color: '#D4AF37',
+    fontSize: 14,
     fontWeight: '600',
   },
-  bannerSubtitle: {
+  fomoBannerSubtitle: {
     color: '#888',
     fontSize: 12,
     marginTop: 2,
@@ -584,63 +566,75 @@ const styles = StyleSheet.create({
   // Locked Card
   lockedCard: {
     backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 20,
     borderRadius: 15,
+    padding: 20,
     alignItems: 'center',
-    width: 140,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
   },
   lockedIconContainer: {
-    position: 'relative',
-    marginBottom: 10,
-  },
-  lockBadge: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 10,
-    padding: 3,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
   },
   lockedTitle: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
   },
-  lockedRequirement: {
+  lockedDescription: {
+    color: '#888',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  lockedBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  lockedBadgeText: {
     color: '#D4AF37',
-    fontSize: 11,
-    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   // Buttons
-  lockedButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  primaryButton: {
     borderRadius: 25,
-    borderWidth: 1,
-    borderColor: '#D4AF37',
-    gap: 8,
+    overflow: 'hidden',
   },
-  lockedButtonText: {
-    color: '#D4AF37',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  actionButton: {
+  primaryButtonGradient: {
     paddingVertical: 14,
     paddingHorizontal: 30,
-    borderRadius: 25,
     alignItems: 'center',
   },
-  actionButtonText: {
-    color: '#0a0a0a',
-    fontSize: 16,
+  primaryButtonText: {
+    color: '#000',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#D4AF37',
+    fontSize: 15,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 
   // Tier Badge
@@ -723,11 +717,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 8,
   },
   benefitText: {
     color: '#ccc',
     fontSize: 13,
+    marginLeft: 8,
   },
 });
 

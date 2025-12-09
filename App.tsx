@@ -1,1675 +1,744 @@
 /**
- * MOTA - Premium Casino Resort App
- * Connected to Backend API
- * All screens complete and working
+ * MOTA - Macau of the Americas
+ * Premium Casino Resort App
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  StatusBar,
-  ActivityIndicator,
-  RefreshControl,
-  FlatList,
-  TextInput,
-} from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Dimensions, StatusBar, ActivityIndicator, RefreshControl, FlatList, TextInput, Modal, Alert, ImageBackground, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// Import components
 import { AuthProvider, useAuth } from './context/AuthContext';
 import BottomSheet from './components/BottomSheet';
 import AuthModal from './components/AuthModal';
-import { 
-  ExclusiveBadge, 
-  SpotsLeft, 
-  VIPOnlyOverlay,
-  PriceDisplay,
-} from './components/FomoComponents';
-import InvestorScreen from './screens/InvestorScreen';
-import ProfileScreen from './screens/ProfileScreen';
-
-// Import API service
 import api from './services/api';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-// Colors
-const Colors = {
-  deepNavy: '#0A122A',
-  cardDark: '#0D1729',
-  cardElevated: '#162038',
-  gold: '#D4AF37',
-  goldDark: '#B8960C',
-  goldSubtle: 'rgba(212, 175, 55, 0.12)',
-  white: '#FFFFFF',
-  softGrey: '#A0A8B8',
-  mutedGrey: '#6B7280',
-  success: '#10B981',
-  error: '#EF4444',
-  blue: '#60A5FA',
+// PREMIUM COLOR PALETTE
+const C = {
+  bg: '#0A122A', card: '#101C40', cardLight: '#152347',
+  gold: '#D4AF37', goldLight: '#E8C547', goldDark: '#B8952F', goldMuted: 'rgba(212,175,55,0.15)',
+  text: '#F5F5F5', textSec: '#A0AEC0', textMuted: '#718096',
+  success: '#48BB78', error: '#FC8181', blue: '#4299E1', purple: '#9F7AEA', cyan: '#38B2AC',
 };
 
-// ============================================
-// TYPES
-// ============================================
+const G = {
+  gold: ['#E8C547', '#D4AF37', '#B8952F'] as const,
+  dark: ['#101C40', '#0A122A'] as const,
+  card: ['#152347', '#101C40'] as const,
+  overlay: ['transparent', 'rgba(10,18,42,0.7)', 'rgba(10,18,42,0.98)'] as const,
+};
 
-interface Restaurant {
-  _id: string;
-  name: string;
-  category: string;
-  description?: string;
-  image: string;
-  rating: number;
-  priceRange?: string;
-  regularPrice: number;
-  memberPrice?: number;
-  platinumPrice?: number;
-  diamondPrice?: number;
-  openHours?: string;
-  location?: string;
-  address?: string;
-  phone?: string;
-  cuisine?: string[];
-  amenities?: string[];
-  isFeatured?: boolean;
-  isActive?: boolean;
-}
+// DATA
+const HeroImages = ['https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200', 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200'];
 
-interface Activity {
-  _id: string;
-  name: string;
-  category: string;
-  description?: string;
-  image: string;
-  rating: number;
-  duration?: string;
-  difficulty?: string;
-  regularPrice: number;
-  memberPrice?: number;
-  platinumPrice?: number;
-  diamondPrice?: number;
-  included?: string[];
-  requirements?: string[];
-  maxParticipants?: number;
-  isFeatured?: boolean;
-}
+const Rooms = [
+  { id: '1', name: 'Oceanfront Suite', type: 'Suite', beds: 'King', size: '850 sq ft', price: 599, image: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800', amenities: ['Ocean View', 'Butler Service'] },
+  { id: '2', name: 'Overwater Villa', type: 'Villa', beds: '2 Kings', size: '1,800 sq ft', price: 1299, image: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800', amenities: ['Glass Floor', 'Private Pool'] },
+  { id: '3', name: 'Beachfront Bungalow', type: 'Bungalow', beds: 'King', size: '1,200 sq ft', price: 899, image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', amenities: ['Beach Access', 'Hammock'] },
+  { id: '4', name: 'Presidential Villa', type: 'Villa', beds: '3 Kings', size: '4,500 sq ft', price: 3999, image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800', amenities: ['Private Chef', 'Helipad'] },
+];
 
-interface Event {
-  _id: string;
-  name: string;
-  description?: string;
-  image: string;
-  date: string;
-  endDate?: string;
-  time?: string;
-  venue?: string;
-  address?: string;
-  regularPrice?: number;
-  memberPrice?: number;
-  vipPrice?: number;
-  capacity?: number;
-  registeredCount?: number;
-  isVipOnly?: boolean;
-  investorTierRequired?: string;
-  isFeatured?: boolean;
-}
+const Cars = [
+  { id: '1', name: 'Lamborghini Huracán', price: 1500, image: 'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600', cat: 'Supercar' },
+  { id: '2', name: 'Ferrari 488 GTB', price: 1800, image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=600', cat: 'Supercar' },
+  { id: '3', name: 'Rolls-Royce Ghost', price: 2000, image: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=600', cat: 'Luxury' },
+  { id: '4', name: 'Bentley Continental', price: 1200, image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600', cat: 'Luxury' },
+  { id: '5', name: 'McLaren 720S', price: 2200, image: 'https://images.unsplash.com/photo-1621135802920-133df287f89c?w=600', cat: 'Supercar' },
+  { id: '6', name: 'Porsche 911 Turbo', price: 900, image: 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600', cat: 'Sports' },
+];
 
-interface Offer {
-  _id: string;
-  title: string;
-  description?: string;
-  image?: string;
-  type: string;
-  discountPercent?: number;
-  discountAmount?: number;
-  freeAddon?: string;
-  code?: string;
-  validFrom?: string;
-  validUntil?: string;
-  minTier?: string;
-}
+const Amenities = [
+  { icon: 'fitness-outline', title: 'Spa & Wellness', desc: 'Full-service spa', img: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800' },
+  { icon: 'game-controller-outline', title: 'Casino & Gaming', desc: 'Tables & slots', img: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800' },
+  { icon: 'boat-outline', title: 'Marina & Pier', desc: 'Private dock', img: 'https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=800' },
+  { icon: 'water-outline', title: 'Beach Club', desc: 'Exclusive access', img: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800' },
+];
 
-// ============================================
-// HOME SCREEN COMPONENT
-// ============================================
+// COMPONENTS
+const ImageCarousel = ({ images, h = 400 }: { images: string[]; h?: number }) => {
+  const [idx, setIdx] = useState(0);
+  const ref = useRef<ScrollView>(null);
+  useEffect(() => { const t = setInterval(() => { const n = (idx + 1) % images.length; setIdx(n); ref.current?.scrollTo({ x: n * width, animated: true }); }, 4000); return () => clearInterval(t); }, [idx]);
+  return (
+    <View style={{ height: h }}>
+      <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(e) => setIdx(Math.round(e.nativeEvent.contentOffset.x / width))}>
+        {images.map((img, i) => <ImageBackground key={i} source={{ uri: img }} style={{ width, height: h }}><LinearGradient colors={G.overlay} style={StyleSheet.absoluteFill} /></ImageBackground>)}
+      </ScrollView>
+      <View style={s.dots}>{images.map((_, i) => <View key={i} style={[s.dot, i === idx && s.dotActive]} />)}</View>
+    </View>
+  );
+};
 
-function HomeScreen({ 
-  onShowAuth,
-  onNavigate,
-}: { 
-  onShowAuth: () => void;
-  onNavigate: (tab: string) => void;
-}) {
+const GoldBtn = ({ title, onPress, icon, lg, loading, style }: any) => (
+  <TouchableOpacity onPress={onPress} disabled={loading} style={style} activeOpacity={0.85}>
+    <LinearGradient colors={G.gold} style={[s.goldBtn, lg && s.goldBtnLg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+      {loading ? <ActivityIndicator color={C.bg} /> : <>{icon ? <Ionicons name={icon} size={lg ? 22 : 18} color={C.bg} style={{ marginRight: 8 }} /> : null}<Text style={[s.goldBtnText, lg && s.goldBtnTextLg]}>{title}</Text></>}
+    </LinearGradient>
+  </TouchableOpacity>
+);
+
+const Stars = ({ r, sz = 14 }: { r: number; sz?: number }) => (
+  <View style={s.stars}>{[1, 2, 3, 4, 5].map(i => <Ionicons key={i} name={i <= Math.floor(r) ? 'star' : 'star-outline'} size={sz} color={C.goldLight} style={{ marginRight: 2 }} />)}<Text style={[s.starsText, { fontSize: sz }]}>{r.toFixed(1)}</Text></View>
+);
+
+const Price = ({ orig, disc, sz = 'md' }: { orig: number; disc?: number; sz?: string }) => {
+  const fs = sz === 'lg' ? 26 : sz === 'sm' ? 16 : 20;
+  return <View style={s.priceRow}>{disc && disc < orig ? <><Text style={[s.priceOld, { fontSize: fs * 0.7 }]}>${orig}</Text><Text style={[s.priceNew, { fontSize: fs }]}>${disc}</Text></> : <Text style={[s.priceReg, { fontSize: fs }]}>${orig}</Text>}</View>;
+};
+
+const Badge = ({ text, color = C.gold }: { text: string; color?: string }) => <View style={[s.badge, { backgroundColor: `${color}25` }]}><Text style={[s.badgeText, { color }]}>{text}</Text></View>;
+
+const SecHeader = ({ title, sub, action, onAction }: any) => (
+  <View style={s.secHeader}><View><Text style={s.secTitle}>{title}</Text>{sub ? <Text style={s.secSub}>{sub}</Text> : null}</View>{action ? <TouchableOpacity onPress={onAction}><Text style={s.secAction}>{action} →</Text></TouchableOpacity> : null}</View>
+);
+
+const GoldCard = ({ tier, value, returns, disc, name, onPress }: any) => {
+  const colors: any = { 
+    silver: ['#E8E8E8', '#C0C0C0', '#A8A8A8'], 
+    gold: ['#F7E98E', '#D4AF37', '#AA8C2C'], 
+    platinum: ['#E8E8E8', '#E5E4E2', '#B8B8B8'], 
+    diamond: ['#E0F7FF', '#B9F2FF', '#87CEEB'], 
+    black: ['#4A4A4A', '#1A1A1A', '#000000'], 
+    founders: ['#F7E98E', '#D4AF37', '#6B46C1'] 
+  };
+  const tierColors = colors[tier] || colors.gold;
+  const isLight = ['silver', 'platinum', 'diamond'].includes(tier);
+  const textColor = isLight ? '#1A1A1A' : '#FFFFFF';
+  const textSecColor = isLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
+  
+  // Simple QR code pattern (5x5 grid)
+  const QRCode = () => (
+    <View style={s.qrCode}>
+      {[0,1,2,3,4].map(row => (
+        <View key={row} style={s.qrRow}>
+          {[0,1,2,3,4].map(col => {
+            // Create a deterministic pattern based on position
+            const filled = (row === 0 || row === 4 || col === 0 || col === 4) || 
+                          (row === 2 && col === 2) ||
+                          ((row === 1 || row === 3) && (col === 1 || col === 3));
+            return <View key={col} style={[s.qrCell, filled && { backgroundColor: textColor }]} />;
+          })}
+        </View>
+      ))}
+    </View>
+  );
+  
+  return (
+    <TouchableOpacity activeOpacity={0.9} onPress={odPress} style={s.goldCardWrap}>
+      <LinearGradient colors={tierColors} style={s.goldCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View style={s.goldCardShine} />
+        <View style={s.goldCardContent}>
+          <View style={s.goldCardHeader}>
+            <View>
+              <Text style={[s.goldCardLogo, { color: textColor }]}>MOTA</Text>
+              <Text style={[s.goldCardTier, { color: textSecColor }]}>{tier?.toUpperCase()} INVESTOR</Text>
+            </View>
+            <QRCode />
+          </View>
+          <View style={s.goldCardChip}>
+            {[1, 2, 3, 4].map(i => <View key={i} style={[s.goldCardChipLine, { backgroundColor: textSecColor }]} />)}
+          </View>
+          <View style={s.goldCardStats}>
+            <View>
+              <Text style={[s.goldCardLabel, { color: textSecColor }]}>PORTFOLIO VALUE</Text>
+              <Text style={[s.goldCardValue, { color: textColor }]}>${(value || 0).toLocaleString()}</Text>
+            </View>
+            <View>
+              <Text style={[s.goldCardLabel, { color: textSecColor }]}>RETURNS</Text>
+              <Text style={[s.goldCardValue, { color: '#4ADE80' }]}>+{returns || 0}%</Text>
+            </View>
+          </View>
+          <View style={s.goldCardFooter}>
+            <View>
+              <Text style={[s.goldCardDisc, { color: textColor }]}>{disc}% OFF ALL BOOKINGS</Text>
+              {name ? <Text style={[s.goldCardName, { color: textSecColor }]}>{name}</Text> : null}
+            </View>
+            <MaterialCommunityIcons name="contactless-payment" size={28} color={textSecColor} />
+          </View>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+};
+
+const ReservationModal = ({ visible, onClose, item, type }: any) => {
+  const { user } = useAuth();
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [guests, setGuests] = useState('2');
+  const [loading, setLoading] = useState(false);
+  const handleReserve = async () => { if (!date || !time) { Alert.alert('Missing Info', 'Select date and time'); return; } setLoading(true); await new Promise(r => setTimeout(r, 1500)); setLoading(false); Alert.alert('✨ Confirmed!', `Your ${type} at ${item?.name} is booked for ${date} at ${time}.`, [{ text: 'Perfect!', onPress: onClose }]); };
+  if (!item) return null;
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={s.modalOverlay}>
+        <View style={s.resModal}>
+          <LinearGradient colors={G.dark} style={StyleSheet.absoluteFill} />
+          <View style={s.resHeader}><View><Text style={s.resTitle}>Make a Reservation</Text><Text style={s.resSub}>{item.name}</Text></View><TouchableOpacity onPress={onClose} style={s.closeBtn}><Ionicons name="close" size={24} color={C.text} /></TouchableOpacity></View>
+          <ScrollView style={s.resContent} showsVerticalScrollIndicator={false}>
+            <Text style={s.inputLabel}>Date</Text>
+            <View style={s.dateRow}>{['Today', 'Tomorrow', 'Custom'].map(d => <TouchableOpacity key={d} style={[s.dateOpt, date === d && s.dateOptActive]} onPress={() => setDate(d)}>{date === d && <LinearGradient colors={G.gold} style={StyleSheet.absoluteFill} />}<Text style={[s.dateOptText, date === d && s.dateOptTextActive]}>{d}</Text></TouchableOpacity>)}</View>
+            <Text style={s.inputLabel}>Time</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>{['12:00 PM', '1:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'].map(t => <TouchableOpacity key={t} style={[s.timeOpt, time === t && s.timeOptActive]} onPress={() => setTime(t)}>{time === t && <LinearGradient colors={G.gold} style={StyleSheet.absoluteFill} />}<Text style={[s.timeOptText, time === t && s.timeOptTextActive]}>{t}</Text></TouchableOpacity>)}</ScrollView>
+            <Text style={s.inputLabel}>Guests</Text>
+            <View style={s.guestSel}><TouchableOpacity style={s.guestBtn} onPress={() => setGuests(Math.max(1, parseInt(guests) - 1).toString())}><Ionicons name="remove" size={20} color={C.gold} /></TouchableOpacity><Text style={s.guestCount}>{guests}</Text><TouchableOpacity style={s.guestBtn} onPress={() => setGuests((parseInt(guests) + 1).toString())}><Ionicons name="add" size={20} color={C.gold} /></TouchableOpacity></View>
+            <View style={s.summaryCard}><View style={s.summaryRow}><Text style={s.summaryLabel}>Location</Text><Text style={s.summaryValue}>{item.name}</Text></View><View style={s.summaryRow}><Text style={s.summaryLabel}>Date & Time</Text><Text style={s.summaryValue}>{date || '--'} at {time || '--'}</Text></View><View style={s.summaryRow}><Text style={s.summaryLabel}>Party Size</Text><Text style={s.summaryValue}>{guests} guests</Text></View></View>
+          </ScrollView>
+          <View style={s.resFooter}><GoldBtn title="Confirm Reservation" onPress={handleReserve} lg loading={loading} style={{ flex: 1 }} /></View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// HOME SCREEN
+function HomeScreen({ onShowAuth, onNavigate }: { onShowAuth: () => void; onNavigate: (tab: string, params?: any) => void }) {
   const insets = useSafeAreaInsets();
-  const { user, isInvestor, getDiscountPercent } = useAuth();
-  
-  // Data state
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([]);
-  
-  // Loading state
+  const { user, isInvestor, getDiscountPercent, refreshUser } = useAuth();
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Detail modals
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [resType, setResType] = useState('');
+  const [showRes, setShowRes] = useState(false);
 
   const isLoggedIn = !!user;
-  const discountPercent = getDiscountPercent();
+  const disc = getDiscountPercent();
+  const getPrice = (p: number) => isLoggedIn ? Math.round(p * (1 - disc / 100)) : p;
 
-  // Fetch data from API
   const fetchData = useCallback(async () => {
-    try {
-      setError(null);
-      
-      const [restaurantsData, activitiesData, eventsData, offersData] = await Promise.all([
-        api.getRestaurants().catch(() => []),
-        api.getActivities().catch(() => []),
-        api.getEvents().catch(() => []),
-        api.getOffers().catch(() => []),
-      ]);
-      
-      setRestaurants(restaurantsData || []);
-      setActivities(activitiesData || []);
-      setEvents(eventsData || []);
-      setOffers(offersData || []);
-      
-    } catch (err: any) {
-      console.error('Error fetching data:', err);
-      setError('Unable to connect to server.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    try { 
+      await refreshUser();
+      const [r, a, e] = await Promise.all([api.getRestaurants().catch(() => []), api.getActivities().catch(() => []), api.getEvents().catch(() => [])]); 
+      setRestaurants(r || []); setActivities(a || []); setEvents(e || []); 
+    } finally { setLoading(false); setRefreshing(false); }
+  }, [refreshUser]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-  }, [fetchData]);
+  const openRes = (item: any, type: string) => { if (!isLoggedIn) { onShowAuth(); return; } setSelectedItem(item); setResType(type); setShowRes(true); };
 
-  // Get price based on user's tier
-  const getPriceForTier = useCallback((item: Restaurant | Activity) => {
-    if (!isLoggedIn) return item.regularPrice;
-    
-    if (isInvestor && user?.investorTier) {
-      switch (user.investorTier) {
-        case 'diamond':
-        case 'black':
-        case 'founders':
-          return item.diamondPrice || Math.round(item.regularPrice * 0.75);
-        case 'platinum':
-          return item.platinumPrice || Math.round(item.regularPrice * 0.85);
-        case 'gold':
-          return item.memberPrice || Math.round(item.regularPrice * 0.9);
-      }
-    }
-    
-    return item.memberPrice || Math.round(item.regularPrice * 0.9);
-  }, [isLoggedIn, isInvestor, user?.investorTier]);
-
-  // Render loading screen
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <LinearGradient colors={['#0a0a0a', '#1a1a2e']} style={StyleSheet.absoluteFill} />
-        <ActivityIndicator size="large" color={Colors.gold} />
-        <Text style={styles.loadingText}>Loading MOTA...</Text>
-      </View>
-    );
-  }
+  if (loading) return <View style={s.loadingContainer}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><MaterialCommunityIcons name="diamond-stone" size={64} color={C.gold} /><Text style={s.loadingLogo}>MOTA</Text><Text style={s.loadingTag}>Macau of the Americas</Text><ActivityIndicator color={C.gold} style={{ marginTop: 30 }} /></View>;
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0a0a0a', '#1a1a2e', '#0a0a0a']} style={StyleSheet.absoluteFill} />
-      
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold} />
-        }
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>
-              {isLoggedIn ? `Welcome back, ${user?.name?.split(' ')[0]}` : 'Welcome to'}
-            </Text>
-            <Text style={styles.logo}>MOTA</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => isLoggedIn ? onNavigate('profile') : onShowAuth()}
-          >
-            {isLoggedIn ? (
-              <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.profileGradient}>
-                <Text style={styles.profileInitial}>{user?.name?.[0] || 'U'}</Text>
-              </LinearGradient>
-            ) : (
-              <Ionicons name="person-circle-outline" size={40} color={Colors.gold} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Error Banner */}
-        {error && (
-          <TouchableOpacity style={styles.errorBanner} onPress={fetchData}>
-            <Ionicons name="warning" size={20} color="#fff" />
-            <Text style={styles.errorText}>{error}</Text>
-            <Text style={styles.retryText}>Tap to retry</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Investor Tier Badge */}
-        {isLoggedIn && isInvestor && user?.investorTier && (
-          <TouchableOpacity 
-            style={styles.tierBadgeContainer}
-            onPress={() => onNavigate('invest')}
-          >
-            <LinearGradient
-              colors={
-                user.investorTier === 'founders' ? ['#E5E4E2', '#C0C0C0'] :
-                user.investorTier === 'black' ? ['#000000', '#333333'] :
-                user.investorTier === 'diamond' ? ['#B9F2FF', '#E0FFFF'] :
-                user.investorTier === 'platinum' ? ['#E5E4E2', '#C9C9C9'] :
-                [Colors.gold, Colors.goldDark]
-              }
-              style={styles.tierBadge}
-            >
-              <Ionicons 
-                name={user.investorTier === 'founders' ? 'star' : 'diamond'} 
-                size={16} 
-                color={user.investorTier === 'diamond' || user.investorTier === 'platinum' ? '#0a0a0a' : '#fff'} 
-              />
-              <Text style={[
-                styles.tierText,
-                (user.investorTier === 'diamond' || user.investorTier === 'platinum') && { color: '#0a0a0a' }
-              ]}>
-                {user.investorTier.charAt(0).toUpperCase() + user.investorTier.slice(1)} Investor • {discountPercent}% off
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-
-        {/* Member Badge */}
-        {isLoggedIn && !isInvestor && (
-          <View style={styles.memberBadgeContainer}>
-            <View style={styles.memberBadge}>
-              <Ionicons name="star" size={14} color={Colors.blue} />
-              <Text style={styles.memberBadgeText}>Member • 10% off all bookings</Text>
+      <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={C.gold} />}>
+        {/* Hero */}
+        <View>
+          <ImageCarousel images={HeroImages} h={height * 0.55} />
+          <View style={[s.heroHeader, { paddingTop: insets.top + 10 }]}>
+            <View><Text style={s.heroGreet}>{isLoggedIn ? 'Welcome back,' : 'Welcome to'}</Text><Text style={s.heroLogo}>MOTA</Text>{isLoggedIn && user?.name ? <Text style={s.heroName}>{user.name.split(' ')[0]}</Text> : null}</View>
+            <View style={s.heroActions}>
+              <TouchableOpacity style={s.heroIconBtn} onPress={() => Alert.alert('Notifications')}><Ionicons name="notifications-outline" size={24} color={C.text} /></TouchableOpacity>
+              <TouchableOpacity style={s.heroProfileBtn} onPress={() => isLoggedIn ? onNavigate('profile') : onShowAuth()}>{isLoggedIn ? <LinearGradient colors={G.gold} style={s.heroProfileGrad}><Text style={s.heroProfileInit}>{user?.name?.[0] || 'U'}</Text></LinearGradient> : <View style={s.heroProfileOut}><Ionicons name="person-add" size={20} color={C.gold} /></View>}</TouchableOpacity>
             </View>
           </View>
-        )}
-
-        {/* Active Offers */}
-        {offers.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎁 Special Offers</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
-              {offers.map((offer) => (
-                <TouchableOpacity key={offer._id} style={styles.offerCard}>
-                  <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.offerGradient}>
-                    <View style={styles.offerHeader}>
-                      <Text style={styles.offerTitle}>{offer.title}</Text>
-                      {offer.discountPercent && (
-                        <View style={styles.offerBadge}>
-                          <Text style={styles.offerBadgeText}>{offer.discountPercent}% OFF</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.offerDescription}>{offer.description}</Text>
-                    {offer.code && (
-                      <View style={styles.offerCodeContainer}>
-                        <Text style={styles.offerCode}>Code: {offer.code}</Text>
-                      </View>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          <View style={s.heroContent}>
+            <Text style={s.heroTitle}>Crown Jewel of the Caribbean</Text>
+            <Text style={s.heroSubtitle}>$2.5B Luxury Casino Resort • Belize</Text>
+            <View style={s.heroStats}>{[{ v: '$6B', l: 'Total Project' }, { v: '2,000+', l: 'Rooms' }, { v: '400', l: 'Acres' }].map((st, i) => <React.Fragment key={i}>{i > 0 && <View style={s.heroStatDiv} />}<View style={s.heroStat}><Text style={s.heroStatV}>{st.v}</Text><Text style={s.heroStatL}>{st.l}</Text></View></React.Fragment>)}</View>
           </View>
-        )}
+        </View>
+
+        {/* Gold Card / CTA */}
+        <View style={{ paddingHorizontal: 20, marginTop: -30, marginBottom: 20 }}>
+          {isLoggedIn && isInvestor && user?.investorTier ? (
+            <GoldCard tier={user.investorTier} value={user.portfolioValue} returns={12} disc={disc} name={user.name} onPress={() => onNavigate('invest')} />
+          ) : isLoggedIn && !isInvestor ? (
+            <TouchableOpacity onPress={() => onNavigate('profile')} activeOpacity={0.9}><LinearGradient colors={G.card} style={s.memberCard}><View style={s.memberIcon}><Ionicons name="star" size={24} color={C.blue} /></View><View style={s.memberContent}><Text style={s.memberTitle}>MOTA MEMBER</Text><Text style={s.memberSub}>{disc}% off all bookings</Text></View><Ionicons name="chevron-forward" size={24} color={C.blue} /></LinearGradient></TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={onShowAuth} activeOpacity={0.9}><LinearGradient colors={G.gold} style={s.guestCta}><MaterialCommunityIcons name="account-plus" size={36} color={C.bg} /><View style={s.guestCtaContent}><Text style={s.guestCtaTitle}>Create Free Account</Text><Text style={s.guestCtaSub}>Book restaurants, save favorites & more</Text></View><Ionicons name="arrow-forward" size={24} color={C.bg} /></LinearGradient></TouchableOpacity>
+          )}
+        </View>
 
         {/* Quick Actions */}
-        <View style={styles.quickActionsContainer}>
-          <TouchableOpacity style={styles.quickAction} onPress={() => onNavigate('explore')}>
-            <LinearGradient colors={[Colors.cardElevated, Colors.cardDark]} style={styles.quickActionGradient}>
-              <Ionicons name="restaurant" size={24} color={Colors.gold} />
-              <Text style={styles.quickActionText}>Dining</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction} onPress={() => onNavigate('explore')}>
-            <LinearGradient colors={[Colors.cardElevated, Colors.cardDark]} style={styles.quickActionGradient}>
-              <Ionicons name="water" size={24} color={Colors.gold} />
-              <Text style={styles.quickActionText}>Activities</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction} onPress={() => onNavigate('explore')}>
-            <LinearGradient colors={[Colors.cardElevated, Colors.cardDark]} style={styles.quickActionGradient}>
-              <Ionicons name="calendar" size={24} color={Colors.gold} />
-              <Text style={styles.quickActionText}>Events</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction} onPress={() => onNavigate('invest')}>
-            <LinearGradient colors={[Colors.cardElevated, Colors.cardDark]} style={styles.quickActionGradient}>
-              <Ionicons name="trending-up" size={24} color={Colors.gold} />
-              <Text style={styles.quickActionText}>Invest</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+        <View style={s.quickGrid}>{[{ icon: 'bed-outline', label: 'Rooms', sub: '160 Keys', color: C.gold }, { icon: 'restaurant-outline', label: 'Dining', sub: '5 Venues', color: '#ED8936' }, { icon: 'water-outline', label: 'Activities', sub: '12 Experiences', color: C.cyan }, { icon: 'diamond-outline', label: 'Casino', sub: 'VIP Gaming', color: C.purple }].map((item, i) => <TouchableOpacity key={i} style={s.quickAction} onPress={() => onNavigate('explore', { tab: item.label.toLowerCase() })} activeOpacity={0.8}><LinearGradient colors={G.card} style={s.quickActionCard}><View style={[s.quickActionIcon, { backgroundColor: `${item.color}20` }]}><Ionicons name={item.icon as any} size={26} color={item.color} /></View><Text style={s.quickActionLabel}>{item.label}</Text><Text style={s.quickActionSub}>{item.sub}</Text></LinearGradient></TouchableOpacity>)}</View>
+
+        {/* Accommodations */}
+        <View style={s.section}>
+          <SecHeader title="Luxury Accommodations" sub="160 Keys • Suites & Villas" action="View All" onAction={() => onNavigate('explore', { tab: 'rooms' })} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+            {Rooms.map((room, idx) => <TouchableOpacity key={room.id} style={[s.roomCard, idx === 0 && { marginLeft: 20 }]} activeOpacity={0.9} onPress={() => openRes(room, 'room')}><ImageBackground source={{ uri: room.image }} style={s.roomImage} imageStyle={{ borderRadius: 20 }}><LinearGradient colors={G.overlay} style={s.roomOverlay}><Badge text={room.type} /><View><Text style={s.roomName}>{room.name}</Text><Text style={s.roomDetails}>{room.beds} • {room.size}</Text><View style={s.roomAmenities}>{room.amenities.map((a, i) => <View key={i} style={s.amenityTag}><Text style={s.amenityText}>{a}</Text></View>)}</View><View style={s.roomFooter}><Price orig={room.price} disc={getPrice(room.price)} /><Text style={s.perNight}>/night</Text></View></View></LinearGradient></ImageBackground></TouchableOpacity>)}
+          </ScrollView>
         </View>
 
-        {/* Featured Restaurants */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🍽️ Restaurants</Text>
-            <TouchableOpacity onPress={() => onNavigate('explore')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {restaurants.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="restaurant-outline" size={40} color={Colors.mutedGrey} />
-              <Text style={styles.emptyText}>No restaurants available</Text>
-            </View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
-              {restaurants.map((restaurant) => (
-                <TouchableOpacity 
-                  key={restaurant._id} 
-                  style={styles.card}
-                  onPress={() => setSelectedRestaurant(restaurant)}
-                >
-                  <Image source={{ uri: restaurant.image }} style={styles.cardImage} />
-                  <LinearGradient 
-                    colors={['transparent', 'rgba(0,0,0,0.9)']} 
-                    style={styles.cardGradient}
-                  >
-                    {restaurant.isFeatured && <ExclusiveBadge />}
-                    <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle} numberOfLines={1}>{restaurant.name}</Text>
-                      <Text style={styles.cardSubtitle}>{restaurant.category}</Text>
-                      <View style={styles.cardFooter}>
-                        <View style={styles.ratingContainer}>
-                          <Ionicons name="star" size={14} color={Colors.gold} />
-                          <Text style={styles.rating}>{restaurant.rating}</Text>
-                        </View>
-                        <PriceDisplay 
-                          originalPrice={restaurant.regularPrice}
-                          discountedPrice={getPriceForTier(restaurant)}
-                        />
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+        {/* Dining */}
+        <View style={s.section}>
+          <SecHeader title="Signature Dining" sub="World-class cuisine" action="View All" onAction={() => onNavigate('explore', { tab: 'dining' })} />
+          {restaurants.length === 0 ? <View style={{ paddingHorizontal: 20 }}><LinearGradient colors={G.card} style={s.placeholderCard}><Image source={{ uri: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800' }} style={s.placeholderImg} /><View style={s.placeholderContent}><Text style={s.placeholderTitle}>Premium F&B Venues</Text><Text style={s.placeholderText}>2 signature restaurants • Rooftop bar • Beach club</Text></View></LinearGradient></View>
+           : <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>{restaurants.map((r: any, idx: number) => <TouchableOpacity key={r._id} style={[s.diningCard, idx === 0 && { marginLeft: 20 }]} activeOpacity={0.9} onPress={() => openRes(r, 'restaurant')}><ImageBackground source={{ uri: r.image }} style={s.diningImg} imageStyle={{ borderRadius: 16 }}><LinearGradient colors={G.overlay} style={s.diningOverlay}><Stars r={r.rating} /><Text style={s.diningName}>{r.name}</Text><Text style={s.diningCat}>{r.category}</Text><View style={s.diningFooter}><Price orig={r.regularPrice} disc={getPrice(r.regularPrice)} sz="sm" /><TouchableOpacity style={s.reserveBtn}><Text style={s.reserveBtnText}>Reserve</Text></TouchableOpacity></View></LinearGradient></ImageBackground></TouchableOpacity>)}</ScrollView>}
+        </View>
+
+        {/* PCH Exotics */}
+        <View style={s.section}>
+          <SecHeader title="PCH Exotics" sub="Luxury car rentals" action="View Fleet" onAction={() => onNavigate('explore', { tab: 'rentals' })} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+            {Cars.map((car, idx) => <TouchableOpacity key={car.id} style={[s.carCard, idx === 0 && { marginLeft: 20 }]} activeOpacity={0.9} onPress={() => Alert.alert(car.name, `$${car.price}/day\n\nContact PCH Exotics to book.`)}><LinearGradient colors={G.card} style={s.carCardInner}><Image source={{ uri: car.image }} style={s.carImg} /><View style={s.carContent}><Badge text={car.cat} /><Text style={s.carName}>{car.name}</Text><View style={s.carFooter}><Text style={s.carPrice}>${car.price}</Text><Text style={s.carPriceUnit}>/day</Text></View></View></LinearGradient></TouchableOpacity>)}
+          </ScrollView>
+        </View>
+
+        {/* Amenities */}
+        <View style={s.section}>
+          <SecHeader title="Premium Amenities" sub="World-class facilities" />
+          <View style={s.amenitiesGrid}>{Amenities.map((a, i) => <TouchableOpacity key={i} style={s.amenityGridCard} activeOpacity={0.9}><ImageBackground source={{ uri: a.img }} style={s.amenityGridImg} imageStyle={{ borderRadius: 16 }}><LinearGradient colors={['transparent', 'rgba(10,18,42,0.9)']} style={s.amenityGridOverlay}><View style={s.amenityGridIcon}><Ionicons name={a.icon as any} size={24} color={C.gold} /></View><Text style={s.amenityGridTitle}>{a.title}</Text><Text style={s.amenityGridDesc}>{a.desc}</Text></LinearGradient></ImageBackground></TouchableOpacity>)}</View>
         </View>
 
         {/* Activities */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🏄 Activities</Text>
-            <TouchableOpacity onPress={() => onNavigate('explore')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {activities.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="boat-outline" size={40} color={Colors.mutedGrey} />
-              <Text style={styles.emptyText}>No activities available</Text>
-            </View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
-              {activities.map((activity) => (
-                <TouchableOpacity 
-                  key={activity._id} 
-                  style={styles.card}
-                  onPress={() => setSelectedActivity(activity)}
-                >
-                  <Image source={{ uri: activity.image }} style={styles.cardImage} />
-                  <LinearGradient 
-                    colors={['transparent', 'rgba(0,0,0,0.9)']} 
-                    style={styles.cardGradient}
-                  >
-                    {activity.isFeatured && <ExclusiveBadge />}
-                    <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle} numberOfLines={1}>{activity.name}</Text>
-                      <Text style={styles.cardSubtitle}>{activity.duration || activity.category}</Text>
-                      <View style={styles.cardFooter}>
-                        <View style={styles.ratingContainer}>
-                          <Ionicons name="star" size={14} color={Colors.gold} />
-                          <Text style={styles.rating}>{activity.rating}</Text>
-                        </View>
-                        <PriceDisplay 
-                          originalPrice={activity.regularPrice}
-                          discountedPrice={getPriceForTier(activity)}
-                        />
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+        <View style={s.section}>
+          <SecHeader title="Curated Experiences" sub="Unforgettable adventures" action="View All" onAction={() => onNavigate('explore', { tab: 'activities' })} />
+          {activities.length === 0 ? <View style={{ paddingHorizontal: 20 }}>{[{ name: 'Scuba Diving', price: 250, img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600' }, { name: 'Yacht Charter', price: 1500, img: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600' }].map((a, i) => <TouchableOpacity key={i} style={s.actListCard} activeOpacity={0.9}><Image source={{ uri: a.img }} style={s.actListImg} /><View style={s.actListContent}><Text style={s.actListName}>{a.name}</Text><Text style={s.actListPrice}>From ${a.price}</Text></View><Ionicons name="chevron-forward" size={20} color={C.gold} /></TouchableOpacity>)}</View>
+           : <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>{activities.map((a: any, idx: number) => <TouchableOpacity key={a._id} style={[s.actCard, idx === 0 && { marginLeft: 20 }]} activeOpacity={0.9} onPress={() => openRes(a, 'activity')}><ImageBackground source={{ uri: a.image }} style={s.actImg} imageStyle={{ borderRadius: 16 }}><LinearGradient colors={G.overlay} style={s.actOverlay}>{a.duration ? <Badge text={a.duration} color={C.cyan} /> : null}<View>{a.rating ? <Stars r={a.rating} /> : null}<Text style={s.actName}>{a.name}</Text><Text style={s.actCat}>{a.category || ' '}</Text><Price orig={a.regularPrice} disc={getPrice(a.regularPrice)} sz="sm" /></View></LinearGradient></ImageBackground></TouchableOpacity>)}</ScrollView>}
         </View>
 
-        {/* Upcoming Events */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🎉 Upcoming Events</Text>
-            <TouchableOpacity onPress={() => onNavigate('explore')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {events.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="calendar-outline" size={40} color={Colors.mutedGrey} />
-              <Text style={styles.emptyText}>No upcoming events</Text>
-            </View>
-          ) : (
-            events.slice(0, 3).map((event) => (
-              <TouchableOpacity 
-                key={event._id} 
-                style={styles.eventCard}
-                onPress={() => setSelectedEvent(event)}
-              >
-                <Image source={{ uri: event.image }} style={styles.eventImage} />
-                <LinearGradient 
-                  colors={['transparent', 'rgba(0,0,0,0.95)']} 
-                  style={styles.eventGradient}
-                >
-                  {event.isVipOnly && <VIPOnlyOverlay tierRequired={event.investorTierRequired} />}
-                  <View style={styles.eventContent}>
-                    <View style={styles.eventDateBadge}>
-                      <Text style={styles.eventDateDay}>
-                        {new Date(event.date).getDate()}
-                      </Text>
-                      <Text style={styles.eventDateMonth}>
-                        {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
-                      </Text>
-                    </View>
-                    <View style={styles.eventInfo}>
-                      <Text style={styles.eventTitle}>{event.name}</Text>
-                      <View style={styles.eventMeta}>
-                        <Ionicons name="location" size={14} color={Colors.softGrey} />
-                        <Text style={styles.eventVenue}>{event.venue}</Text>
-                      </View>
-                      {event.capacity && (
-                        <SpotsLeft current={event.registeredCount || 0} total={event.capacity} />
-                      )}
-                    </View>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))
-          )}
+        {/* Events */}
+        <View style={s.section}>
+          <SecHeader title="Upcoming Events" sub="VIP gatherings" action="View All" onAction={() => onNavigate('explore', { tab: 'events' })} />
+          {events.length === 0 ? <View style={{ paddingHorizontal: 20 }}><LinearGradient colors={G.card} style={s.eventPlaceholder}><Ionicons name="calendar-outline" size={48} color={C.textMuted} /><Text style={s.eventPlaceholderText}>Events coming soon</Text></LinearGradient></View>
+           : <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 20, paddingRight: 20 }}>{events.slice(0, 5).map((e: any, idx: number) => <TouchableOpacity key={e._id} style={[s.eventCardH, idx > 0 && { marginLeft: 14 }]} activeOpacity={0.9}><ImageBackground source={{ uri: e.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800' }} style={s.eventImgH} imageStyle={{ borderRadius: 16 }}><LinearGradient colors={['transparent', 'rgba(10,18,42,0.95)']} style={s.eventOverlayH}>{e.isVipOnly ? <View style={s.vipBadge}><Ionicons name="diamond" size={14} color={C.gold} /><Text style={s.vipBadgeText}>VIP</Text></View> : null}<View style={s.eventContentH}><View style={s.eventDateBox}><Text style={s.eventDateDay}>{new Date(e.date).getDate()}</Text><Text style={s.eventDateMonth}>{new Date(e.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}</Text></View><View style={s.eventDetailsH}><Text style={s.eventNameH} numberOfLines={1}>{e.name}</Text><View style={s.eventMeta}><Ionicons name="location-outline" size={12} color={C.textSec} /><Text style={s.eventVenueH} numberOfLines={1}>{e.venue || 'MOTA Resort'}</Text></View></View></View></LinearGradient></ImageBackground></TouchableOpacity>)}</ScrollView>}
         </View>
 
-        {/* CTA for non-members */}
-        {!isLoggedIn && (
-          <TouchableOpacity 
-            style={styles.ctaContainer}
-            onPress={onShowAuth}
-          >
-            <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.ctaGradient}>
-              <MaterialCommunityIcons name="diamond-stone" size={32} color="#0a0a0a" />
-              <Text style={styles.ctaTitle}>Join MOTA Today</Text>
-              <Text style={styles.ctaSubtitle}>Unlock exclusive benefits and discounts</Text>
-              <View style={styles.ctaButton}>
-                <Text style={styles.ctaButtonText}>Get Started Free</Text>
-                <Ionicons name="arrow-forward" size={20} color={Colors.gold} />
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
+        {/* Investor CTA */}
+        {isLoggedIn && !isInvestor ? <View style={{ paddingHorizontal: 20, marginBottom: 24 }}><TouchableOpacity onPress={() => onNavigate('invest')} activeOpacity={0.9}><LinearGradient colors={G.card} style={s.invCta}><View style={s.invCtaGlow} /><View style={s.invCtaRow}><View style={s.invCtaIcon}><MaterialCommunityIcons name="diamond-stone" size={40} color={C.gold} /></View><View style={s.invCtaContent}><Text style={s.invCtaTitle}>Become an Investor</Text><Text style={s.invCtaSub}>Up to 50% off • VIP access</Text></View></View><GoldBtn title="Learn More" icon="arrow-forward" onPress={() => onNavigate('invest')} /></LinearGradient></TouchableOpacity></View> : null}
 
-        {/* Become Investor CTA for members */}
-        {isLoggedIn && !isInvestor && (
-          <TouchableOpacity 
-            style={styles.investorCta}
-            onPress={() => onNavigate('invest')}
-          >
-            <LinearGradient colors={[Colors.cardElevated, Colors.cardDark]} style={styles.investorCtaGradient}>
-              <View style={styles.investorCtaContent}>
-                <MaterialCommunityIcons name="diamond-stone" size={40} color={Colors.gold} />
-                <View style={styles.investorCtaText}>
-                  <Text style={styles.investorCtaTitle}>Become an Investor</Text>
-                  <Text style={styles.investorCtaSubtitle}>Up to 50% off + exclusive VIP perks</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={Colors.gold} />
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
+        {/* Metrics */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <Text style={s.metricsTitle}>Key Metrics</Text>
+          <View style={s.metricsGrid}>{[{ l: 'Crown Jewel Core', v: '$2.5B' }, { l: 'Total Project', v: '$6B' }, { l: 'Land Area', v: '400 Acres' }, { l: 'Hotel Rooms', v: '2,000+' }].map((m, i) => <View key={i} style={s.metricCard}><Text style={s.metricValue}>{m.v}</Text><Text style={s.metricLabel}>{m.l}</Text></View>)}</View>
+        </View>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
-
-      {/* Restaurant Detail Modal */}
-      <BottomSheet 
-        isVisible={!!selectedRestaurant} 
-        onClose={() => setSelectedRestaurant(null)}
-      >
-        {selectedRestaurant && (
-          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-            <Image source={{ uri: selectedRestaurant.image }} style={styles.detailImage} />
-            <Text style={styles.detailTitle}>{selectedRestaurant.name}</Text>
-            <Text style={styles.detailCategory}>{selectedRestaurant.category}</Text>
-            <Text style={styles.detailDescription}>{selectedRestaurant.description}</Text>
-            
-            <View style={styles.detailInfo}>
-              <View style={styles.detailRow}>
-                <Ionicons name="star" size={18} color={Colors.gold} />
-                <Text style={styles.detailText}>{selectedRestaurant.rating} Rating</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="time" size={18} color={Colors.gold} />
-                <Text style={styles.detailText}>{selectedRestaurant.openHours || 'Hours vary'}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="location" size={18} color={Colors.gold} />
-                <Text style={styles.detailText}>{selectedRestaurant.location || 'See map'}</Text>
-              </View>
-            </View>
-
-            <View style={styles.priceSection}>
-              <Text style={styles.priceLabel}>Your Price:</Text>
-              <PriceDisplay 
-                originalPrice={selectedRestaurant.regularPrice}
-                discountedPrice={getPriceForTier(selectedRestaurant)}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.bookButton}>
-              <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.bookButtonGradient}>
-                <Text style={styles.bookButtonText}>Reserve Table</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <View style={{ height: 30 }} />
-          </ScrollView>
-        )}
-      </BottomSheet>
-
-      {/* Activity Detail Modal */}
-      <BottomSheet 
-        isVisible={!!selectedActivity} 
-        onClose={() => setSelectedActivity(null)}
-      >
-        {selectedActivity && (
-          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-            <Image source={{ uri: selectedActivity.image }} style={styles.detailImage} />
-            <Text style={styles.detailTitle}>{selectedActivity.name}</Text>
-            <Text style={styles.detailCategory}>{selectedActivity.category}</Text>
-            <Text style={styles.detailDescription}>{selectedActivity.description}</Text>
-            
-            <View style={styles.detailInfo}>
-              <View style={styles.detailRow}>
-                <Ionicons name="time" size={18} color={Colors.gold} />
-                <Text style={styles.detailText}>{selectedActivity.duration || 'Duration varies'}</Text>
-              </View>
-            </View>
-
-            {selectedActivity.included && selectedActivity.included.length > 0 && (
-              <View style={styles.includedSection}>
-                <Text style={styles.includedTitle}>What's Included:</Text>
-                {selectedActivity.included.map((item, index) => (
-                  <View key={index} style={styles.includedItem}>
-                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-                    <Text style={styles.includedText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.priceSection}>
-              <Text style={styles.priceLabel}>Your Price:</Text>
-              <PriceDisplay 
-                originalPrice={selectedActivity.regularPrice}
-                discountedPrice={getPriceForTier(selectedActivity)}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.bookButton}>
-              <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.bookButtonGradient}>
-                <Text style={styles.bookButtonText}>Book Now</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <View style={{ height: 30 }} />
-          </ScrollView>
-        )}
-      </BottomSheet>
-
-      {/* Event Detail Modal */}
-      <BottomSheet 
-        isVisible={!!selectedEvent} 
-        onClose={() => setSelectedEvent(null)}
-      >
-        {selectedEvent && (
-          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-            <Image source={{ uri: selectedEvent.image }} style={styles.detailImage} />
-            <Text style={styles.detailTitle}>{selectedEvent.name}</Text>
-            <Text style={styles.detailCategory}>{selectedEvent.venue}</Text>
-            <Text style={styles.detailDescription}>{selectedEvent.description}</Text>
-            
-            <View style={styles.detailInfo}>
-              <View style={styles.detailRow}>
-                <Ionicons name="calendar" size={18} color={Colors.gold} />
-                <Text style={styles.detailText}>
-                  {new Date(selectedEvent.date).toLocaleDateString('en-US', { 
-                    weekday: 'long',
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </Text>
-              </View>
-              {selectedEvent.capacity && (
-                <View style={styles.detailRow}>
-                  <Ionicons name="people" size={18} color={Colors.gold} />
-                  <Text style={styles.detailText}>
-                    {selectedEvent.capacity - (selectedEvent.registeredCount || 0)} spots remaining
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {selectedEvent.isVipOnly && (
-              <View style={styles.vipNotice}>
-                <Ionicons name="diamond" size={20} color={Colors.gold} />
-                <Text style={styles.vipNoticeText}>
-                  This event is exclusive to {selectedEvent.investorTierRequired || 'VIP'} members
-                </Text>
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.bookButton}>
-              <LinearGradient colors={[Colors.gold, Colors.goldDark]} style={styles.bookButtonGradient}>
-                <Text style={styles.bookButtonText}>RSVP Now</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <View style={{ height: 30 }} />
-          </ScrollView>
-        )}
-      </BottomSheet>
+      <ReservationModal visible={showRes} onClose={() => setShowRes(false)} item={selectedItem} type={resType} />
     </View>
   );
 }
 
-// ============================================
 // EXPLORE SCREEN
-// ============================================
-
-function ExploreScreen({ onShowAuth }: { onShowAuth: () => void }) {
+function ExploreScreen({ onShowAuth, initialTab }: { onShowAuth: () => void; initialTab?: string }) {
   const insets = useSafeAreaInsets();
-  const { user, isInvestor } = useAuth();
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const { user, getDiscountPercent } = useAuth();
+  const [activeTab, setActiveTab] = useState(initialTab || 'rooms');
+  const [search, setSearch] = useState('');
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRes, setShowRes] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [resType, setResType] = useState('');
 
   const isLoggedIn = !!user;
+  const disc = getDiscountPercent();
+  const getPrice = (p: number) => isLoggedIn ? Math.round(p * (1 - disc / 100)) : p;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
+  const fetchData = async () => { try { const [r, a, e] = await Promise.all([api.getRestaurants().catch(() => []), api.getActivities().catch(() => []), api.getEvents().catch(() => [])]); setRestaurants(r || []); setActivities(a || []); setEvents(e || []); } finally { setLoading(false); } };
+  const openRes = (item: any, type: string) => { if (!isLoggedIn) { onShowAuth(); return; } setSelectedItem(item); setResType(type); setShowRes(true); };
 
-  const fetchData = async () => {
-    try {
-      const [r, a, e] = await Promise.all([
-        api.getRestaurants().catch(() => []),
-        api.getActivities().catch(() => []),
-        api.getEvents().catch(() => []),
-      ]);
-      setRestaurants(r || []);
-      setActivities(a || []);
-      setEvents(e || []);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const tabs = [{ id: 'rooms', label: 'Rooms', icon: 'bed-outline' }, { id: 'dining', label: 'Dining', icon: 'restaurant-outline' }, { id: 'activities', label: 'Activities', icon: 'water-outline' }, { id: 'rentals', label: 'Rentals', icon: 'car-sport-outline' }, { id: 'events', label: 'Events', icon: 'calendar-outline' }];
 
-  const getPriceForTier = (item: Restaurant | Activity) => {
-    if (!isLoggedIn) return item.regularPrice;
-    if (isInvestor && user?.investorTier) {
-      switch (user.investorTier) {
-        case 'diamond':
-        case 'black':
-        case 'founders':
-          return item.diamondPrice || Math.round(item.regularPrice * 0.75);
-        case 'platinum':
-          return item.platinumPrice || Math.round(item.regularPrice * 0.85);
-        case 'gold':
-          return item.memberPrice || Math.round(item.regularPrice * 0.9);
-      }
-    }
-    return item.memberPrice || Math.round(item.regularPrice * 0.9);
-  };
-
-  const categories = [
-    { id: 'all', label: 'All', icon: 'apps' },
-    { id: 'restaurants', label: 'Dining', icon: 'restaurant' },
-    { id: 'activities', label: 'Activities', icon: 'water' },
-    { id: 'events', label: 'Events', icon: 'calendar' },
-  ];
-
-  const filteredItems = () => {
+  const getItems = () => {
     let items: any[] = [];
-    
-    if (activeCategory === 'all' || activeCategory === 'restaurants') {
-      items = [...items, ...restaurants.map(r => ({ ...r, type: 'restaurant' }))];
-    }
-    if (activeCategory === 'all' || activeCategory === 'activities') {
-      items = [...items, ...activities.map(a => ({ ...a, type: 'activity' }))];
-    }
-    if (activeCategory === 'all' || activeCategory === 'events') {
-      items = [...items, ...events.map(e => ({ ...e, type: 'event' }))];
-    }
-
-    if (searchQuery) {
-      items = items.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.venue?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
+    if (activeTab === 'rooms') items = [...Rooms.map(r => ({ ...r, _id: r.id, itemType: 'room', regularPrice: r.price }))];
+    if (activeTab === 'dining') { const d = restaurants.length > 0 ? restaurants : [{ _id: 'ph1', name: 'Signature Restaurant', category: 'Fine Dining', rating: 4.9, regularPrice: 150, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800' }]; items = [...d.map(x => ({ ...x, itemType: 'restaurant' }))]; }
+    if (activeTab === 'activities') { const a = activities.length > 0 ? activities : [{ _id: 'ph2', name: 'Scuba Diving', category: 'Water Sports', rating: 4.8, regularPrice: 250, image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600' }, { _id: 'ph3', name: 'Yacht Charter', category: 'Luxury', rating: 5.0, regularPrice: 1500, image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600' }]; items = [...a.map(x => ({ ...x, itemType: 'activity' }))]; }
+    if (activeTab === 'rentals') items = [...Cars.map(c => ({ ...c, _id: c.id, itemType: 'rental', regularPrice: c.price, category: c.cat }))];
+    if (activeTab === 'events') items = [...events.map(e => ({ ...e, itemType: 'event' }))];
+    if (search) { const q = search.toLowerCase(); items = items.filter(i => i.name?.toLowerCase().includes(q) || i.category?.toLowerCase().includes(q)); }
     return items;
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={Colors.gold} />
-      </View>
-    );
-  }
+  const renderItem = ({ item }: { item: any }) => {
+    const labels: any = { room: '🏨 Room', restaurant: '🍽️ Dining', activity: '🏄 Activity', rental: '🚗 Rental', event: '🎉 Event' };
+    return <TouchableOpacity style={s.listCard} activeOpacity={0.9} onPress={() => { if (item.itemType === 'rental') Alert.alert(item.name, `$${item.regularPrice}/day`); else if (item.itemType === 'event') Alert.alert(item.name, item.description || 'Coming soon'); else openRes(item, item.itemType); }}><Image source={{ uri: item.image }} style={s.listImg} /><View style={s.listContent}><Text style={s.listType}>{labels[item.itemType]}</Text><Text style={s.listName} numberOfLines={1}>{item.name}</Text><Text style={s.listCat} numberOfLines={1}>{item.category || item.type || item.venue || ' '}</Text><View style={s.listFooter}>{item.rating ? <Stars r={item.rating} sz={12} /> : null}{item.regularPrice ? <Price orig={item.regularPrice} disc={getPrice(item.regularPrice)} sz="sm" /> : null}</View></View><Ionicons name="chevron-forward" size={22} color={C.textMuted} /></TouchableOpacity>;
+  };
+
+  if (loading) return <View style={[s.loadingContainer, { paddingTop: insets.top }]}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><ActivityIndicator size="large" color={C.gold} /></View>;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient colors={['#0a0a0a', '#1a1a2e', '#0a0a0a']} style={StyleSheet.absoluteFill} />
-      
-      {/* Header */}
-      <View style={styles.exploreHeader}>
-        <Text style={styles.exploreTitle}>Explore</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={Colors.mutedGrey} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search restaurants, activities..."
-          placeholderTextColor={Colors.mutedGrey}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={Colors.mutedGrey} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Categories */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.categoriesContainer}
-        contentContainerStyle={{ paddingHorizontal: 20 }}
-      >
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoryChip,
-              activeCategory === cat.id && styles.categoryChipActive
-            ]}
-            onPress={() => setActiveCategory(cat.id)}
-          >
-            <Ionicons 
-              name={cat.icon as any} 
-              size={18} 
-              color={activeCategory === cat.id ? '#0a0a0a' : Colors.softGrey} 
-            />
-            <Text style={[
-              styles.categoryChipText,
-              activeCategory === cat.id && styles.categoryChipTextActive
-            ]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Results */}
-      <FlatList
-        data={filteredItems()}
-        keyExtractor={(item) => `${item.type}-${item._id}`}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.exploreCard}>
-            <Image source={{ uri: item.image }} style={styles.exploreCardImage} />
-            <View style={styles.exploreCardContent}>
-              <View style={styles.exploreCardBadge}>
-                <Text style={styles.exploreCardBadgeText}>
-                  {item.type === 'restaurant' ? '🍽️' : item.type === 'activity' ? '🏄' : '🎉'}
-                </Text>
-              </View>
-              <Text style={styles.exploreCardTitle} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.exploreCardSubtitle} numberOfLines={1}>
-                {item.category || item.venue || ''}
-              </Text>
-              <View style={styles.exploreCardFooter}>
-                {item.rating && (
-                  <View style={styles.ratingContainer}>
-                    <Ionicons name="star" size={12} color={Colors.gold} />
-                    <Text style={styles.ratingSmall}>{item.rating}</Text>
-                  </View>
-                )}
-                {item.regularPrice && (
-                  <PriceDisplay 
-                    originalPrice={item.regularPrice}
-                    discountedPrice={getPriceForTier(item)}
-                  />
-                )}
-                {item.date && (
-                  <Text style={styles.eventDateSmall}>
-                    {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </Text>
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={60} color={Colors.mutedGrey} />
-            <Text style={styles.emptyStateText}>No results found</Text>
-            <Text style={styles.emptyStateSubtext}>Try a different search or category</Text>
-          </View>
-        )}
-      />
+    <View style={s.container}>
+      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
+      <View style={[s.exploreHeader, { paddingTop: insets.top + 10 }]}><View><Text style={s.exploreTitle}>Explore</Text><Text style={s.exploreSub}>Discover luxury experiences</Text></View><TouchableOpacity style={s.filterBtn} onPress={() => Alert.alert('Filters')}><Ionicons name="options-outline" size={24} color={C.gold} /></TouchableOpacity></View>
+      <View style={s.searchBar}><Ionicons name="search" size={20} color={C.textMuted} /><TextInput style={s.searchInput} placeholder="Search..." placeholderTextColor={C.textMuted} value={search} onChangeText={setSearch} />{search && search.length > 0 ? <TouchableOpacity onPress={() => setSearch('')}><Ionicons name="close-circle" size={20} color={C.textMuted} /></TouchableOpacity> : null}</View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabsScroll} contentContainerStyle={{ paddingHorizontal: 16 }}>{tabs.map((t, i) => <TouchableOpacity key={t.id} style={[s.tabPill, activeTab === t.id && s.tabPillActive, i > 0 && { marginLeft: 10 }]} onPress={() => setActiveTab(t.id)}>{activeTab === t.id && <LinearGradient colors={G.gold} style={[StyleSheet.absoluteFill, { borderRadius: 25 }]} />}<Ionicons name={t.icon as any} size={18} color={activeTab === t.id ? C.bg : C.textSec} /><Text style={[s.tabPillText, activeTab === t.id && s.tabPillTextActive]}>{t.label}</Text></TouchableOpacity>)}</ScrollView>
+      <FlatList data={getItems()} keyExtractor={(item) => `${item.itemType}-${item._id}`} renderItem={renderItem} contentContainerStyle={{ padding: 20, paddingBottom: 120 }} ListEmptyComponent={() => <View style={s.emptyState}><Ionicons name="search-outline" size={64} color={C.textMuted} /><Text style={s.emptyStateTitle}>No Results</Text></View>} />
+      <ReservationModal visible={showRes} onClose={() => setShowRes(false)} item={selectedItem} type={resType} />
     </View>
   );
 }
 
-// ============================================
-// MAIN APP CONTENT
-// ============================================
+// INVEST SCREEN
+function InvestScreen() {
+  const insets = useSafeAreaInsets();
+  const { user, isInvestor, getDiscountPercent, refreshUser } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const disc = getDiscountPercent();
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setRefreshing(false);
+  };
+  
+  // Visible tiers (Silver, Gold, Platinum, Diamond) - Black & Founders are hidden unless user has them
+  const visibleTiers = [
+    { id: 'silver', name: 'Silver', min: '$50K', discount: '5%', color: '#C0C0C0', benefits: ['Member Events', 'Quarterly Updates', 'Priority Support'] },
+    { id: 'gold', name: 'Gold', min: '$100K', discount: '10%', color: '#FFD700', benefits: ['All Silver Benefits', 'VIP Reservations', 'Exclusive Dining'] },
+    { id: 'platinum', name: 'Platinum', min: '$250K', discount: '20%', color: '#E5E4E2', benefits: ['All Gold Benefits', 'Helicopter Transfers', 'Yacht Access'] },
+    { id: 'diamond', name: 'Diamond', min: '$500K', discount: '30%', color: '#B9F2FF', benefits: ['All Platinum Benefits', 'Private Jet', 'Dedicated Concierge'] },
+  ];
+  
+  const openInvestorPage = () => {
+    Linking.openURL('https://macauoftheamericas.com');
+  };
 
+  if (isInvestor && user) return (
+    <View style={s.container}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.gold} />}><View style={s.invHeader}><Text style={s.invWelcome}>Welcome back,</Text><Text style={s.invName}>{user.name || 'Investor'}</Text></View><View style={{ paddingHorizontal: 20, marginBottom: 24 }}><GoldCard tier={user.investorTier || 'gold'} value={user.portfolioValue || 0} returns={12} disc={disc} name={user.name} onPress={() => Alert.alert('Card Details')} /></View><View style={s.invStats}>{[{ icon: 'wallet', label: 'Invested', value: `$${(user.investmentAmount || 0).toLocaleString()}`, color: C.gold }, { icon: 'trending-up', label: 'Returns', value: `+$${((user.portfolioValue || 0) - (user.investmentAmount || 0)).toLocaleString()}`, color: C.success }, { icon: 'pricetag', label: 'Discount', value: `${disc}%`, color: C.gold }].map((st, i) => <View key={i} style={s.invStatCard}><Ionicons name={st.icon as any} size={24} color={st.color} /><Text style={s.invStatValue}>{st.value}</Text><Text style={s.invStatLabel}>{st.label}</Text></View>)}</View><View style={s.invSection}><Text style={s.invSecTitle}>Quick Actions</Text><View style={s.invActions}>{[{ icon: 'document-text', label: 'Documents', color: C.gold }, { icon: 'headset', label: 'Concierge', color: C.blue }, { icon: 'gift', label: 'Benefits', color: C.purple }, { icon: 'add-circle', label: 'Invest More', color: C.success }].map((a, i) => <TouchableOpacity key={i} style={s.invAction} onPress={() => a.label === 'Invest More' ? openInvestorPage() : Alert.alert(a.label)}><View style={[s.invActionIcon, { backgroundColor: `${a.color}20` }]}><Ionicons name={a.icon as any} size={24} color={a.color} /></View><Text style={s.invActionLabel}>{a.label}</Text></TouchableOpacity>)}</View></View></ScrollView></View>
+  );
+
+  return (
+    <View style={s.container}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 120 }}><View style={s.invHero}><MaterialCommunityIcons name="diamond-stone" size={64} color={C.gold} /><Text style={s.invHeroTitle}>Invest in Paradise</Text><Text style={s.invHeroSub}>Join the $2.5B Macau of the Americas project in Belize</Text></View><View style={s.invMetrics}>{[{ l: 'Project Value', v: '$2.5B' }, { l: 'Target ROI', v: '15-20%' }, { l: 'Opening', v: '2026' }].map((m, i) => <React.Fragment key={i}>{i > 0 ? <View style={s.invMetricDiv} /> : null}<View style={s.invMetric}><Text style={s.invMetricV}>{m.v}</Text><Text style={s.invMetricL}>{m.l}</Text></View></React.Fragment>)}</View><View style={s.invSection}><Text style={s.invSecTitle}>Investment Tiers</Text>{visibleTiers.map(tier => <LinearGradient key={tier.id} colors={G.card} style={s.tierCard}><View style={s.tierHeader}><View style={[s.tierBadge, { backgroundColor: tier.color }]}><Ionicons name="diamond" size={16} color={tier.id === 'silver' ? '#333' : '#fff'} /></View><View style={s.tierHeaderText}><Text style={s.tierName}>{tier.name}</Text><Text style={s.tierMin}>{tier.min} minimum</Text></View><View style={s.tierDisc}><Text style={s.tierDiscV}>{tier.discount}</Text><Text style={s.tierDiscL}>OFF</Text></View></View><View style={s.tierBenefits}>{tier.benefits.map((b, i) => <View key={i} style={s.tierBenefit}><Ionicons name="checkmark-circle" size={16} color={C.success} /><Text style={s.tierBenefitText}>{b}</Text></View>)}</View></LinearGradient>)}</View><View style={s.invCtaSection}><GoldBtn title="Request Investor Deck" icon="open-outline" lg onPress={openInvestorPage} style={{ width: '100%' }} /><Text style={s.invCtaNote}>Opens macauoftheamericas.com</Text></View></ScrollView></View>
+  );
+}
+
+// PROFILE SCREEN
+function ProfileScreen({ onShowAuthModal }: { onShowAuthModal: () => void }) {
+  const insets = useSafeAreaInsets();
+  const { user, isInvestor, logout, getDiscountPercent, refreshUser } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const isLoggedIn = !!user;
+  const disc = getDiscountPercent();
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setRefreshing(false);
+  };
+
+  if (!isLoggedIn) return (
+    <View style={s.container}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><ScrollView contentContainerStyle={[s.profileGuestContainer, { paddingTop: insets.top + 40 }]}><View style={s.profileGuestIcon}><LinearGradient colors={G.gold} style={s.profileGuestIconGrad}><MaterialCommunityIcons name="diamond-stone" size={48} color={C.bg} /></LinearGradient></View><Text style={s.profileGuestTitle}>Join MOTA</Text><Text style={s.profileGuestSub}>Create a FREE account to unlock exclusive features</Text><View style={s.profileGuestBenefits}>{[{ icon: 'calendar', text: 'Book restaurants & activities' }, { icon: 'heart', text: 'Save your favorites' }, { icon: 'ticket', text: 'RSVP to exclusive events' }, { icon: 'gift', text: 'Receive special offers' }].map((b, i) => <View key={i} style={s.profileGuestBenefit}><View style={s.profileGuestBenefitIcon}><Ionicons name={b.icon as any} size={20} color={C.gold} /></View><Text style={s.profileGuestBenefitText}>{b.text}</Text></View>)}</View><GoldBtn title="Create Free Account" icon="person-add" lg onPress={onShowAuthModal} style={{ width: '100%' }} /><TouchableOpacity onPress={onShowAuthModal} style={{ marginTop: 16 }}><Text style={s.profileGuestSignIn}>Already have an account? <Text style={{ color: C.gold }}>Sign In</Text></Text></TouchableOpacity></ScrollView></View>
+  );
+
+  return (
+    <View style={s.container}><LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} /><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.gold} />}><View style={s.profileHeader}><LinearGradient colors={G.gold} style={s.profileAvatar}><Text style={s.profileAvatarText}>{user?.name ? user.name[0].toUpperCase() : 'U'}</Text></LinearGradient><Text style={s.profileName}>{user?.name || 'User'}</Text><Text style={s.profileEmail}>{user?.email || ''}</Text><View style={s.profileBadge}>{isInvestor ? <LinearGradient colors={G.gold} style={s.profileBadgeGrad}><MaterialCommunityIcons name="diamond-stone" size={16} color={C.bg} /><Text style={s.profileBadgeText}>{(user?.investorTier || 'GOLD').toUpperCase()} INVESTOR</Text></LinearGradient> : <View style={[s.profileBadgeGrad, { backgroundColor: C.blue }]}><Ionicons name="star" size={16} color="#fff" /><Text style={[s.profileBadgeText, { color: '#fff' }]}>MEMBER</Text></View>}</View></View><View style={s.profileStats}>{[{ v: `${disc}%`, l: 'Discount' }, { v: '0', l: 'Bookings' }, { v: '0', l: 'Favorites' }].map((st, i) => <View key={i} style={s.profileStatCard}><Text style={s.profileStatV}>{st.v}</Text><Text style={s.profileStatL}>{st.l}</Text></View>)}</View>{isInvestor && user?.investorTier ? <View style={{ paddingHorizontal: 20, marginBottom: 24 }}><Text style={s.profileSecTitle}>Your Card</Text><GoldCard tier={user.investorTier} value={user.portfolioValue || 0} returns={12} disc={disc} name={user.name} onPress={() => Alert.alert('Card Details')} /></View> : null}{[{ title: 'Account', items: [{ icon: 'person-outline', label: 'Edit Profile' }, { icon: 'notifications-outline', label: 'Notifications', badge: '3' }, { icon: 'heart-outline', label: 'Favorites' }, { icon: 'time-outline', label: 'Booking History' }] }, { title: 'Support', items: [{ icon: 'help-circle-outline', label: 'Help Center' }, { icon: 'chatbubble-outline', label: 'Live Chat' }, { icon: 'call-outline', label: 'Contact Us' }] }].map((sec, si) => <View key={si} style={s.profileSection}><Text style={s.profileSecTitle}>{sec.title}</Text><LinearGradient colors={G.card} style={s.profileMenu}>{sec.items.map((item: any, ii) => <TouchableOpacity key={ii} style={[s.profileMenuItem, ii < sec.items.length - 1 && s.profileMenuItemBorder]} onPress={() => Alert.alert(item.label)}><View style={s.profileMenuItemIcon}><Ionicons name={item.icon} size={22} color={C.gold} /></View><Text style={s.profileMenuItemLabel}>{item.label}</Text><View style={s.profileMenuItemRight}>{item.badge ? <View style={s.profileMenuItemBadge}><Text style={s.profileMenuItemBadgeText}>{item.badge}</Text></View> : null}<Ionicons name="chevron-forward" size={20} color={C.textMuted} /></View></TouchableOpacity>)}</LinearGradient></View>)}<View style={s.profileSection}><TouchableOpacity style={s.logoutBtn} onPress={() => Alert.alert('Sign Out', 'Are you sure you want to sign out?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign Out', style: 'destructive', onPress: logout }])}><Ionicons name="log-out-outline" size={22} color={C.error} /><Text style={s.logoutBtnText}>Sign Out</Text></TouchableOpacity></View><Text style={s.profileVersion}>MOTA v2.0</Text></ScrollView></View>
+  );
+}
+
+// MAIN APP
 function MainApp() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [exploreParams, setExploreParams] = useState<any>({});
   const insets = useSafeAreaInsets();
 
-  const handleShowAuth = () => {
-    setShowAuthModal(true);
-  };
+  const handleNavigate = (tab: string, params?: any) => { if (params) setExploreParams(params); setActiveTab(tab); };
 
-  const handleCloseAuth = () => {
-    setShowAuthModal(false);
-  };
-
-  const handleNavigate = (tab: string) => {
-    setActiveTab(tab);
-  };
-
-  // Render content based on active tab
   const renderContent = () => {
     switch (activeTab) {
-      case 'invest':
-        return <InvestorScreen />;
-      case 'profile':
-        return <ProfileScreen onShowAuthModal={handleShowAuth} />;
-      case 'explore':
-        return <ExploreScreen onShowAuth={handleShowAuth} />;
-      default:
-        return <HomeScreen onShowAuth={handleShowAuth} onNavigate={handleNavigate} />;
+      case 'explore': return <ExploreScreen onShowAuth={() => setShowAuthModal(true)} initialTab={exploreParams?.tab} />;
+      case 'invest': return <InvestScreen />;
+      case 'profile': return <ProfileScreen onShowAuthModal={() => setShowAuthModal(true)} />;
+      default: return <HomeScreen onShowAuth={() => setShowAuthModal(true)} onNavigate={handleNavigate} />;
     }
   };
 
-  return (
-    <View style={styles.container}>
-      {renderContent()}
-      
-      {/* Navigation Bar */}
-      <View style={[styles.navBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('home')}>
-          <Ionicons 
-            name={activeTab === 'home' ? 'home' : 'home-outline'} 
-            size={24} 
-            color={activeTab === 'home' ? Colors.gold : Colors.mutedGrey} 
-          />
-          <Text style={[styles.navLabel, activeTab === 'home' && styles.navLabelActive]}>Home</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('explore')}>
-          <Ionicons 
-            name={activeTab === 'explore' ? 'compass' : 'compass-outline'} 
-            size={24} 
-            color={activeTab === 'explore' ? Colors.gold : Colors.mutedGrey} 
-          />
-          <Text style={[styles.navLabel, activeTab === 'explore' && styles.navLabelActive]}>Explore</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('invest')}>
-          <Ionicons 
-            name={activeTab === 'invest' ? 'trending-up' : 'trending-up-outline'} 
-            size={24} 
-            color={activeTab === 'invest' ? Colors.gold : Colors.mutedGrey} 
-          />
-          <Text style={[styles.navLabel, activeTab === 'invest' && styles.navLabelActive]}>Invest</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('profile')}>
-          <Ionicons 
-            name={activeTab === 'profile' ? 'person' : 'person-outline'} 
-            size={24} 
-            color={activeTab === 'profile' ? Colors.gold : Colors.mutedGrey} 
-          />
-          <Text style={[styles.navLabel, activeTab === 'profile' && styles.navLabelActive]}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+  const navItems = [{ id: 'home', icon: 'home', label: 'Home' }, { id: 'explore', icon: 'compass', label: 'Explore' }, { id: 'invest', icon: 'diamond', label: 'Invest' }, { id: 'profile', icon: 'person', label: 'Profile' }];
 
-      {/* Auth Modal */}
-      <BottomSheet 
-        isVisible={showAuthModal} 
-        onClose={handleCloseAuth}
-      >
-        <AuthModal onClose={handleCloseAuth} />
-      </BottomSheet>
+  return (
+    <View style={s.container}>
+      {renderContent()}
+      <View style={[s.navBar, { paddingBottom: Math.max(insets.bottom, 12) }]}><LinearGradient colors={['rgba(10,18,42,0.95)', 'rgba(10,18,42,0.99)']} style={StyleSheet.absoluteFill} />{navItems.map(item => <TouchableOpacity key={item.id} style={s.navItem} onPress={() => { setExploreParams({}); setActiveTab(item.id); }} activeOpacity={0.7}>{activeTab === item.id ? <LinearGradient colors={G.gold} style={s.navItemActive}><Ionicons name={item.icon as any} size={22} color={C.bg} /></LinearGradient> : <Ionicons name={`${item.icon}-outline` as any} size={24} color={C.textMuted} />}<Text style={[s.navLabel, activeTab === item.id && s.navLabelActive]}>{item.label}</Text></TouchableOpacity>)}</View>
+      <BottomSheet isVisible={showAuthModal} onClose={() => setShowAuthModal(false)}><AuthModal onClose={() => setShowAuthModal(false)} /></BottomSheet>
     </View>
   );
 }
 
-// ============================================
 // STYLES
-// ============================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0a0a0a',
-  },
-  loadingText: {
-    color: Colors.gold,
-    marginTop: 16,
-    fontSize: 16,
-  },
-  
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  greeting: {
-    color: Colors.softGrey,
-    fontSize: 14,
-  },
-  logo: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: Colors.gold,
-    letterSpacing: 8,
-  },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: 'hidden',
-  },
-  profileGradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInitial: {
-    color: '#0a0a0a',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  // Error Banner
-  errorBanner: {
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
-    marginHorizontal: 20,
-    padding: 15,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  errorText: {
-    color: '#fff',
-    marginLeft: 10,
-    flex: 1,
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-
-  // Badges
-  tierBadgeContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 15,
-  },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    alignSelf: 'flex-start',
-  },
-  tierText: {
-    color: '#fff',
-    marginLeft: 8,
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  memberBadgeContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 15,
-  },
-  memberBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(96, 165, 250, 0.15)',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    alignSelf: 'flex-start',
-  },
-  memberBadgeText: {
-    color: Colors.blue,
-    marginLeft: 8,
-    fontWeight: '600',
-    fontSize: 13,
-  },
-
-  // Sections
-  section: {
-    marginBottom: 25,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    paddingHorizontal: 20,
-  },
-  seeAll: {
-    color: Colors.gold,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyCard: {
-    backgroundColor: Colors.cardElevated,
-    marginHorizontal: 20,
-    padding: 40,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: Colors.mutedGrey,
-    marginTop: 12,
-    fontSize: 14,
-  },
-
-  // Quick Actions
-  quickActionsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 25,
-    gap: 10,
-  },
-  quickAction: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  quickActionGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
-    borderRadius: 12,
-  },
-  quickActionText: {
-    color: Colors.softGrey,
-    fontSize: 11,
-    marginTop: 6,
-  },
-
-  // Offer Cards
-  offerCard: {
-    width: width * 0.8,
-    marginLeft: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  offerGradient: {
-    padding: 20,
-  },
-  offerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  offerTitle: {
-    color: '#0a0a0a',
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  offerBadge: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 10,
-  },
-  offerBadgeText: {
-    color: '#0a0a0a',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  offerDescription: {
-    color: '#0a0a0a',
-    opacity: 0.8,
-    marginTop: 8,
-    fontSize: 14,
-  },
-  offerCodeContainer: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 12,
-  },
-  offerCode: {
-    color: '#0a0a0a',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-
-  // Cards
-  card: {
-    width: width * 0.6,
-    height: 220,
-    marginLeft: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: Colors.cardDark,
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  cardGradient: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 15,
-  },
-  cardContent: {},
-  cardTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cardSubtitle: {
-    color: Colors.softGrey,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rating: {
-    color: Colors.gold,
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-
-  // Event Cards
-  eventCard: {
-    marginHorizontal: 20,
-    height: 140,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  eventImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  eventGradient: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: 15,
-  },
-  eventContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  eventDateBadge: {
-    backgroundColor: Colors.gold,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  eventDateDay: {
-    color: '#0a0a0a',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  eventDateMonth: {
-    color: '#0a0a0a',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  eventInfo: {
-    flex: 1,
-  },
-  eventTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  eventMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  eventVenue: {
-    color: Colors.softGrey,
-    fontSize: 13,
-    marginLeft: 4,
-  },
-
-  // CTAs
-  ctaContainer: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  ctaGradient: {
-    padding: 30,
-    alignItems: 'center',
-  },
-  ctaTitle: {
-    color: '#0a0a0a',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
-  ctaSubtitle: {
-    color: '#0a0a0a',
-    opacity: 0.8,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0a0a0a',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    marginTop: 20,
-  },
-  ctaButtonText: {
-    color: Colors.gold,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  investorCta: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-  },
-  investorCtaGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-  },
-  investorCtaContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  investorCtaText: {
-    marginLeft: 15,
-  },
-  investorCtaTitle: {
-    color: Colors.gold,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  investorCtaSubtitle: {
-    color: Colors.softGrey,
-    fontSize: 13,
-    marginTop: 2,
-  },
-
-  // Nav Bar
-  navBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    paddingTop: 10,
-    backgroundColor: 'rgba(10, 10, 10, 0.98)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  navLabel: {
-    color: Colors.mutedGrey,
-    fontSize: 11,
-    marginTop: 4,
-  },
-  navLabelActive: {
-    color: Colors.gold,
-  },
-
-  // Detail Modal
-  detailContent: {
-    padding: 20,
-  },
-  detailImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-  detailTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  detailCategory: {
-    color: Colors.gold,
-    fontSize: 15,
-    marginTop: 5,
-    fontWeight: '500',
-  },
-  detailDescription: {
-    color: Colors.softGrey,
-    fontSize: 14,
-    marginTop: 12,
-    lineHeight: 22,
-  },
-  detailInfo: {
-    marginTop: 20,
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 12,
-    padding: 15,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  detailText: {
-    color: '#fff',
-    marginLeft: 12,
-    fontSize: 14,
-  },
-  priceSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
-  },
-  priceLabel: {
-    color: Colors.softGrey,
-    fontSize: 16,
-  },
-  includedSection: {
-    marginTop: 20,
-  },
-  includedTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  includedItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  includedText: {
-    color: Colors.softGrey,
-    marginLeft: 10,
-    fontSize: 14,
-  },
-  vipNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    borderRadius: 12,
-    padding: 15,
-    marginTop: 20,
-  },
-  vipNoticeText: {
-    color: Colors.gold,
-    marginLeft: 10,
-    fontSize: 13,
-    flex: 1,
-  },
-  bookButton: {
-    marginTop: 25,
-    borderRadius: 30,
-    overflow: 'hidden',
-  },
-  bookButtonGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  bookButtonText: {
-    color: '#0a0a0a',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  // Explore Screen
-  exploreHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  exploreTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.cardElevated,
-    marginHorizontal: 20,
-    paddingHorizontal: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    color: '#fff',
-    fontSize: 15,
-  },
-  categoriesContainer: {
-    marginBottom: 10,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.cardElevated,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  categoryChipActive: {
-    backgroundColor: Colors.gold,
-  },
-  categoryChipText: {
-    color: Colors.softGrey,
-    marginLeft: 8,
-    fontWeight: '500',
-  },
-  categoryChipTextActive: {
-    color: '#0a0a0a',
-  },
-  exploreCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  exploreCardImage: {
-    width: 100,
-    height: 100,
-  },
-  exploreCardContent: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'center',
-  },
-  exploreCardBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-  exploreCardBadgeText: {
-    fontSize: 14,
-  },
-  exploreCardTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  exploreCardSubtitle: {
-    color: Colors.softGrey,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  exploreCardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    gap: 15,
-  },
-  ratingSmall: {
-    color: Colors.gold,
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  eventDateSmall: {
-    color: Colors.gold,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 15,
-  },
-  emptyStateSubtext: {
-    color: Colors.mutedGrey,
-    fontSize: 14,
-    marginTop: 5,
-  },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingLogo: { fontSize: 48, fontWeight: '800', color: C.gold, letterSpacing: 12, marginTop: 16 },
+  loadingTag: { fontSize: 14, color: C.textSec, marginTop: 8, letterSpacing: 2 },
+  dots: { position: 'absolute', bottom: 100, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.4)', marginHorizontal: 4 },
+  dotActive: { backgroundColor: C.gold, width: 24 },
+  heroHeader: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, zIndex: 10 },
+  heroGreet: { fontSize: 14, color: C.textSec },
+  heroLogo: { fontSize: 42, fontWeight: '800', color: C.gold, letterSpacing: 10 },
+  heroName: { fontSize: 24, fontWeight: '600', color: C.text, marginTop: 4 },
+  heroActions: { flexDirection: 'row', alignItems: 'center' },
+  heroIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  heroProfileBtn: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden' },
+  heroProfileGrad: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+  heroProfileInit: { fontSize: 18, fontWeight: '700', color: C.bg },
+  heroProfileOut: { width: '100%', height: '100%', borderRadius: 24, borderWidth: 2, borderColor: C.gold, justifyContent: 'center', alignItems: 'center' },
+  heroContent: { position: 'absolute', bottom: 80, left: 20, right: 20 },
+  heroTitle: { fontSize: 28, fontWeight: '800', color: C.text },
+  heroSubtitle: { fontSize: 14, color: C.gold, marginTop: 4, letterSpacing: 1 },
+  heroStats: { flexDirection: 'row', marginTop: 20, backgroundColor: 'rgba(16,28,64,0.85)', borderRadius: 16, padding: 16 },
+  heroStat: { flex: 1, alignItems: 'center' },
+  heroStatV: { fontSize: 22, fontWeight: '800', color: C.gold },
+  heroStatL: { fontSize: 11, color: C.textSec, marginTop: 4 },
+  heroStatDiv: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 12 },
+  goldCardWrap: { borderRadius: 20, shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 12 },
+  goldCard: { width: '100%', aspectRatio: 1.6, borderRadius: 20, padding: 24, overflow: 'hidden' },
+  goldCardShine: { position: 'absolute', top: -80, right: -80, width: 200, height: 200, backgroundColor: 'rgba(255,255,255,0.15)', transform: [{ rotate: '45deg' }] },
+  goldCardContent: { flex: 1, justifyContent: 'space-between' },
+  goldCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  goldCardLogo: { fontSize: 22, fontWeight: '800', color: 'rgba(255,255,255,0.9)', letterSpacing: 5 },
+  goldCardTier: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 2 },
+  goldCardChip: { width: 50, height: 38, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 6, padding: 6, justifyContent: 'space-around' },
+  goldCardChipLine: { height: 3, backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 1 },
+  goldCardStats: { flexDirection: 'row' },
+  goldCardLabel: { fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: 1, marginBottom: 4 },
+  goldCardValue: { fontSize: 18, fontWeight: '700', color: '#fff', marginRight: 30 },
+  goldCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  goldCardDisc: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.9)', letterSpacing: 1 },
+  goldCardName: { fontSize: 10, marginTop: 4, letterSpacing: 0.5 },
+  qrCode: { width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 4, padding: 4, justifyContent: 'space-between' },
+  qrRow: { flexDirection: 'row', justifyContent: 'space-between', flex: 1 },
+  qrCell: { width: 5, height: 5, backgroundColor: 'transparent' },
+  goldBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14 },
+  goldBtnLg: { paddingVertical: 18, paddingHorizontal: 32, borderRadius: 16 },
+  goldBtnText: { fontSize: 15, fontWeight: '700', color: C.bg },
+  goldBtnTextLg: { fontSize: 17 },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, alignSelf: 'flex-start' },
+  badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  stars: { flexDirection: 'row', alignItems: 'center' },
+  starsText: { color: C.goldLight, fontWeight: '600', marginLeft: 6 },
+  priceRow: { flexDirection: 'row', alignItems: 'center' },
+  priceOld: { color: C.textMuted, textDecorationLine: 'line-through', marginRight: 8 },
+  priceNew: { fontWeight: '700', color: C.success },
+  priceReg: { fontWeight: '700', color: C.text },
+  section: { marginBottom: 28 },
+  secHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, marginBottom: 16 },
+  secTitle: { fontSize: 22, fontWeight: '700', color: C.text },
+  secSub: { fontSize: 13, color: C.textMuted, marginTop: 2 },
+  secAction: { fontSize: 14, fontWeight: '600', color: C.gold },
+  guestCta: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 20 },
+  guestCtaContent: { flex: 1, marginLeft: 16 },
+  guestCtaTitle: { fontSize: 18, fontWeight: '700', color: C.bg },
+  guestCtaSub: { fontSize: 13, color: 'rgba(0,0,0,0.7)', marginTop: 2 },
+  memberCard: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 20 },
+  memberIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(66,153,225,0.15)', justifyContent: 'center', alignItems: 'center' },
+  memberContent: { flex: 1, marginLeft: 16 },
+  memberTitle: { fontSize: 14, fontWeight: '700', color: C.blue, letterSpacing: 1 },
+  memberSub: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, marginBottom: 24 },
+  quickAction: { width: '25%', padding: 6 },
+  quickActionCard: { alignItems: 'center', paddingVertical: 18, paddingHorizontal: 8, borderRadius: 20 },
+  quickActionIcon: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  quickActionLabel: { fontSize: 13, fontWeight: '600', color: C.text },
+  quickActionSub: { fontSize: 10, color: C.textMuted, marginTop: 2 },
+  roomCard: { width: width * 0.72, marginRight: 16, borderRadius: 20, overflow: 'hidden' },
+  roomImage: { width: '100%', height: 320 },
+  roomOverlay: { flex: 1, padding: 18, justifyContent: 'space-between' },
+  roomName: { fontSize: 20, fontWeight: '700', color: C.text, marginTop: 8 },
+  roomDetails: { fontSize: 13, color: C.textSec, marginTop: 4 },
+  roomAmenities: { flexDirection: 'row', marginTop: 10 },
+  amenityTag: { backgroundColor: C.goldMuted, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginRight: 8 },
+  amenityText: { fontSize: 11, color: C.gold, fontWeight: '500' },
+  roomFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
+  perNight: { fontSize: 13, color: C.textSec, marginLeft: 4 },
+  placeholderCard: { borderRadius: 20, overflow: 'hidden' },
+  placeholderImg: { width: '100%', height: 150 },
+  placeholderContent: { padding: 16 },
+  placeholderTitle: { fontSize: 16, fontWeight: '700', color: C.text },
+  placeholderText: { fontSize: 13, color: C.textSec, marginTop: 4 },
+  diningCard: { width: width * 0.65, marginRight: 14, borderRadius: 16, overflow: 'hidden' },
+  diningImg: { width: '100%', height: 240 },
+  diningOverlay: { flex: 1, padding: 16, justifyContent: 'flex-end' },
+  diningName: { fontSize: 18, fontWeight: '700', color: C.text, marginTop: 8 },
+  diningCat: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  diningFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  reserveBtn: { backgroundColor: C.goldMuted, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  reserveBtnText: { fontSize: 13, fontWeight: '600', color: C.gold },
+  carCard: { width: width * 0.55, marginRight: 14 },
+  carCardInner: { borderRadius: 20, overflow: 'hidden' },
+  carImg: { width: '100%', height: 140 },
+  carContent: { padding: 16 },
+  carName: { fontSize: 16, fontWeight: '700', color: C.text, marginTop: 8 },
+  carFooter: { flexDirection: 'row', alignItems: 'baseline', marginTop: 8 },
+  carPrice: { fontSize: 20, fontWeight: '700', color: C.gold },
+  carPriceUnit: { fontSize: 13, color: C.textSec, marginLeft: 2 },
+  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16 },
+  amenityGridCard: { width: '50%', padding: 4 },
+  amenityGridImg: { width: '100%', height: 140 },
+  amenityGridOverlay: { flex: 1, padding: 14, justifyContent: 'flex-end' },
+  amenityGridIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  amenityGridTitle: { fontSize: 14, fontWeight: '700', color: C.text },
+  amenityGridDesc: { fontSize: 11, color: C.textSec, marginTop: 2 },
+  actCard: { width: width * 0.55, marginRight: 14, borderRadius: 16, overflow: 'hidden' },
+  actImg: { width: '100%', height: 200 },
+  actOverlay: { flex: 1, padding: 14, justifyContent: 'space-between' },
+  actName: { fontSize: 16, fontWeight: '700', color: C.text, marginTop: 6 },
+  actCat: { fontSize: 12, color: C.textSec, marginTop: 2 },
+  actListCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 16, padding: 14, marginBottom: 12 },
+  actListImg: { width: 70, height: 70, borderRadius: 12 },
+  actListContent: { flex: 1, marginLeft: 14 },
+  actListName: { fontSize: 16, fontWeight: '600', color: C.text },
+  actListPrice: { fontSize: 14, color: C.gold, marginTop: 4 },
+  eventCard: { marginHorizontal: 20, marginBottom: 14, borderRadius: 16, overflow: 'hidden' },
+  eventImg: { width: '100%', height: 130 },
+  eventOverlay: { flex: 1, justifyContent: 'flex-end' },
+  eventContent: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  eventDateBox: { backgroundColor: C.gold, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', marginRight: 14 },
+  eventDateDay: { fontSize: 22, fontWeight: '800', color: C.bg },
+  eventDateMonth: { fontSize: 10, fontWeight: '700', color: C.bg },
+  eventDetails: { flex: 1 },
+  eventName: { fontSize: 16, fontWeight: '700', color: C.text },
+  eventMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  eventVenue: { fontSize: 12, color: C.textSec, marginLeft: 4 },
+  vipBadge: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(10,18,42,0.9)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  vipBadgeText: { fontSize: 11, fontWeight: '600', color: C.gold, marginLeft: 4 },
+  eventPlaceholder: { padding: 40, borderRadius: 20, alignItems: 'center' },
+  eventPlaceholderText: { fontSize: 14, color: C.textMuted, marginTop: 12 },
+  eventCardH: { width: width * 0.7, borderRadius: 16, overflow: 'hidden' },
+  eventImgH: { width: '100%', height: 160 },
+  eventOverlayH: { flex: 1, justifyContent: 'flex-end' },
+  eventContentH: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+  eventDetailsH: { flex: 1, marginLeft: 12 },
+  eventNameH: { fontSize: 15, fontWeight: '700', color: C.text },
+  eventVenueH: { fontSize: 12, color: C.textSec, marginLeft: 4, flex: 1 },
+  invCta: { padding: 24, borderRadius: 20, overflow: 'hidden' },
+  invCtaGlow: { position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(212,175,55,0.4)' },
+  invCtaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  invCtaIcon: { width: 64, height: 64, borderRadius: 18, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  invCtaContent: { flex: 1 },
+  invCtaTitle: { fontSize: 20, fontWeight: '700', color: C.text },
+  invCtaSub: { fontSize: 13, color: C.textSec, marginTop: 4 },
+  metricsTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 16 },
+  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  metricCard: { width: '50%', padding: 6 },
+  metricValue: { fontSize: 24, fontWeight: '800', color: C.gold, backgroundColor: C.card, paddingVertical: 20, paddingHorizontal: 16, borderRadius: 16, textAlign: 'center', overflow: 'hidden' },
+  metricLabel: { fontSize: 12, color: C.textSec, textAlign: 'center', marginTop: 8 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  resModal: { height: height * 0.85, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
+  resHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 24, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
+  resTitle: { fontSize: 22, fontWeight: '700', color: C.text },
+  resSub: { fontSize: 14, color: C.gold, marginTop: 4 },
+  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center' },
+  resContent: { flex: 1, padding: 24 },
+  inputLabel: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 12, marginTop: 20 },
+  dateRow: { flexDirection: 'row' },
+  dateOpt: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', marginRight: 10, overflow: 'hidden' },
+  dateOptActive: {},
+  dateOptText: { fontSize: 14, fontWeight: '600', color: C.textSec },
+  dateOptTextActive: { color: C.bg },
+  timeOpt: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12, backgroundColor: C.card, marginRight: 10, overflow: 'hidden' },
+  timeOptActive: {},
+  timeOptText: { fontSize: 14, fontWeight: '600', color: C.textSec },
+  timeOptTextActive: { color: C.bg },
+  guestSel: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 12, paddingVertical: 8 },
+  guestBtn: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
+  guestCount: { flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '700', color: C.text },
+  summaryCard: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginTop: 24 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
+  summaryLabel: { fontSize: 14, color: C.textSec },
+  summaryValue: { fontSize: 14, fontWeight: '600', color: C.text },
+  resFooter: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
+  exploreHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingBottom: 16 },
+  exploreTitle: { fontSize: 32, fontWeight: '800', color: C.text },
+  exploreSub: { fontSize: 14, color: C.textSec, marginTop: 4 },
+  filterBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, marginHorizontal: 20, paddingHorizontal: 16, borderRadius: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+  searchInput: { flex: 1, paddingVertical: 14, paddingHorizontal: 12, fontSize: 15, color: C.text },
+  tabsScroll: { marginBottom: 16 },
+  tabPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25, backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' },
+  tabPillActive: { borderColor: C.gold },
+  tabPillText: { fontSize: 13, fontWeight: '600', color: C.textSec, marginLeft: 8 },
+  tabPillTextActive: { color: C.bg },
+  listCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 16, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  listImg: { width: 100, height: 100 },
+  listContent: { flex: 1, padding: 14 },
+  listType: { fontSize: 11, color: C.textMuted, fontWeight: '600', marginBottom: 4 },
+  listName: { fontSize: 16, fontWeight: '700', color: C.text },
+  listCat: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  listFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  emptyState: { alignItems: 'center', paddingVertical: 60 },
+  emptyStateTitle: { fontSize: 20, fontWeight: '700', color: C.text, marginTop: 20 },
+  invHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
+  invWelcome: { fontSize: 14, color: C.textSec },
+  invName: { fontSize: 28, fontWeight: '700', color: C.text, marginTop: 4 },
+  invStats: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 24 },
+  invStatCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, alignItems: 'center', marginHorizontal: 4 },
+  invStatValue: { fontSize: 18, fontWeight: '700', color: C.gold, marginTop: 8 },
+  invStatLabel: { fontSize: 11, color: C.textMuted, marginTop: 4 },
+  invSection: { paddingHorizontal: 20, marginBottom: 24 },
+  invSecTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 16 },
+  invActions: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  invAction: { width: '25%', padding: 6, alignItems: 'center' },
+  invActionIcon: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  invActionLabel: { fontSize: 12, color: C.textSec, fontWeight: '500' },
+  invHero: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 32 },
+  invHeroTitle: { fontSize: 32, fontWeight: '800', color: C.text, marginTop: 20, textAlign: 'center' },
+  invHeroSub: { fontSize: 15, color: C.textSec, textAlign: 'center', lineHeight: 24, marginTop: 12 },
+  invMetrics: { flexDirection: 'row', backgroundColor: C.card, marginHorizontal: 20, borderRadius: 20, padding: 24, marginBottom: 32 },
+  invMetric: { flex: 1, alignItems: 'center' },
+  invMetricV: { fontSize: 24, fontWeight: '800', color: C.gold },
+  invMetricL: { fontSize: 12, color: C.textMuted, marginTop: 4 },
+  invMetricDiv: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 16 },
+  tierCard: { padding: 20, marginBottom: 12, borderRadius: 20 },
+  tierHeader: { flexDirection: 'row', alignItems: 'center' },
+  tierBadge: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  tierHeaderText: { flex: 1, marginLeft: 14 },
+  tierName: { fontSize: 16, fontWeight: '700', color: C.text },
+  tierMin: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  tierDisc: { alignItems: 'center' },
+  tierDiscV: { fontSize: 20, fontWeight: '800', color: C.gold },
+  tierDiscL: { fontSize: 10, color: C.textMuted },
+  tierBenefits: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
+  tierBenefit: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  tierBenefitText: { fontSize: 13, color: C.textSec, marginLeft: 10 },
+  invCtaSection: { paddingHorizontal: 20, alignItems: 'center', marginBottom: 32 },
+  invCtaNote: { fontSize: 12, color: C.textMuted, marginTop: 12 },
+  profileGuestContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 32, paddingBottom: 100 },
+  profileGuestIcon: { marginBottom: 24 },
+  profileGuestIconGrad: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center' },
+  profileGuestTitle: { fontSize: 28, fontWeight: '800', color: C.text, marginBottom: 12, textAlign: 'center' },
+  profileGuestSub: { fontSize: 15, color: C.textSec, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+  profileGuestBenefits: { width: '100%', marginBottom: 32 },
+  profileGuestBenefit: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  profileGuestBenefitIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  profileGuestBenefitText: { fontSize: 15, color: C.text, fontWeight: '500' },
+  profileGuestSignIn: { fontSize: 14, color: C.textSec },
+  profileHeader: { alignItems: 'center', paddingTop: 20, paddingBottom: 30 },
+  profileAvatar: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  profileAvatarText: { fontSize: 36, fontWeight: '700', color: C.bg },
+  profileName: { fontSize: 24, fontWeight: '700', color: C.text },
+  profileEmail: { fontSize: 14, color: C.textSec, marginTop: 4 },
+  profileBadge: { marginTop: 16 },
+  profileBadgeGrad: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  profileBadgeText: { fontSize: 12, fontWeight: '700', color: C.bg, marginLeft: 6, letterSpacing: 1 },
+  profileStats: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 24 },
+  profileStatCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, alignItems: 'center', marginHorizontal: 4 },
+  profileStatV: { fontSize: 24, fontWeight: '700', color: C.gold },
+  profileStatL: { fontSize: 11, color: C.textMuted, marginTop: 4 },
+  profileSection: { paddingHorizontal: 20, marginBottom: 24 },
+  profileSecTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 },
+  profileMenu: { borderRadius: 20, overflow: 'hidden' },
+  profileMenuItem: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  profileMenuItemBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
+  profileMenuItemIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center' },
+  profileMenuItemLabel: { flex: 1, fontSize: 15, fontWeight: '500', color: C.text, marginLeft: 14 },
+  profileMenuItemRight: { flexDirection: 'row', alignItems: 'center' },
+  profileMenuItemBadge: { backgroundColor: C.error, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, marginRight: 8 },
+  profileMenuItemBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
+  logoutBtnText: { fontSize: 15, fontWeight: '600', color: C.error, marginLeft: 8 },
+  profileVersion: { fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 24 },
+  navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', overflow: 'hidden' },
+  navItem: { flex: 1, alignItems: 'center' },
+  navItemActive: { width: 44, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  navLabel: { fontSize: 11, color: C.textMuted, marginTop: 4, fontWeight: '500' },
+  navLabelActive: { color: C.gold, fontWeight: '600' },
 });
 
-// ============================================
-// APP WRAPPER
-// ============================================
-
 export default function App() {
-  return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <MainApp />
-      </AuthProvider>
-    </SafeAreaProvider>
-  );
+  return <SafeAreaProvider><AuthProvider><MainApp /></AuthProvider></SafeAreaProvider>;
 }

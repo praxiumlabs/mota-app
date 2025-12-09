@@ -1,187 +1,104 @@
 /**
  * MOTA API Service
- * Connects mobile app to backend
+ * Handles all API calls to the backend
  */
 
-// Change this to your backend URL
-// For local development: http://localhost:3001
-// For production: https://your-domain.com
-const API_BASE_URL = 'http://192.168.0.9:3001/api';
+const API_URL = 'http://192.168.0.101:5001/api'; // Update this to your backend IP
 
-// For Android emulator, use: http://10.0.2.2:3001/api
-// For iOS simulator, use: http://localhost:3001/api
-// For physical device, use your computer's IP: http://192.168.x.x:3001/api
+// Store the auth token
+let authToken: string | null = null;
 
-class ApiService {
-  private token: string | null = null;
+const api = {
+  setToken: (token: string | null) => {
+    authToken = token;
+  },
 
-  setToken(token: string | null) {
-    this.token = token;
-  }
-
-  private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    if (this.token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Request failed');
-      }
-
-      return data;
-    } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
-      throw error;
-    }
-  }
-
-  // ============================================
-  // AUTH
-  // ============================================
-
-  async login(email: string, password: string) {
-    const data = await this.request('/auth/login', {
+  // Auth endpoints
+  login: async (email: string, password: string) => {
+    const response = await fetch(`${API_URL}/users/login`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    this.token = data.token;
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Login failed');
+    if (data.token) authToken = data.token;
     return data;
-  }
+  },
 
-  async register(name: string, email: string, password: string, phone?: string) {
-    const data = await this.request('/auth/register', {
+  register: async (name: string, email: string, password: string) => {
+    const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, phone }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
     });
-    this.token = data.token;
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Registration failed');
+    if (data.token) authToken = data.token;
     return data;
-  }
+  },
 
-  // ============================================
-  // RESTAURANTS
-  // ============================================
-
-  async getRestaurants(params?: { featured?: boolean; category?: string; limit?: number }) {
-    let query = '';
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.category) queryParams.append('category', params.category);
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      query = `?${queryParams.toString()}`;
-    }
-    return this.request(`/restaurants${query}`);
-  }
-
-  async getRestaurant(id: string) {
-    return this.request(`/restaurants/${id}`);
-  }
-
-  // ============================================
-  // ACTIVITIES
-  // ============================================
-
-  async getActivities(params?: { featured?: boolean; category?: string; limit?: number }) {
-    let query = '';
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.category) queryParams.append('category', params.category);
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      query = `?${queryParams.toString()}`;
-    }
-    return this.request(`/activities${query}`);
-  }
-
-  async getActivity(id: string) {
-    return this.request(`/activities/${id}`);
-  }
-
-  // ============================================
-  // EVENTS
-  // ============================================
-
-  async getEvents(params?: { featured?: boolean; upcoming?: boolean; limit?: number }) {
-    let query = '';
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.upcoming) queryParams.append('upcoming', 'true');
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      query = `?${queryParams.toString()}`;
-    }
-    return this.request(`/events${query}`);
-  }
-
-  async getEvent(id: string) {
-    return this.request(`/events/${id}`);
-  }
-
-  async rsvpEvent(eventId: string) {
-    return this.request(`/events/${eventId}/rsvp`, {
-      method: 'POST',
+  getProfile: async () => {
+    if (!authToken) throw new Error('Not authenticated');
+    const response = await fetch(`${API_URL}/users/profile`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
     });
-  }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to get profile');
+    return data;
+  },
 
-  // ============================================
-  // OFFERS
-  // ============================================
+  // Restaurant endpoints
+  getRestaurants: async () => {
+    const response = await fetch(`${API_URL}/restaurants`);
+    if (!response.ok) return [];
+    return response.json();
+  },
 
-  async getOffers(params?: { type?: string }) {
-    let query = '';
-    if (params?.type) {
-      query = `?type=${params.type}`;
-    }
-    return this.request(`/offers${query}`);
-  }
+  // Activity endpoints
+  getActivities: async () => {
+    const response = await fetch(`${API_URL}/activities`);
+    if (!response.ok) return [];
+    return response.json();
+  },
 
-  async validateOfferCode(code: string) {
-    return this.request('/offers/validate', {
+  // Event endpoints
+  getEvents: async () => {
+    const response = await fetch(`${API_URL}/events`);
+    if (!response.ok) return [];
+    return response.json();
+  },
+
+  // Booking endpoints
+  createBooking: async (bookingData: any) => {
+    if (!authToken) throw new Error('Not authenticated');
+    const response = await fetch(`${API_URL}/bookings`, {
       method: 'POST',
-      body: JSON.stringify({ code }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(bookingData),
     });
-  }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Booking failed');
+    return data;
+  },
 
-  // ============================================
-  // BOOKINGS
-  // ============================================
-
-  async createBooking(booking: {
-    type: 'restaurant' | 'activity' | 'event';
-    itemId: string;
-    itemName: string;
-    date: string;
-    time?: string;
-    guests?: number;
-    specialRequests?: string;
-    totalPrice?: number;
-    offerCode?: string;
-  }) {
-    return this.request('/bookings', {
-      method: 'POST',
-      body: JSON.stringify(booking),
+  getMyBookings: async () => {
+    if (!authToken) throw new Error('Not authenticated');
+    const response = await fetch(`${API_URL}/bookings/my`, {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
     });
-  }
+    if (!response.ok) return [];
+    return response.json();
+  },
+};
 
-  async getMyBookings() {
-    return this.request('/bookings');
-  }
-}
-
-export const api = new ApiService();
 export default api;

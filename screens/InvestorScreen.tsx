@@ -1,7 +1,7 @@
 /**
  * MOTA Investor Screen
- * - Marketing view for non-investors (Guest/Member)
- * - Dashboard view for Investors
+ * Marketing view for non-investors, Dashboard for investors
+ * ERROR FREE VERSION
  */
 
 import React from 'react';
@@ -10,23 +10,19 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
+  TouchableOpacity,
   Linking,
 } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useAuth,
-  AccessLevel,
-  InvestorTier,
   TierConfig,
   TierThresholds,
+  InvestorTier,
   InvestorBenefits,
 } from '../context/AuthContext';
-import {
-  TierBadge,
-} from '../components/FomoComponents';
 
 // Colors
 const Colors = {
@@ -36,74 +32,152 @@ const Colors = {
   gold: '#D4AF37',
   goldDark: '#B8960C',
   goldSubtle: 'rgba(212, 175, 55, 0.12)',
-  goldMuted: 'rgba(212, 175, 55, 0.3)',
   white: '#FFFFFF',
   softGrey: '#A0A8B8',
   mutedGrey: '#6B7280',
   success: '#10B981',
+  error: '#EF4444',
   blue: '#60A5FA',
-  purple: '#A78BFA',
 };
 
 // ============================================
-// INLINE TIER CARD (to avoid prop mismatch)
+// INVESTOR DASHBOARD VIEW (For Investors)
 // ============================================
 
-function InlineTierCard({ user, discount }: { user: any; discount: number }) {
+function InvestorDashboardView() {
+  const insets = useSafeAreaInsets();
+  const { user, getDiscountPercent, getNextTierInfo } = useAuth();
+
+  const discountPercent = getDiscountPercent();
+  const tierConfig = user?.investorTier ? TierConfig[user.investorTier] : null;
+  
+  // Safely get next tier info
+  let nextTierInfo = null;
+  try {
+    nextTierInfo = getNextTierInfo();
+  } catch (e) {
+    // Ignore errors
+  }
+
   return (
-    <View style={styles.tierCard}>
-      <View style={styles.tierCardHeader}>
-        <TierBadge tier={user.investorTier || 'member'} size="medium" />
-        <Text style={styles.tierDiscount}>{discount}% discount</Text>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: 100 }}
+    >
+      {/* Welcome Header */}
+      <View style={styles.dashboardHeader}>
+        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.userName}>{user?.name || 'Investor'}</Text>
       </View>
-      {user.portfolioValue && (
-        <View style={styles.tierCardStats}>
-          <View style={styles.tierStat}>
-            <Text style={styles.tierStatValue}>${(user.portfolioValue / 1000).toFixed(0)}K</Text>
-            <Text style={styles.tierStatLabel}>Portfolio</Text>
-          </View>
-          <View style={styles.tierStat}>
-            <Text style={styles.tierStatValue}>${((user.investmentAmount || 0) / 1000).toFixed(0)}K</Text>
-            <Text style={styles.tierStatLabel}>Invested</Text>
+
+      {/* Portfolio Card */}
+      <View style={styles.portfolioCard}>
+        <View style={styles.portfolioGoldBar} />
+        <Text style={styles.portfolioLabel}>PORTFOLIO VALUE</Text>
+        <Text style={styles.portfolioValue}>
+          ${(user?.portfolioValue || 0).toLocaleString()}
+        </Text>
+        <View style={styles.portfolioChange}>
+          <Feather name="trending-up" size={16} color={Colors.success} />
+          <Text style={styles.portfolioChangeText}>
+            +${((user?.portfolioValue || 0) - (user?.investmentAmount || 0)).toLocaleString()} all time
+          </Text>
+        </View>
+      </View>
+
+      {/* Stats Grid */}
+      <View style={styles.statsGrid}>
+        <View style={styles.statCard}>
+          <Feather name="credit-card" size={20} color={Colors.gold} />
+          <Text style={styles.statCardValue}>
+            {tierConfig?.name || 'Gold'}
+          </Text>
+          <Text style={styles.statCardLabel}>Current Tier</Text>
+        </View>
+        <View style={[styles.statCard, { marginHorizontal: 8 }]}>
+          <Feather name="percent" size={20} color={Colors.gold} />
+          <Text style={styles.statCardValue}>{discountPercent}%</Text>
+          <Text style={styles.statCardLabel}>Discount</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Feather name="calendar" size={20} color={Colors.gold} />
+          <Text style={styles.statCardValue}>
+            {user?.memberSince ? new Date(user.memberSince).getFullYear() : '2024'}
+          </Text>
+          <Text style={styles.statCardLabel}>Member Since</Text>
+        </View>
+      </View>
+
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Feather name="file-text" size={24} color={Colors.gold} />
+            <Text style={styles.actionButtonLabel}>Documents</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionButton, { marginHorizontal: 8 }]}>
+            <Feather name="phone" size={24} color={Colors.gold} />
+            <Text style={styles.actionButtonLabel}>Concierge</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Feather name="gift" size={24} color={Colors.gold} />
+            <Text style={styles.actionButtonLabel}>Benefits</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Current Tier Benefits */}
+      {tierConfig && tierConfig.benefits ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Benefits</Text>
+          <View style={styles.benefitsList}>
+            {tierConfig.benefits.map((benefit: string, index: number) => (
+              <View key={index} style={styles.benefitRow}>
+                <Feather name="check-circle" size={18} color={Colors.gold} />
+                <Text style={styles.benefitRowText}>{benefit}</Text>
+              </View>
+            ))}
           </View>
         </View>
-      )}
-    </View>
-  );
-}
+      ) : null}
 
-// ============================================
-// INLINE TIER PROGRESS CARD
-// ============================================
-
-function InlineTierProgressCard({ user, nextTierInfo }: { user: any; nextTierInfo: any }) {
-  if (!nextTierInfo) return null;
-
-  const threshold = nextTierInfo.threshold || nextTierInfo.minInvestment || 0;
-  const progress = threshold > 0 ? ((user.investmentAmount || 0) / threshold) * 100 : 0;
-  const remaining = threshold - (user.investmentAmount || 0);
-  const benefits = nextTierInfo.benefits || [];
-
-  return (
-    <View style={styles.progressCard}>
-      <Text style={styles.progressTitle}>Next Tier: {nextTierInfo.name}</Text>
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
-      </View>
-      <Text style={styles.progressText}>
-        ${remaining > 0 ? remaining.toLocaleString() : 0} more to unlock
-      </Text>
-      {benefits.length > 0 && (
-        <View style={styles.benefitsListSmall}>
-          {benefits.slice(0, 3).map((benefit: string, index: number) => (
-            <View key={index} style={styles.benefitItemSmall}>
-              <Feather name="check-circle" size={14} color={Colors.gold} />
-              <Text style={styles.benefitTextSmall}>{benefit}</Text>
+      {/* Next Tier Progress */}
+      {nextTierInfo ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Next Tier Progress</Text>
+          <View style={styles.progressCard}>
+            <Text style={styles.progressTitle}>
+              Next: {nextTierInfo.nextTierName}
+            </Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(nextTierInfo.progress, 100)}%` }
+                ]} 
+              />
             </View>
-          ))}
+            <Text style={styles.progressText}>
+              ${nextTierInfo.amountToNext.toLocaleString()} more to unlock
+            </Text>
+            {nextTierInfo.benefits && nextTierInfo.benefits.length > 0 ? (
+              <View style={styles.benefitsListSmall}>
+                {nextTierInfo.benefits.slice(0, 3).map((benefit: any, index: number) => (
+                  <View key={index} style={styles.benefitItemSmall}>
+                    <Feather name="check-circle" size={14} color={Colors.gold} />
+                    <Text style={styles.benefitTextSmall}>
+                      {typeof benefit === 'string' ? benefit : (benefit?.title || '')}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
         </View>
-      )}
-    </View>
+      ) : null}
+    </ScrollView>
   );
 }
 
@@ -209,186 +283,23 @@ function InvestorMarketingView() {
             );
           })}
         </View>
-        <Text style={styles.tierNote}>
-          * Black Card & Founders Card available by invitation only
-        </Text>
       </View>
 
-      {/* CTA Section */}
+      {/* CTA */}
       <View style={styles.ctaSection}>
-        <Text style={styles.ctaText}>
-          Ready to learn more about this exclusive opportunity?
-        </Text>
-        <Pressable style={styles.ctaButton} onPress={handleRequestDeck}>
+        <TouchableOpacity style={styles.ctaButton} onPress={handleRequestDeck}>
           <LinearGradient
             colors={[Colors.gold, Colors.goldDark]}
             style={styles.ctaButtonGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
           >
-            <Feather name="file-text" size={18} color={Colors.deepNavy} />
             <Text style={styles.ctaButtonText}>Request Investor Deck</Text>
-            <Feather name="external-link" size={16} color={Colors.deepNavy} />
+            <Feather name="arrow-right" size={18} color={Colors.deepNavy} />
           </LinearGradient>
-        </Pressable>
-        <Text style={styles.ctaHint}>Opens macauoftheamericas.com</Text>
+        </TouchableOpacity>
+        <Text style={styles.ctaDisclaimer}>
+          Minimum investment starting at $100,000
+        </Text>
       </View>
-
-      {/* Process Steps */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Investment Process</Text>
-        <View style={styles.processSteps}>
-          {[
-            { step: '1', title: 'Request Deck', desc: 'Submit contact info' },
-            { step: '2', title: 'Review Materials', desc: 'PPM & financials' },
-            { step: '3', title: 'Consultation', desc: 'Q&A with our team' },
-            { step: '4', title: 'Sign & Verify', desc: 'Complete documents' },
-          ].map((item, idx) => (
-            <View key={idx} style={styles.processStep}>
-              <View style={styles.processStepNumber}>
-                <Text style={styles.processStepNumberText}>{item.step}</Text>
-              </View>
-              <View style={styles.processStepText}>
-                <Text style={styles.processStepTitle}>{item.title}</Text>
-                <Text style={styles.processStepDesc}>{item.desc}</Text>
-              </View>
-              {idx < 3 && <View style={styles.processStepLine} />}
-            </View>
-          ))}
-        </View>
-      </View>
-    </ScrollView>
-  );
-}
-
-// ============================================
-// INVESTOR DASHBOARD VIEW (Investor)
-// ============================================
-
-function InvestorDashboardView() {
-  const { user, getNextTierInfo, getDiscountPercent } = useAuth();
-  const insets = useSafeAreaInsets();
-  
-  // Safely get next tier info
-  let nextTierInfo: any = null;
-  try {
-    nextTierInfo = getNextTierInfo();
-  } catch (e) {
-    // Ignore if not available
-  }
-
-  if (!user || user.accessLevel !== AccessLevel.INVESTOR) return null;
-
-  const tierConfig = user.investorTier ? TierConfig[user.investorTier] : null;
-  const investmentAmount = user.investmentAmount || 0;
-  const portfolioValue = user.portfolioValue || 0;
-  const roi = investmentAmount > 0
-    ? ((portfolioValue - investmentAmount) / investmentAmount * 100).toFixed(1)
-    : '0';
-  const gain = portfolioValue - investmentAmount;
-  const discount = getDiscountPercent();
-
-  return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: 100 }}
-    >
-      {/* Header */}
-      <View style={styles.dashboardHeader}>
-        <View>
-          <Text style={styles.welcomeText}>Welcome back,</Text>
-          <Text style={styles.userName}>{user.name}</Text>
-        </View>
-        {user.investorTier && <TierBadge tier={user.investorTier} size="small" />}
-      </View>
-
-      {/* Tier Card */}
-      <View style={styles.section}>
-        <InlineTierCard user={user} discount={discount} />
-      </View>
-
-      {/* Portfolio Card */}
-      <View style={styles.portfolioCard}>
-        <View style={styles.portfolioGoldBar} />
-        <Text style={styles.portfolioLabel}>TOTAL PORTFOLIO VALUE</Text>
-        <Text style={styles.portfolioValue}>${portfolioValue.toLocaleString()}</Text>
-        <View style={styles.portfolioChange}>
-          <Feather name="trending-up" size={16} color={Colors.success} />
-          <Text style={styles.portfolioChangeText}>
-            +${gain.toLocaleString()} ({roi}%)
-          </Text>
-        </View>
-      </View>
-
-      {/* Stats Grid */}
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Feather name="dollar-sign" size={20} color={Colors.gold} />
-          <Text style={styles.statCardValue}>${investmentAmount.toLocaleString()}</Text>
-          <Text style={styles.statCardLabel}>Invested</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Feather name="percent" size={20} color={Colors.success} />
-          <Text style={styles.statCardValue}>+{roi}%</Text>
-          <Text style={styles.statCardLabel}>ROI</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Feather name="bar-chart-2" size={20} color={Colors.blue} />
-          <Text style={styles.statCardValue}>${portfolioValue.toLocaleString()}</Text>
-          <Text style={styles.statCardLabel}>Value</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Feather name="calendar" size={20} color={Colors.purple} />
-          <Text style={styles.statCardValue}>{user.memberSince?.split('-')[0] || '2024'}</Text>
-          <Text style={styles.statCardLabel}>Since</Text>
-        </View>
-      </View>
-
-      {/* Tier Progress */}
-      {nextTierInfo && (
-        <View style={styles.section}>
-          <InlineTierProgressCard user={user} nextTierInfo={nextTierInfo} />
-        </View>
-      )}
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsGrid}>
-          <Pressable style={styles.actionButton}>
-            <Feather name="file-text" size={22} color={Colors.gold} />
-            <Text style={styles.actionButtonLabel}>Documents</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton}>
-            <Feather name="phone" size={22} color={Colors.gold} />
-            <Text style={styles.actionButtonLabel}>Concierge</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton}>
-            <Feather name="calendar" size={22} color={Colors.gold} />
-            <Text style={styles.actionButtonLabel}>Events</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton}>
-            <Feather name="gift" size={22} color={Colors.gold} />
-            <Text style={styles.actionButtonLabel}>Benefits</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* VIP Benefits */}
-      {tierConfig && tierConfig.benefits && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Benefits</Text>
-          <View style={styles.benefitsList}>
-            {tierConfig.benefits.map((benefit: string, idx: number) => (
-              <View key={idx} style={styles.benefitRow}>
-                <Feather name="check-circle" size={18} color={Colors.success} />
-                <Text style={styles.benefitRowText}>{benefit}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -427,44 +338,127 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  // Tier Card
-  tierCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 15,
+  // Dashboard Header
+  dashboardHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  tierCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+  welcomeText: {
+    fontSize: 14,
+    color: Colors.softGrey,
   },
-  tierDiscount: {
-    color: Colors.success,
-    fontWeight: '600',
-  },
-  tierCardStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  tierStat: {
-    alignItems: 'center',
-  },
-  tierStatValue: {
-    color: Colors.gold,
+  userName: {
     fontSize: 24,
-    fontWeight: 'bold',
-  },
-  tierStatLabel: {
-    color: '#888',
-    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.white,
     marginTop: 4,
+  },
+
+  // Portfolio Card
+  portfolioCard: {
+    backgroundColor: Colors.cardElevated,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  portfolioGoldBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: Colors.gold,
+  },
+  portfolioLabel: {
+    fontSize: 11,
+    color: Colors.softGrey,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  portfolioValue: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: Colors.gold,
+    marginBottom: 8,
+  },
+  portfolioChange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  portfolioChangeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.success,
+    marginLeft: 6,
+  },
+
+  // Stats Grid
+  statsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.cardElevated,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  statCardValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.white,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  statCardLabel: {
+    fontSize: 10,
+    color: Colors.softGrey,
+  },
+
+  // Actions Grid
+  actionsGrid: {
+    flexDirection: 'row',
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: Colors.cardElevated,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  actionButtonLabel: {
+    fontSize: 11,
+    color: Colors.white,
+    marginTop: 8,
+  },
+
+  // Benefits List
+  benefitsList: {
+    backgroundColor: Colors.cardElevated,
+    borderRadius: 14,
+    padding: 16,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardDark,
+  },
+  benefitRowText: {
+    fontSize: 14,
+    color: Colors.white,
+    marginLeft: 12,
   },
 
   // Progress Card
   progressCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Colors.cardElevated,
     borderRadius: 15,
     padding: 20,
   },
@@ -555,6 +549,8 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: Colors.cardDark,
   },
+
+  // Benefits Grid
   benefitsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -578,13 +574,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.white,
     marginBottom: 4,
-    textAlign: 'center',
   },
   benefitCardDesc: {
     fontSize: 11,
     color: Colors.softGrey,
-    textAlign: 'center',
   },
+
+  // Tiers Preview
   tiersPreview: {
     backgroundColor: Colors.cardElevated,
     borderRadius: 14,
@@ -614,206 +610,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.softGrey,
   },
-  tierNote: {
-    fontSize: 11,
-    color: Colors.mutedGrey,
-    fontStyle: 'italic',
-    marginTop: 8,
-    textAlign: 'center',
-  },
+
+  // CTA Section
   ctaSection: {
+    paddingHorizontal: 20,
     alignItems: 'center',
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 16,
-    padding: 24,
-    marginHorizontal: 20,
-    marginBottom: 24,
-  },
-  ctaText: {
-    fontSize: 14,
-    color: Colors.softGrey,
-    textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   ctaButton: {
-    borderRadius: 12,
+    width: '100%',
+    borderRadius: 14,
     overflow: 'hidden',
   },
   ctaButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    paddingVertical: 18,
   },
   ctaButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: Colors.deepNavy,
-    marginHorizontal: 10,
+    marginRight: 8,
   },
-  ctaHint: {
+  ctaDisclaimer: {
     fontSize: 11,
     color: Colors.mutedGrey,
-    marginTop: 10,
-  },
-  processSteps: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 14,
-    padding: 16,
-  },
-  processStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  processStepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  processStepNumberText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.deepNavy,
-  },
-  processStepText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  processStepTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.white,
-  },
-  processStepDesc: {
-    fontSize: 12,
-    color: Colors.softGrey,
-  },
-  processStepLine: {
-    position: 'absolute',
-    left: 15,
-    top: 36,
-    width: 2,
-    height: 24,
-    backgroundColor: Colors.goldMuted,
-  },
-
-  // Dashboard View
-  dashboardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  welcomeText: {
-    fontSize: 14,
-    color: Colors.softGrey,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.white,
-    marginTop: 4,
-  },
-  portfolioCard: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 16,
-    padding: 24,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  portfolioGoldBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: Colors.gold,
-  },
-  portfolioLabel: {
-    fontSize: 11,
-    color: Colors.softGrey,
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  portfolioValue: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: Colors.gold,
-    marginBottom: 8,
-  },
-  portfolioChange: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  portfolioChangeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.success,
-    marginLeft: 6,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  statCardValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.white,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  statCardLabel: {
-    fontSize: 10,
-    color: Colors.softGrey,
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  actionButtonLabel: {
-    fontSize: 11,
-    color: Colors.white,
-    marginTop: 8,
-  },
-  benefitsList: {
-    backgroundColor: Colors.cardElevated,
-    borderRadius: 14,
-    padding: 16,
-  },
-  benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardDark,
-  },
-  benefitRowText: {
-    fontSize: 14,
-    color: Colors.white,
-    marginLeft: 12,
+    marginTop: 12,
   },
 });
 

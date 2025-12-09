@@ -1,57 +1,74 @@
 /**
- * MOTA Bottom Sheet Modal
- * Non-disruptive modal that slides up from bottom
- * Fixed keyboard handling
+ * MOTA Bottom Sheet
+ * 
+ * Modal that slides up from bottom of screen
+ * - Covers ~70% of screen height
+ * - Drag handle at top
+ * - Tap outside to dismiss
+ * - Dimmed background
  */
 
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  StyleSheet,
   Modal,
-  Pressable,
+  TouchableWithoutFeedback,
   Animated,
   Dimensions,
+  StyleSheet,
   PanResponder,
-  Platform,
-  Keyboard,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const Colors = {
-  cardDark: '#0D1729',
-  mutedGrey: '#6B7280',
-  overlay: 'rgba(0, 0, 0, 0.6)',
-};
+const { height } = Dimensions.get('window');
+const SHEET_HEIGHT = height * 0.75;
 
 interface BottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  height?: number | string;
-  showHandle?: boolean;
 }
 
-export function BottomSheet({
-  isVisible,
-  onClose,
-  children,
-  height = '70%',
-  showHandle = true,
-}: BottomSheetProps) {
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
+export default function BottomSheet({ isVisible, onClose, children }: BottomSheetProps) {
+  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
-  const sheetHeight = typeof height === 'string' 
-    ? (parseFloat(height) / 100) * SCREEN_HEIGHT 
-    : height;
+  useEffect(() => {
+    if (isVisible) {
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          damping: 20,
+          stiffness: 150,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isVisible]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return gestureState.dy > 10;
+        return gestureState.dy > 5;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
@@ -60,60 +77,16 @@ export function BottomSheet({
       },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy > 100 || gestureState.vy > 0.5) {
-          closeSheet();
+          onClose();
         } else {
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
-            bounciness: 4,
           }).start();
         }
       },
     })
   ).current;
-
-  useEffect(() => {
-    if (isVisible) {
-      openSheet();
-    } else {
-      closeSheet();
-    }
-  }, [isVisible]);
-
-  const openSheet = () => {
-    Animated.parallel([
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 4,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const closeSheet = () => {
-    Keyboard.dismiss();
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: SCREEN_HEIGHT,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      if (isVisible) {
-        onClose();
-      }
-    });
-  };
 
   if (!isVisible) return null;
 
@@ -122,32 +95,37 @@ export function BottomSheet({
       visible={isVisible}
       transparent
       animationType="none"
-      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        {/* Overlay */}
-        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
-        </Animated.View>
+        {/* Backdrop */}
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View style={[styles.backdrop, { opacity }]} />
+        </TouchableWithoutFeedback>
 
-        {/* Sheet - NO KeyboardAvoidingView wrapper */}
+        {/* Sheet */}
         <Animated.View
           style={[
             styles.sheet,
             {
-              height: sheetHeight,
               transform: [{ translateY }],
             },
           ]}
         >
-          {showHandle && (
-            <View style={styles.handleContainer} {...panResponder.panHandlers}>
+          <LinearGradient
+            colors={['#152347', '#101C40', '#0A122A']}
+            style={styles.sheetGradient}
+          >
+            {/* Drag Handle */}
+            <View {...panResponder.panHandlers} style={styles.handleArea}>
               <View style={styles.handle} />
             </View>
-          )}
 
-          <View style={styles.content}>{children}</View>
+            {/* Content */}
+            <View style={styles.content}>
+              {children}
+            </View>
+          </LinearGradient>
         </Animated.View>
       </View>
     </Modal>
@@ -159,29 +137,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  overlay: {
+  backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.overlay,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   sheet: {
-    backgroundColor: Colors.cardDark,
+    height: SHEET_HEIGHT,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
   },
-  handleContainer: {
+  sheetGradient: {
+    flex: 1,
+  },
+  handleArea: {
     paddingVertical: 12,
     alignItems: 'center',
   },
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: Colors.mutedGrey,
     borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   content: {
     flex: 1,
   },
 });
-
-export default BottomSheet;
