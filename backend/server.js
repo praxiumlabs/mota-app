@@ -447,6 +447,152 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+
+
+// Get current user profile
+app.get('/api/users/profile', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update current user profile
+app.put('/api/users/profile', authenticateUser, async (req, res) => {
+  try {
+    const { password, accessLevel, investorTier, ...updateData } = req.body;
+    updateData.updatedAt = new Date();
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      updateData, 
+      { new: true }
+    ).select('-password');
+    
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// COPY THE COMPLETE ROUTE BELOW IF YOU NEED
+// FULL REPLACEMENT OF USER AUTH SECTION
+// ============================================
+
+/*
+// ============================================
+// USER AUTH ROUTES
+// ============================================
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, accessLevel: user.accessLevel },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ token, user: userObj });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const user = await User.create({
+      email: email.toLowerCase(),
+      password: bcrypt.hashSync(password, 10),
+      name,
+      phone,
+      accessLevel: 'member'
+    });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, accessLevel: user.accessLevel },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ token, user: userObj });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get current user profile
+app.get('/api/users/profile', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update current user profile
+app.put('/api/users/profile', authenticateUser, async (req, res) => {
+  try {
+    const { password, accessLevel, investorTier, ...updateData } = req.body;
+    updateData.updatedAt = new Date();
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      updateData, 
+      { new: true }
+    ).select('-password');
+    
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ============================================
 // RESTAURANT ROUTES
 // ============================================
