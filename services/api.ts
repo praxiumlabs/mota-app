@@ -1,471 +1,547 @@
 /**
  * MOTA API Service
- * Production-ready API client with proper error handling
- * 
- * @version 2.1 - Fixed timeout handling
- * @author MOTA Development Team
+ * Connects to real backend with fallback to local data
  */
 
-// ============================================
-// CONFIGURATION
-// ============================================
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// IMPORTANT: Update this to your computer's IP address
-// Find it by running 'ipconfig' in PowerShell and look for IPv4 Address
-// Example: If your IP is 192.168.1.5, change the line below to:
-// const API_BASE_URL = 'http://192.168.1.5:3001/api';
-
-//const API_BASE_URL = 'http://192.168.0.9:3001/api';
+// API Configuration
 const API_BASE_URL = 'https://unpromotable-manda-sprayfully.ngrok-free.dev/api';
+const TOKEN_KEY = 'mota_auth_token';
+const USER_KEY = 'mota_user';
 
-// Request timeout in milliseconds (15 seconds)
-const TIMEOUT_MS = 15000;
+class ApiService {
+  private token: string | null = null;
+  private isInitialized = false;
 
-// Store the auth token in memory
-let authToken: string | null = null;
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Fetch with timeout - wraps fetch to add timeout functionality
- */
-const fetchWithTimeout = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-    console.log('API: Request timed out after', TIMEOUT_MS, 'ms');
-  }, TIMEOUT_MS);
-  
-  try {
-    console.log('API: Fetching', url);
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    console.log('API: Response received, status:', response.status);
-    return response;
-  } catch (error: any) {
-    clearTimeout(timeoutId);
-    
-    if (error.name === 'AbortError') {
-      console.error('API: Request aborted (timeout)');
-      throw new Error('Connection timeout. Please check:\n1. Backend is running (node server.js)\n2. IP address is correct in api.ts\n3. Your phone/emulator is on same network');
-    }
-    
-    // Network error (no connection)
-    if (error.message === 'Network request failed') {
-      console.error('API: Network request failed');
-      throw new Error('Cannot connect to server. Please check:\n1. Backend is running on port 3001\n2. IP address in api.ts matches your computer\n3. Phone and computer are on same WiFi');
-    }
-    
-    console.error('API: Fetch error:', error.message);
-    throw error;
+  constructor() {
+    this.init();
   }
-};
 
-const getHeaders = (includeAuth: boolean = false): HeadersInit => {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-  
-  if (includeAuth && authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
+  private async init() {
+    try {
+      this.token = await AsyncStorage.getItem(TOKEN_KEY);
+      this.isInitialized = true;
+    } catch (e) {
+      this.isInitialized = true;
+    }
   }
-  
-  return headers;
-};
 
-const handleResponse = async (response: Response) => {
-  let data;
-  
-  try {
-    const text = await response.text();
-    data = text ? JSON.parse(text) : {};
-  } catch (parseError) {
-    console.error('API: Failed to parse response');
-    throw new Error('Invalid server response');
+  private async ensureInitialized() {
+    if (!this.isInitialized) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
-  
-  if (!response.ok) {
-    const errorMessage = data.error || data.message || `Request failed with status ${response.status}`;
-    console.error('API: Error response:', errorMessage);
-    throw new Error(errorMessage);
+
+  setToken(token: string | null) {
+    this.token = token;
+    if (token) {
+      AsyncStorage.setItem(TOKEN_KEY, token);
+    } else {
+      AsyncStorage.removeItem(TOKEN_KEY);
+      AsyncStorage.removeItem(USER_KEY);
+    }
   }
-  
-  return data;
-};
 
-// ============================================
-// API SERVICE
-// ============================================
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    await this.ensureInitialized();
+    
+    const url = `${API_BASE_URL}${endpoint}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      ...(options.headers as Record<string, string>),
+    };
 
-const api = {
-  // Token management
-  setToken: (token: string | null) => {
-    authToken = token;
-    console.log('API: Auth token', token ? 'SET' : 'CLEARED');
-  },
-  
-  getToken: () => authToken,
-
-  // ==========================================
-  // AUTHENTICATION ENDPOINTS
-  // Backend uses /auth/login and /auth/register
-  // ==========================================
-  
-  login: async (email: string, password: string) => {
-    console.log('API: Login attempt for:', email);
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ email, password }),
-    });
-    
-    const data = await handleResponse(response);
-    
-    if (data.token) {
-      authToken = data.token;
-      console.log('API: Login successful');
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
-    
-    return data;
-  },
 
-  register: async (name: string, email: string, password: string) => {
-    console.log('API: Register attempt for:', email);
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ name, email, password }),
-    });
-    
-    const data = await handleResponse(response);
-    
-    if (data.token) {
-      authToken = data.token;
-      console.log('API: Registration successful');
+    try {
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Request failed');
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error(`API Error [${endpoint}]:`, error.message);
+      throw error;
     }
-    
-    return data;
-  },
+  }
 
-  // ==========================================
-  // USER PROFILE
-  // ==========================================
-  
-  getProfile: async () => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
+  // ============================================
+  // AUTH
+  // ============================================
+  async login(email: string, password: string) {
+    try {
+      const data = await this.request<{ token: string; user: any }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      
+      this.setToken(data.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      
+      return { token: data.token, user: data.user };
+    } catch (error: any) {
+      return { error: error.message || 'Login failed' };
     }
-    
-    console.log('API: Fetching profile');
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/users/profile`, {
-      method: 'GET',
-      headers: getHeaders(true),
-    });
-    
-    return handleResponse(response);
-  },
+  }
 
-  updateProfile: async (updates: any) => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
+  async register(name: string, email: string, password: string) {
+    try {
+      const data = await this.request<{ token: string; user: any }>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password }),
+      });
+      
+      this.setToken(data.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      
+      return { token: data.token, user: data.user };
+    } catch (error: any) {
+      return { error: error.message || 'Registration failed' };
     }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/users/profile`, {
-      method: 'PUT',
-      headers: getHeaders(true),
-      body: JSON.stringify(updates),
-    });
-    
-    return handleResponse(response);
-  },
+  }
 
-  // ==========================================
+  async getProfile() {
+    try {
+      const cached = await AsyncStorage.getItem(USER_KEY);
+      if (cached) return JSON.parse(cached);
+      
+      const user = await this.request<any>('/auth/me');
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+      return user;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async logout() {
+    this.setToken(null);
+  }
+
+  // ============================================
+  // LODGING
+  // ============================================
+  async getLodging(params?: any) {
+    try {
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      const data = await this.request<{ lodging: any[] }>(`/lodging?${query}`);
+      return data.lodging || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getFeaturedLodging() {
+    try {
+      return await this.request<any[]>('/lodging/featured');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getLodgingById(id: string) {
+    return this.request<any>(`/lodging/${id}`);
+  }
+
+  // ============================================
   // RESTAURANTS
-  // ==========================================
-  
-  getRestaurants: async (params?: { featured?: boolean; category?: string; limit?: number }) => {
-    let url = `${API_BASE_URL}/restaurants`;
-    
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.category) queryParams.append('category', params.category);
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      
-      const queryString = queryParams.toString();
-      if (queryString) url += `?${queryString}`;
-    }
-    
+  // ============================================
+  async getRestaurants(params?: { featured?: boolean; limit?: number; cuisine?: string; priceRange?: string }) {
     try {
-      const response = await fetchWithTimeout(url, { 
-        method: 'GET',
-        headers: getHeaders() 
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching restaurants:', error);
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      const data = await this.request<{ restaurants: any[] }>(`/restaurants?${query}`);
+      return data.restaurants || [];
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  getRestaurant: async (id: string) => {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/restaurants/${id}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  async getFeaturedRestaurants() {
+    try {
+      return await this.request<any[]>('/restaurants/featured');
+    } catch (e) {
+      return [];
+    }
+  }
 
-  // ==========================================
+  async getRestaurant(id: string) {
+    return this.request<any>(`/restaurants/${id}`);
+  }
+
+  // ============================================
   // ACTIVITIES
-  // ==========================================
-  
-  getActivities: async (params?: { featured?: boolean; category?: string; limit?: number }) => {
-    let url = `${API_BASE_URL}/activities`;
-    
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.category) queryParams.append('category', params.category);
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      
-      const queryString = queryParams.toString();
-      if (queryString) url += `?${queryString}`;
-    }
-    
+  // ============================================
+  async getActivities(params?: { featured?: boolean; category?: string; limit?: number }) {
     try {
-      const response = await fetchWithTimeout(url, { 
-        method: 'GET',
-        headers: getHeaders() 
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching activities:', error);
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      const data = await this.request<{ activities: any[] }>(`/activities?${query}`);
+      return data.activities || [];
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  getActivity: async (id: string) => {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/activities/${id}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-    return handleResponse(response);
-  },
+  async getFeaturedActivities() {
+    try {
+      return await this.request<any[]>('/activities/featured');
+    } catch (e) {
+      return [];
+    }
+  }
 
-  // ==========================================
+  async getActivity(id: string) {
+    return this.request<any>(`/activities/${id}`);
+  }
+
+  // ============================================
   // EVENTS
-  // ==========================================
-  
-  getEvents: async (params?: { featured?: boolean; upcoming?: boolean; limit?: number }) => {
-    let url = `${API_BASE_URL}/events`;
-    
-    if (params) {
-      const queryParams = new URLSearchParams();
-      if (params.featured) queryParams.append('featured', 'true');
-      if (params.upcoming) queryParams.append('upcoming', 'true');
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      
-      const queryString = queryParams.toString();
-      if (queryString) url += `?${queryString}`;
-    }
-    
+  // ============================================
+  async getEvents(params?: { featured?: boolean; upcoming?: boolean; limit?: number }) {
     try {
-      const response = await fetchWithTimeout(url, { 
-        method: 'GET',
-        headers: getHeaders() 
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching events:', error);
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      const data = await this.request<{ events: any[] }>(`/events?${query}`);
+      return data.events || [];
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  getEvent: async (id: string) => {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/events/${id}`, {
-      method: 'GET',
-      headers: getHeaders(),
+  async getUpcomingEvents() {
+    try {
+      return await this.request<any[]>('/events/upcoming');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getEvent(id: string) {
+    return this.request<any>(`/events/${id}`);
+  }
+
+  async rsvpEvent(eventId: string, data: { guests: number; dietaryRequirements?: string; specialRequests?: string }) {
+    return this.request<any>(`/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
-    return handleResponse(response);
-  },
+  }
 
-  // ==========================================
-  // BOOKINGS
-  // ==========================================
-  
-  createBooking: async (bookingData: {
-    type: 'restaurant' | 'activity' | 'event';
+  async cancelRSVP(eventId: string) {
+    return this.request<any>(`/events/${eventId}/rsvp`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getMyRSVPs() {
+    try {
+      return await this.request<any[]>('/events/user/rsvps');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ============================================
+  // RESERVATIONS
+  // ============================================
+  async createBooking(data: {
+    type: 'restaurant' | 'activity' | 'lodging' | 'nightlife';
     itemId: string;
     itemName: string;
     date: string;
     time?: string;
     guests: number;
-    notes?: string;
-    totalPrice?: number;
-  }) => {
-    if (!authToken) {
-      throw new Error('Please sign in to make a booking');
-    }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/bookings`, {
+    specialRequests?: string;
+    dietaryRequirements?: string;
+    occasion?: string;
+  }) {
+    return this.request<any>('/reservations', {
       method: 'POST',
-      headers: getHeaders(true),
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(data),
     });
-    
-    return handleResponse(response);
-  },
+  }
 
-  getMyBookings: async () => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
-    }
-    
+  async getMyBookings(params?: { status?: string; type?: string }) {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/bookings`, {
-        method: 'GET',
-        headers: getHeaders(true),
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching bookings:', error);
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      return await this.request<any[]>(`/reservations/my?${query}`);
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  cancelBooking: async (bookingId: string) => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
-    }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
+  async cancelBooking(id: string, reason?: string) {
+    return this.request<any>(`/reservations/${id}/cancel`, {
       method: 'PUT',
-      headers: getHeaders(true),
+      body: JSON.stringify({ reason }),
     });
-    
-    return handleResponse(response);
-  },
+  }
 
-  // ==========================================
-  // OFFERS
-  // ==========================================
-  
-  getOffers: async () => {
+  // ============================================
+  // CONCIERGE
+  // ============================================
+  async submitConciergeRequest(data: {
+    serviceCategory: string;
+    serviceName: string;
+    selectedOption: string;
+    preferredDate: string;
+    preferredTime?: string;
+    guestCount?: number;
+    specialRequests?: string;
+  }) {
+    return this.request<any>('/concierge/request', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async submitVIPConciergeRequest(data: any) {
+    return this.request<any>('/concierge/vip-request', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMyConciergeRequests() {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/offers`, {
-        method: 'GET',
-        headers: getHeaders(),
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching offers:', error);
+      return await this.request<any[]>('/concierge/my-requests');
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  validateOfferCode: async (code: string) => {
-    if (!authToken) {
-      throw new Error('Please sign in to use offer codes');
-    }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/offers/validate`, {
-      method: 'POST',
-      headers: getHeaders(true),
-      body: JSON.stringify({ code }),
+  // ============================================
+  // USER / FAVORITES
+  // ============================================
+  async updateProfile(data: Partial<{ name: string; phone: string; avatar: string }>) {
+    const user = await this.request<any>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
-    
-    return handleResponse(response);
-  },
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    return user;
+  }
 
-  // ==========================================
-  // FAVORITES
-  // ==========================================
-  
-  addFavorite: async (itemId: string, itemType: 'restaurant' | 'activity' | 'event') => {
-    if (!authToken) {
-      throw new Error('Please sign in to save favorites');
-    }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/users/favorites`, {
+  async addFavorite(itemId: string, itemType: string) {
+    return this.request<any>('/users/favorites', {
       method: 'POST',
-      headers: getHeaders(true),
       body: JSON.stringify({ itemId, itemType }),
     });
-    
-    return handleResponse(response);
-  },
+  }
 
-  removeFavorite: async (itemId: string) => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
-    }
-    
-    const response = await fetchWithTimeout(`${API_BASE_URL}/users/favorites/${itemId}`, {
+  async removeFavorite(itemId: string) {
+    return this.request<any>(`/users/favorites/${itemId}`, {
       method: 'DELETE',
-      headers: getHeaders(true),
     });
-    
-    return handleResponse(response);
-  },
+  }
 
-  getFavorites: async () => {
-    if (!authToken) {
-      throw new Error('Not authenticated');
-    }
-    
+  async getMyFavorites() {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/users/favorites`, {
-        method: 'GET',
-        headers: getHeaders(true),
-      });
-      return handleResponse(response);
-    } catch (error) {
-      console.error('API: Error fetching favorites:', error);
+      const user = await this.getProfile();
+      if (!user) return [];
+      return await this.request<any[]>(`/users/${user._id}/favorites`);
+    } catch (e) {
       return [];
     }
-  },
+  }
 
-  // ==========================================
-  // UTILITY
-  // ==========================================
-  
-  healthCheck: async () => {
+  // ============================================
+  // INVESTOR
+  // ============================================
+  async getInvestorDashboard() {
+    return this.request<any>('/investors/dashboard');
+  }
+
+  async getInvestmentHistory() {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL.replace('/api', '')}`, {
-        method: 'GET',
-        headers: getHeaders(),
-      });
-      return { status: 'ok', statusCode: response.status };
-    } catch (error: any) {
-      console.error('API: Health check failed:', error.message);
-      throw error;
+      return await this.request<any[]>('/investors/history');
+    } catch (e) {
+      return [];
     }
-  },
+  }
 
-  // Test connection - useful for debugging
-  testConnection: async () => {
-    console.log('API: Testing connection to', API_BASE_URL);
+  async getDocuments() {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL.replace('/api', '')}`, {
-        method: 'GET',
-      });
-      console.log('API: Connection test successful, status:', response.status);
-      return true;
-    } catch (error: any) {
-      console.error('API: Connection test failed:', error.message);
-      return false;
+      return await this.request<any[]>('/investors/documents');
+    } catch (e) {
+      return [];
     }
-  },
-};
+  }
 
-export default api;
+  async getProjectUpdates() {
+    try {
+      return await this.request<any[]>('/investors/updates');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getFundingTimeline() {
+    try {
+      return await this.request<any[]>('/funding/timeline');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ============================================
+  // SUPPORT CHAT
+  // ============================================
+  async getSupportChat() {
+    return this.request<any>('/support/chat');
+  }
+
+  async sendSupportMessage(message: string, ticketId?: string) {
+    return this.request<any>('/support/message', {
+      method: 'POST',
+      body: JSON.stringify({ message, ticketId }),
+    });
+  }
+
+  async getSupportMessages() {
+    try {
+      const chat = await this.getSupportChat();
+      return chat.messages || [];
+    } catch (e) {
+      return [{ _id: 'msg_001', sender: 'support', content: 'Welcome! How can we help you today?', createdAt: new Date().toISOString() }];
+    }
+  }
+
+  // ============================================
+  // OFFERS
+  // ============================================
+  async getOffers(params?: { type?: string; tier?: string; category?: string }) {
+    try {
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      return await this.request<any[]>(`/offers?${query}`);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async validateOfferCode(code: string) {
+    try {
+      return await this.request<any>('/offers/validate', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      });
+    } catch (e) {
+      return { valid: false };
+    }
+  }
+
+  // ============================================
+  // NIGHTLIFE
+  // ============================================
+  async getNightlife(params?: { type?: string; featured?: boolean }) {
+    try {
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      // Note: nightlife routes would need to be added to backend
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ============================================
+  // NEWSLETTER
+  // ============================================
+  async subscribe(email: string, name?: string) {
+    return this.request<any>('/newsletter/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email, name }),
+    });
+  }
+
+  // ============================================
+  // GENERIC HTTP METHODS
+  // ============================================
+  async get<T = any>(endpoint: string): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint);
+    return { data };
+  }
+
+  async post<T = any>(endpoint: string, body?: any): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  }
+
+  async put<T = any>(endpoint: string, body?: any): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint, {
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  }
+
+  async delete<T = any>(endpoint: string): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint, {
+      method: 'DELETE',
+    });
+    return { data };
+  }
+
+  // ============================================
+  // CONTENT
+  // ============================================
+  async getSlideshow() {
+    try {
+      const data = await this.request<{ slides: any[] }>('/content/slideshow/homepage');
+      return data.slides || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getContent(key: string) {
+    try {
+      return await this.request<any>(`/content/${key}`);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
+export default new ApiService();

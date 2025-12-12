@@ -3,1797 +3,1489 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOTA Admin Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>MOTA Admin CMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary: #D4AF37;
-      --primary-dark: #B8860B;
-      --bg-dark: #0a0a0a;
-      --bg-card: #1a1a2e;
-      --bg-input: #2a2a3e;
-      --text-white: #ffffff;
-      --text-gray: #888888;
-      --success: #4CAF50;
-      --warning: #FF9800;
-      --danger: #f44336;
-      --gold: linear-gradient(135deg, #D4AF37, #B8860B);
-      --platinum: linear-gradient(135deg, #E5E4E2, #C9C9C9);
-      --diamond: linear-gradient(135deg, #B9F2FF, #E0FFFF);
-      --black-tier: linear-gradient(135deg, #000000, #333333);
-      --founders: linear-gradient(135deg, #FFD700, #FFA500);
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-white);
-      min-height: 100vh;
-    }
-
-    /* Login Screen */
-    .login-screen {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .login-card {
-      background: var(--bg-card);
-      padding: 40px;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .login-logo {
-      font-size: 48px;
-      font-weight: bold;
-      color: var(--primary);
-      letter-spacing: 8px;
-      margin-bottom: 10px;
-    }
-
-    .login-subtitle {
-      color: var(--text-gray);
-      margin-bottom: 30px;
-    }
-
-    .login-form input {
-      width: 100%;
-      padding: 15px;
-      background: var(--bg-input);
-      border: 1px solid transparent;
-      border-radius: 10px;
-      color: var(--text-white);
-      margin-bottom: 15px;
-      font-size: 16px;
-    }
-
-    .login-form input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 15px;
-      background: var(--gold);
-      border: none;
-      border-radius: 10px;
-      color: var(--bg-dark);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .login-btn:hover {
-      transform: scale(1.02);
-    }
-
-    .login-error {
-      color: var(--danger);
-      margin-top: 15px;
-      display: none;
-    }
-
-    /* Dashboard Layout */
-    .dashboard {
-      display: none;
-    }
-
-    .dashboard.active {
-      display: flex;
-    }
-
-    .sidebar {
-      width: 250px;
-      background: var(--bg-card);
-      min-height: 100vh;
-      padding: 20px;
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      overflow-y: auto;
-    }
-
-    .sidebar-logo {
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--primary);
-      letter-spacing: 5px;
-      margin-bottom: 5px;
-    }
-
-    .sidebar-subtitle {
-      color: var(--text-gray);
-      font-size: 12px;
-      margin-bottom: 30px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 15px;
-      color: var(--text-gray);
-      text-decoration: none;
-      border-radius: 10px;
-      margin-bottom: 5px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .nav-item:hover, .nav-item.active {
-      background: rgba(212, 175, 55, 0.1);
-      color: var(--primary);
-    }
-
-    .nav-item i {
-      width: 24px;
-      margin-right: 12px;
-    }
-
-    .main-content {
-      flex: 1;
-      margin-left: 250px;
-      padding: 30px;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-    }
-
-    .page-title {
-      font-size: 28px;
-      font-weight: 600;
-    }
-
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: var(--gold);
-      color: var(--bg-dark);
-    }
-
-    .btn-primary:hover {
-      transform: scale(1.02);
-    }
-
-    .btn-secondary {
-      background: var(--bg-input);
-      color: var(--text-white);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn-small {
-      padding: 8px 16px;
-      font-size: 12px;
-    }
-
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      padding: 25px;
-      border-radius: 15px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--gold);
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    .stat-label {
-      color: var(--text-gray);
-      margin-top: 5px;
-    }
-
-    .stat-icon {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 40px;
-      opacity: 0.2;
-      color: var(--primary);
-    }
-
-    /* Tables */
-    .table-container {
-      background: var(--bg-card);
-      border-radius: 15px;
-      overflow: hidden;
-    }
-
-    .table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .table-title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .search-box {
-      display: flex;
-      align-items: center;
-      background: var(--bg-input);
-      padding: 10px 15px;
-      border-radius: 10px;
-    }
-
-    .search-box input {
-      background: none;
-      border: none;
-      color: var(--text-white);
-      margin-left: 10px;
-      width: 200px;
-    }
-
-    .search-box input:focus {
-      outline: none;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 15px 20px;
-      text-align: left;
-    }
-
-    th {
-      background: rgba(0,0,0,0.2);
-      color: var(--text-gray);
-      font-weight: 500;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    tr {
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-
-    tr:hover {
-      background: rgba(212, 175, 55, 0.05);
-    }
-
-    .item-image {
-      width: 50px;
-      height: 50px;
-      border-radius: 10px;
-      object-fit: cover;
-    }
-
-    .tier-badge {
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .tier-member { background: var(--bg-input); color: var(--text-white); }
-    .tier-gold { background: var(--gold); color: var(--bg-dark); }
-    .tier-platinum { background: var(--platinum); color: var(--bg-dark); }
-    .tier-diamond { background: var(--diamond); color: var(--bg-dark); }
-    .tier-black { background: var(--black-tier); color: var(--text-white); }
-    .tier-founders { background: var(--founders); color: var(--bg-dark); }
-
-    .status-badge {
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .status-active { background: rgba(76, 175, 80, 0.2); color: var(--success); }
-    .status-pending { background: rgba(255, 152, 0, 0.2); color: var(--warning); }
-    .status-inactive { background: rgba(244, 67, 54, 0.2); color: var(--danger); }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .action-btn {
-      width: 35px;
-      height: 35px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .action-btn.edit {
-      background: rgba(212, 175, 55, 0.2);
-      color: var(--primary);
-    }
-
-    .action-btn.delete {
-      background: rgba(244, 67, 54, 0.2);
-      color: var(--danger);
-    }
-
-    .action-btn:hover {
-      transform: scale(1.1);
-    }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal {
-      background: var(--bg-card);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .modal-close {
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      background: var(--bg-input);
-      border: none;
-      color: var(--text-white);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-label {
-      display: block;
-      color: var(--text-gray);
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      padding: 12px 15px;
-      background: var(--bg-input);
-      border: 1px solid transparent;
-      border-radius: 10px;
-      color: var(--text-white);
-      font-size: 14px;
-    }
-
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .form-textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .form-select {
-      cursor: pointer;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-
-    .modal-footer {
-      padding: 20px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      padding: 15px 25px;
-      background: var(--success);
-      color: white;
-      border-radius: 10px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      z-index: 2000;
-      animation: slideIn 0.3s ease;
-    }
-
-    .toast.active {
-      display: flex;
-    }
-
-    .toast.error {
-      background: var(--danger);
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    /* Loading */
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 40px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--bg-input);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Page Sections */
-    .page-section {
-      display: none;
-    }
-
-    .page-section.active {
-      display: block;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-
-      .main-content {
-        margin-left: 0;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .logout-btn {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-    }
-
-    .price-calculator {
-      background: var(--bg-input);
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      font-size: 13px;
-    }
-
-    .price-row span:first-child {
-      color: var(--text-gray);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-gray);
-    }
-
-    .empty-state i {
-      font-size: 60px;
-      margin-bottom: 20px;
-      opacity: 0.5;
-    }
+    :root { --bg-primary:#0a0a0f; --bg-secondary:#12121a; --bg-tertiary:#1a1a25; --bg-card:#15151f; --border:#2a2a3a; --text-primary:#fff; --text-secondary:#a0a0b0; --text-muted:#606070; --accent:#c9a962; --accent-hover:#d4b872; --success:#4ade80; --warning:#fbbf24; --danger:#f87171; --info:#60a5fa; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg-primary); color:var(--text-primary); min-height:100vh; }
+    
+    .login-container { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .login-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:48px; width:100%; max-width:420px; }
+    .login-logo { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; color:var(--accent); text-align:center; margin-bottom:8px; letter-spacing:4px; }
+    .login-subtitle { text-align:center; color:var(--text-secondary); margin-bottom:32px; font-size:14px; }
+    
+    .form-group { margin-bottom:20px; }
+    .form-label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:8px; }
+    .form-input,.form-select,.form-textarea { width:100%; padding:12px 14px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-primary); font-size:14px; transition:all 0.2s; }
+    .form-input:focus,.form-select:focus,.form-textarea:focus { outline:none; border-color:var(--accent); }
+    .form-textarea { min-height:100px; resize:vertical; font-family:inherit; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+    .form-error { background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:var(--danger); padding:12px; border-radius:8px; margin-bottom:16px; font-size:14px; }
+    .form-help { font-size:12px; color:var(--text-muted); margin-top:4px; }
+    
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; border:none; }
+    .btn-primary { background:var(--accent); color:var(--bg-primary); }
+    .btn-primary:hover { background:var(--accent-hover); }
+    .btn-secondary { background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border); }
+    .btn-secondary:hover { border-color:var(--accent); }
+    .btn-danger { background:rgba(248,113,113,0.1); color:var(--danger); border:1px solid rgba(248,113,113,0.3); }
+    .btn-danger:hover { background:rgba(248,113,113,0.2); }
+    .btn-success { background:rgba(74,222,128,0.1); color:var(--success); border:1px solid rgba(74,222,128,0.3); }
+    .btn-sm { padding:8px 14px; font-size:13px; }
+    .btn-block { width:100%; }
+    
+    .dashboard { display:flex; min-height:100vh; }
+    .sidebar { width:260px; background:var(--bg-secondary); border-right:1px solid var(--border); padding:24px 0; position:fixed; height:100vh; overflow-y:auto; }
+    .sidebar-logo { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--accent); padding:0 24px; margin-bottom:4px; letter-spacing:3px; }
+    .sidebar-subtitle { font-size:11px; color:var(--text-muted); padding:0 24px; margin-bottom:32px; text-transform:uppercase; letter-spacing:1px; }
+    .nav-item { display:flex; align-items:center; gap:12px; padding:12px 24px; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; font-size:14px; }
+    .nav-item:hover { background:var(--bg-tertiary); color:var(--text-primary); }
+    .nav-item.active { background:rgba(201,169,98,0.1); color:var(--accent); border-right:2px solid var(--accent); }
+    .main-content { flex:1; margin-left:260px; padding:32px; }
+    
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+    .page-title { font-family:'Playfair Display',serif; font-size:28px; font-weight:600; }
+    .page-subtitle { color:var(--text-secondary); font-size:14px; margin-top:4px; }
+    .page-actions { display:flex; gap:12px; }
+    
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:20px; margin-bottom:32px; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px; transition:all 0.2s; }
+    .stat-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+    .stat-label { font-size:13px; color:var(--text-secondary); margin-bottom:8px; }
+    .stat-value { font-size:28px; font-weight:700; }
+    .stat-change { font-size:12px; margin-top:4px; }
+    .stat-change.up { color:var(--success); }
+    .stat-change.down { color:var(--danger); }
+    
+    .card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:24px; }
+    .card-header { display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid var(--border); }
+    .card-title { font-size:16px; font-weight:600; }
+    .card-body { padding:24px; }
+    
+    .table-container { overflow-x:auto; }
+    .table { width:100%; border-collapse:collapse; min-width:600px; }
+    .table th { text-align:left; padding:14px 16px; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); white-space:nowrap; }
+    .table td { padding:14px 16px; font-size:14px; border-bottom:1px solid var(--border); }
+    .table tr:hover td { background:var(--bg-tertiary); }
+    .table-img { width:50px; height:50px; border-radius:8px; object-fit:cover; background:var(--bg-tertiary); }
+    
+    .badge { display:inline-flex; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+    .badge-success { background:rgba(74,222,128,0.15); color:var(--success); }
+    .badge-warning { background:rgba(251,191,36,0.15); color:var(--warning); }
+    .badge-danger { background:rgba(248,113,113,0.15); color:var(--danger); }
+    .badge-info { background:rgba(96,165,250,0.15); color:var(--info); }
+    .badge-gold { background:rgba(201,169,98,0.15); color:var(--accent); }
+    .badge-platinum { background:rgba(192,192,210,0.15); color:#c0c0d2; }
+    .badge-diamond { background:rgba(185,242,255,0.15); color:#b9f2ff; }
+    
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg-card); z-index:1; }
+    .modal-title { font-size:18px; font-weight:600; }
+    .modal-close { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--bg-tertiary); border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; }
+    .modal-close:hover { color:var(--text-primary); }
+    .modal-body { padding:24px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:12px; padding:20px 24px; border-top:1px solid var(--border); position:sticky; bottom:0; background:var(--bg-card); }
+    
+    .slide-list { display:flex; flex-direction:column; gap:12px; }
+    .slide-item { display:flex; gap:16px; padding:16px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px; transition:all 0.2s; }
+    .slide-item:hover { border-color:var(--accent); }
+    .slide-preview { width:140px; height:80px; border-radius:8px; object-fit:cover; background:var(--bg-tertiary); flex-shrink:0; }
+    .slide-info { flex:1; min-width:0; }
+    .slide-title { font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .slide-subtitle { font-size:13px; color:var(--text-secondary); margin-bottom:4px; }
+    .slide-desc { font-size:12px; color:var(--text-muted); margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .slide-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    
+    .toggle { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+    .toggle-switch { width:44px; height:24px; background:var(--bg-tertiary); border-radius:12px; position:relative; transition:all 0.2s; flex-shrink:0; }
+    .toggle-switch::after { content:''; position:absolute; width:18px; height:18px; background:var(--text-secondary); border-radius:50%; top:3px; left:3px; transition:all 0.2s; }
+    .toggle.active .toggle-switch { background:var(--accent); }
+    .toggle.active .toggle-switch::after { left:23px; background:var(--bg-primary); }
+    .toggle-label { font-size:14px; }
+    
+    .avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#8b6914); display:flex; align-items:center; justify-content:center; font-weight:600; color:var(--bg-primary); flex-shrink:0; }
+    .avatar-lg { width:64px; height:64px; font-size:24px; }
+    .user-cell { display:flex; align-items:center; gap:12px; }
+    .user-name { font-weight:500; }
+    .user-email { font-size:12px; color:var(--text-muted); }
+    
+    .loading { display:flex; align-items:center; justify-content:center; padding:60px; color:var(--text-secondary); }
+    .spinner { width:24px; height:24px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin-right:12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    
+    .empty { text-align:center; padding:60px 20px; color:var(--text-secondary); }
+    .empty-icon { font-size:48px; margin-bottom:16px; opacity:0.5; }
+    
+    .alert { padding:16px; border-radius:8px; margin-bottom:20px; font-size:14px; }
+    .alert-success { background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3); color:var(--success); }
+    .alert-info { background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); color:var(--info); }
+    
+    .divider { height:1px; background:var(--border); margin:24px 0; }
+    
+    .img-preview { width:100%; max-width:300px; height:150px; object-fit:cover; border-radius:8px; background:var(--bg-tertiary); margin-top:8px; }
+    
+    @media (max-width:768px) { .sidebar { display:none; } .main-content { margin-left:0; } .form-row,.form-row-3 { grid-template-columns:1fr; } }
+    
+    .hidden { display:none !important; }
+    ::-webkit-scrollbar { width:8px; height:8px; }
+    ::-webkit-scrollbar-track { background:var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--text-muted); }
   </style>
 </head>
 <body>
-  <!-- Login Screen -->
-  <div class="login-screen" id="loginScreen">
-    <div class="login-card">
-      <div class="login-logo">MOTA</div>
-      <p class="login-subtitle">Admin Dashboard</p>
-      <form class="login-form" id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" value="admin@mota.com" required>
-        <input type="password" id="loginPassword" placeholder="Password" value="admin123" required>
-        <button type="submit" class="login-btn">Sign In</button>
-      </form>
-      <p class="login-error" id="loginError">Invalid credentials</p>
-    </div>
-  </div>
-
-  <!-- Dashboard -->
-  <div class="dashboard" id="dashboard">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">MOTA</div>
-      <p class="sidebar-subtitle">Admin Dashboard</p>
-      
-      <nav>
-        <a class="nav-item active" data-page="overview">
-          <i class="fas fa-chart-line"></i> Overview
-        </a>
-        <a class="nav-item" data-page="restaurants">
-          <i class="fas fa-utensils"></i> Restaurants
-        </a>
-        <a class="nav-item" data-page="activities">
-          <i class="fas fa-hiking"></i> Activities
-        </a>
-        <a class="nav-item" data-page="events">
-          <i class="fas fa-calendar-alt"></i> Events
-        </a>
-        <a class="nav-item" data-page="offers">
-          <i class="fas fa-tags"></i> Offers
-        </a>
-        <a class="nav-item" data-page="users">
-          <i class="fas fa-users"></i> Users
-        </a>
-        <a class="nav-item" data-page="bookings">
-          <i class="fas fa-book"></i> Bookings
-        </a>
-      </nav>
-
-      <button class="btn btn-secondary logout-btn" onclick="logout()">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </button>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Overview Page -->
-      <section class="page-section active" id="page-overview">
-        <div class="page-header">
-          <h1 class="page-title">Overview</h1>
-        </div>
-
-        <div class="stats-grid" id="statsGrid">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-users">0</div>
-            <div class="stat-label">Total Users</div>
-            <i class="fas fa-users stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-investors">0</div>
-            <div class="stat-label">Investors</div>
-            <i class="fas fa-gem stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-restaurants">0</div>
-            <div class="stat-label">Restaurants</div>
-            <i class="fas fa-utensils stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-activities">0</div>
-            <div class="stat-label">Activities</div>
-            <i class="fas fa-hiking stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-events">0</div>
-            <div class="stat-label">Events</div>
-            <i class="fas fa-calendar stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-bookings">0</div>
-            <div class="stat-label">Bookings</div>
-            <i class="fas fa-book stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-investment">$0</div>
-            <div class="stat-label">Total Investment</div>
-            <i class="fas fa-dollar-sign stat-icon"></i>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-offers">0</div>
-            <div class="stat-label">Active Offers</div>
-            <i class="fas fa-tags stat-icon"></i>
-          </div>
-        </div>
-
-        <!-- Investor Breakdown -->
-        <div class="table-container">
-          <div class="table-header">
-            <h3 class="table-title">Investor Breakdown</h3>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Tier</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody id="investorBreakdown">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Restaurants Page -->
-      <section class="page-section" id="page-restaurants">
-        <div class="page-header">
-          <h1 class="page-title">Restaurants</h1>
-          <button class="btn btn-primary" onclick="openModal('restaurant')">
-            <i class="fas fa-plus"></i> Add Restaurant
-          </button>
-        </div>
-
-        <div class="table-container">
-          <div class="table-header">
-            <h3 class="table-title">All Restaurants</h3>
-            <div class="search-box">
-              <i class="fas fa-search" style="color: var(--text-gray)"></i>
-              <input type="text" placeholder="Search restaurants..." id="searchRestaurants">
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Regular Price</th>
-                <th>Member Price</th>
-                <th>Rating</th>
-                <th>Featured</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="restaurantsTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Activities Page -->
-      <section class="page-section" id="page-activities">
-        <div class="page-header">
-          <h1 class="page-title">Activities</h1>
-          <button class="btn btn-primary" onclick="openModal('activity')">
-            <i class="fas fa-plus"></i> Add Activity
-          </button>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Duration</th>
-                <th>Regular Price</th>
-                <th>Rating</th>
-                <th>Featured</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="activitiesTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Events Page -->
-      <section class="page-section" id="page-events">
-        <div class="page-header">
-          <h1 class="page-title">Events</h1>
-          <button class="btn btn-primary" onclick="openModal('event')">
-            <i class="fas fa-plus"></i> Add Event
-          </button>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Venue</th>
-                <th>Capacity</th>
-                <th>VIP Only</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="eventsTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Offers Page -->
-      <section class="page-section" id="page-offers">
-        <div class="page-header">
-          <h1 class="page-title">Offers & Promotions</h1>
-          <button class="btn btn-primary" onclick="openModal('offer')">
-            <i class="fas fa-plus"></i> Add Offer
-          </button>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Discount</th>
-                <th>Code</th>
-                <th>Min Tier</th>
-                <th>Valid Until</th>
-                <th>Uses</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="offersTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Users Page -->
-      <section class="page-section" id="page-users">
-        <div class="page-header">
-          <h1 class="page-title">Users</h1>
-        </div>
-
-        <div class="table-container">
-          <div class="table-header">
-            <h3 class="table-title">All Users</h3>
-            <div class="search-box">
-              <i class="fas fa-search" style="color: var(--text-gray)"></i>
-              <input type="text" placeholder="Search users..." id="searchUsers">
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Access Level</th>
-                <th>Investor Tier</th>
-                <th>Investment</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="usersTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Bookings Page -->
-      <section class="page-section" id="page-bookings">
-        <div class="page-header">
-          <h1 class="page-title">Bookings</h1>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Type</th>
-                <th>Item</th>
-                <th>Date</th>
-                <th>Guests</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="bookingsTable">
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Modal -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Add Item</h3>
-        <button class="modal-close" onclick="closeModal()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="modal-body" id="modalBody">
-        <!-- Dynamic form content -->
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="modalSaveBtn" onclick="saveItem()">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast -->
-  <div class="toast" id="toast">
-    <i class="fas fa-check-circle"></i>
-    <span id="toastMessage">Success!</span>
-  </div>
-
+  <div id="app"></div>
   <script>
-    // API Configuration
-    const API_URL = 'http://localhost:3001/api';
-    let token = localStorage.getItem('adminToken');
-    let currentPage = 'overview';
-    let currentModal = null;
-    let editingId = null;
+    // =============================================
+    // MOTA ADMIN CMS - FULL CONTROL
+    // =============================================
+    
+    const API_BASE = 'https://unpromotable-manda-sprayfully.ngrok-free.dev/api';
+    
+    let state = {
+      isLoggedIn: false,
+      token: null,
+      user: null,
+      page: 'dashboard',
+      data: {},
+      loading: false,
+      modal: null,
+      alert: null
+    };
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      if (token) {
-        showDashboard();
-        loadAllData();
-      }
-
-      // Login form
-      document.getElementById('loginForm').addEventListener('submit', handleLogin);
-
-      // Navigation
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const page = item.dataset.page;
-          navigateTo(page);
-        });
-      });
-
-      // Search handlers
-      document.getElementById('searchRestaurants')?.addEventListener('input', (e) => {
-        filterTable('restaurantsTable', e.target.value);
-      });
-      document.getElementById('searchUsers')?.addEventListener('input', (e) => {
-        filterTable('usersTable', e.target.value);
-      });
-    });
-
-    // Auth Functions
-    async function handleLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-
+    // =============================================
+    // API HELPER
+    // =============================================
+    
+    async function api(endpoint, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        ...(state.token ? { 'Authorization': `Bearer ${state.token}` } : {})
+      };
       try {
-        const response = await fetch(`${API_URL}/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
+        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      } catch (err) {
+        console.error('API Error:', err);
+        throw err;
+      }
+    }
 
-        const data = await response.json();
-
-        if (response.ok) {
-          token = data.token;
-          localStorage.setItem('adminToken', token);
-          showDashboard();
-          loadAllData();
-        } else {
-          document.getElementById('loginError').style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        document.getElementById('loginError').textContent = 'Connection error. Is the server running?';
-        document.getElementById('loginError').style.display = 'block';
+    // =============================================
+    // AUTH
+    // =============================================
+    
+    async function login(email, password) {
+      try {
+        const data = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        state.token = data.token;
+        state.user = data.user;
+        state.isLoggedIn = true;
+        localStorage.setItem('mota_token', data.token);
+        localStorage.setItem('mota_user', JSON.stringify(data.user));
+        render();
+        loadData();
+      } catch (err) {
+        return err.message;
       }
     }
 
     function logout() {
-      token = null;
-      localStorage.removeItem('adminToken');
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('dashboard').classList.remove('active');
+      state = { isLoggedIn: false, token: null, user: null, page: 'dashboard', data: {}, loading: false, modal: null, alert: null };
+      localStorage.removeItem('mota_token');
+      localStorage.removeItem('mota_user');
+      render();
     }
 
-    function showDashboard() {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').classList.add('active');
-    }
-
-    // Navigation
-    function navigateTo(page) {
-      currentPage = page;
-      
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.page === page);
-      });
-
-      document.querySelectorAll('.page-section').forEach(section => {
-        section.classList.toggle('active', section.id === `page-${page}`);
-      });
-
-      // Load data for page
-      switch(page) {
-        case 'overview': loadStats(); break;
-        case 'restaurants': loadRestaurants(); break;
-        case 'activities': loadActivities(); break;
-        case 'events': loadEvents(); break;
-        case 'offers': loadOffers(); break;
-        case 'users': loadUsers(); break;
-        case 'bookings': loadBookings(); break;
+    function checkAuth() {
+      const token = localStorage.getItem('mota_token');
+      const user = localStorage.getItem('mota_user');
+      if (token && user) {
+        state.token = token;
+        state.user = JSON.parse(user);
+        state.isLoggedIn = true;
       }
     }
 
-    // API Functions
-    async function apiRequest(endpoint, method = 'GET', body = null) {
-      const options = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+    // =============================================
+    // DATA
+    // =============================================
+    
+    async function loadData() {
+      state.loading = true;
+      render();
+      try {
+        const [users, restaurants, events, lodging, activities, content, reservations, leads, nightlife] = await Promise.all([
+          api('/users').catch(() => ({ users: [] })),
+          api('/restaurants').catch(() => ({ restaurants: [] })),
+          api('/events').catch(() => ({ events: [] })),
+          api('/lodging').catch(() => ({ lodging: [] })),
+          api('/activities').catch(() => ({ activities: [] })),
+          api('/content').catch(() => ({ content: [] })),
+          api('/reservations').catch(() => ({ reservations: [] })),
+          api('/leads').catch(() => ({ leads: [] })),
+          api('/nightlife').catch(() => ({ nightlife: [] }))
+        ]);
+        state.data = {
+          users: users.users || [],
+          restaurants: restaurants.restaurants || [],
+          events: events.events || [],
+          lodging: lodging.lodging || [],
+          activities: activities.activities || [],
+          content: content.content || [],
+          reservations: reservations.reservations || reservations || [],
+          leads: leads.leads || [],
+          nightlife: nightlife.nightlife || []
+        };
+      } catch (err) {
+        console.error('Load error:', err);
+      }
+      state.loading = false;
+      render();
+    }
+
+    async function saveItem(type, id, data) {
+      try {
+        if (id) {
+          await api(`/${type}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+          showAlert('Updated successfully!', 'success');
+        } else {
+          await api(`/${type}`, { method: 'POST', body: JSON.stringify(data) });
+          showAlert('Created successfully!', 'success');
         }
+        closeModal();
+        loadData();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function deleteItem(type, id, name) {
+      if (!confirm(`Delete "${name || 'this item'}"? This cannot be undone.`)) return;
+      try {
+        await api(`/${type}/${id}`, { method: 'DELETE' });
+        showAlert('Deleted successfully!', 'success');
+        loadData();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function saveContent(key, data) {
+      try {
+        await api(`/content/${key}`, { method: 'PUT', body: JSON.stringify(data) });
+        showAlert('Content saved!', 'success');
+        closeModal();
+        loadData();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // =============================================
+    // UI HELPERS
+    // =============================================
+    
+    function navigate(page) { state.page = page; state.alert = null; render(); }
+    function openModal(type, data = null) { state.modal = { type, data }; render(); }
+    function closeModal() { state.modal = null; render(); }
+    function showAlert(msg, type = 'info') { state.alert = { msg, type }; render(); setTimeout(() => { state.alert = null; render(); }, 3000); }
+    function esc(str) { return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+    // =============================================
+    // RENDER
+    // =============================================
+    
+    function render() {
+      document.getElementById('app').innerHTML = state.isLoggedIn ? renderDashboard() : renderLogin();
+      attachEvents();
+    }
+
+    function renderLogin() {
+      return `
+        <div class="login-container">
+          <div class="login-box">
+            <div class="login-logo">MOTA</div>
+            <div class="login-subtitle">Admin Content Management System</div>
+            <div id="login-error" class="form-error hidden"></div>
+            <form id="login-form">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" class="form-input" value="investor@demo.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="login-password" class="form-input" value="demo123" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Sign In to Admin</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDashboard() {
+      return `
+        <div class="dashboard">
+          ${renderSidebar()}
+          <main class="main-content">
+            ${state.alert ? `<div class="alert alert-${state.alert.type}">${state.alert.msg}</div>` : ''}
+            ${state.loading ? '<div class="loading"><div class="spinner"></div>Loading data...</div>' : renderPage()}
+          </main>
+          ${state.modal ? renderModal() : ''}
+        </div>
+      `;
+    }
+
+    function renderSidebar() {
+      const nav = [
+        { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+        { id: 'divider1' },
+        { id: 'slideshow', icon: '🖼️', label: 'Homepage Slideshow' },
+        { id: 'divider2' },
+        { id: 'restaurants', icon: '🍽️', label: 'Restaurants' },
+        { id: 'events', icon: '🎉', label: 'Events' },
+        { id: 'lodging', icon: '🏠', label: 'Lodging' },
+        { id: 'activities', icon: '🏄', label: 'Activities' },
+        { id: 'nightlife', icon: '🌙', label: 'Nightlife' },
+        { id: 'divider3' },
+        { id: 'users', icon: '👥', label: 'All Users' },
+        { id: 'investors', icon: '💎', label: 'Investors' },
+        { id: 'divider4' },
+        { id: 'reservations', icon: '📅', label: 'Reservations' },
+        { id: 'leads', icon: '📈', label: 'Leads CRM' },
+        { id: 'divider5' },
+        { id: 'settings', icon: '⚙️', label: 'App Settings' }
+      ];
+      return `
+        <aside class="sidebar">
+          <div class="sidebar-logo">MOTA</div>
+          <div class="sidebar-subtitle">Content Management</div>
+          <nav style="flex:1;">
+            ${nav.map(n => n.id.startsWith('divider') ? '<div style="height:1px;background:var(--border);margin:12px 24px;"></div>' : `
+              <div class="nav-item ${state.page === n.id ? 'active' : ''}" data-page="${n.id}">
+                <span>${n.icon}</span><span>${n.label}</span>
+              </div>
+            `).join('')}
+          </nav>
+          <div style="padding:20px 24px;border-top:1px solid var(--border);">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Logged in as</div>
+            <div style="font-weight:500;margin-bottom:12px;">${state.user?.name || state.user?.email}</div>
+            <button class="btn btn-secondary btn-sm btn-block" id="logout-btn">Logout</button>
+          </div>
+        </aside>
+      `;
+    }
+
+    function renderPage() {
+      const pages = {
+        dashboard: renderDashboardPage,
+        slideshow: renderSlideshowPage,
+        restaurants: () => renderCRUDPage('restaurants', 'Restaurant', ['name', 'cuisine', 'priceRange', 'rating', 'isFeatured']),
+        events: () => renderCRUDPage('events', 'Event', ['name', 'date', 'venue', 'capacity', 'accessLevel']),
+        lodging: () => renderCRUDPage('lodging', 'Property', ['name', 'type', 'price', 'bedrooms', 'isAvailable']),
+        activities: () => renderCRUDPage('activities', 'Activity', ['name', 'category', 'price', 'duration', 'isFeatured']),
+        nightlife: () => renderCRUDPage('nightlife', 'Venue', ['name', 'type', 'priceRange', 'hours', 'isFeatured']),
+        users: renderUsersPage,
+        investors: renderInvestorsPage,
+        reservations: renderReservationsPage,
+        leads: renderLeadsPage,
+        settings: renderSettingsPage
       };
-
-      if (body) {
-        options.body = JSON.stringify(body);
-      }
-
-      const response = await fetch(`${API_URL}${endpoint}`, options);
-      return response.json();
+      return (pages[state.page] || pages.dashboard)();
     }
 
-    // Load All Data
-    async function loadAllData() {
-      loadStats();
-    }
+    // =============================================
+    // DASHBOARD
+    // =============================================
 
-    // Load Stats
-    async function loadStats() {
-      try {
-        const stats = await apiRequest('/admin/stats');
-        
-        document.getElementById('stat-users').textContent = stats.totalUsers || 0;
-        document.getElementById('stat-investors').textContent = stats.totalInvestors || 0;
-        document.getElementById('stat-restaurants').textContent = stats.totalRestaurants || 0;
-        document.getElementById('stat-activities').textContent = stats.totalActivities || 0;
-        document.getElementById('stat-events').textContent = stats.totalEvents || 0;
-        document.getElementById('stat-bookings').textContent = stats.totalBookings || 0;
-        document.getElementById('stat-investment').textContent = `$${(stats.totalInvestment || 0).toLocaleString()}`;
-        document.getElementById('stat-offers').textContent = stats.activeOffers || 0;
-
-        // Investor breakdown
-        const breakdown = stats.investorsByTier || {};
-        const breakdownHtml = Object.entries(breakdown).map(([tier, count]) => `
-          <tr>
-            <td><span class="tier-badge tier-${tier}">${tier.charAt(0).toUpperCase() + tier.slice(1)}</span></td>
-            <td>${count}</td>
-          </tr>
-        `).join('');
-        document.getElementById('investorBreakdown').innerHTML = breakdownHtml || '<tr><td colspan="2">No investors yet</td></tr>';
-      } catch (error) {
-        console.error('Error loading stats:', error);
-      }
-    }
-
-    // Load Restaurants
-    async function loadRestaurants() {
-      try {
-        const restaurants = await apiRequest('/restaurants');
-        const html = restaurants.map(r => `
-          <tr>
-            <td><img src="${r.image}" class="item-image" onerror="this.src='https://via.placeholder.com/50'"></td>
-            <td><strong>${r.name}</strong></td>
-            <td>${r.category}</td>
-            <td>$${r.regularPrice}</td>
-            <td>$${r.memberPrice || '-'}</td>
-            <td><i class="fas fa-star" style="color: var(--primary)"></i> ${r.rating}</td>
-            <td>${r.isFeatured ? '<i class="fas fa-check" style="color: var(--success)"></i>' : ''}</td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="editItem('restaurant', '${r._id}')"><i class="fas fa-edit"></i></button>
-              <button class="action-btn delete" onclick="deleteItem('restaurant', '${r._id}')"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('restaurantsTable').innerHTML = html || '<tr><td colspan="8" class="empty-state">No restaurants found</td></tr>';
-      } catch (error) {
-        console.error('Error loading restaurants:', error);
-      }
-    }
-
-    // Load Activities
-    async function loadActivities() {
-      try {
-        const activities = await apiRequest('/activities');
-        const html = activities.map(a => `
-          <tr>
-            <td><img src="${a.image}" class="item-image" onerror="this.src='https://via.placeholder.com/50'"></td>
-            <td><strong>${a.name}</strong></td>
-            <td>${a.category}</td>
-            <td>${a.duration || '-'}</td>
-            <td>$${a.regularPrice}</td>
-            <td><i class="fas fa-star" style="color: var(--primary)"></i> ${a.rating}</td>
-            <td>${a.isFeatured ? '<i class="fas fa-check" style="color: var(--success)"></i>' : ''}</td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="editItem('activity', '${a._id}')"><i class="fas fa-edit"></i></button>
-              <button class="action-btn delete" onclick="deleteItem('activity', '${a._id}')"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('activitiesTable').innerHTML = html || '<tr><td colspan="8" class="empty-state">No activities found</td></tr>';
-      } catch (error) {
-        console.error('Error loading activities:', error);
-      }
-    }
-
-    // Load Events
-    async function loadEvents() {
-      try {
-        const events = await apiRequest('/events');
-        const html = events.map(e => `
-          <tr>
-            <td><img src="${e.image}" class="item-image" onerror="this.src='https://via.placeholder.com/50'"></td>
-            <td><strong>${e.name}</strong></td>
-            <td>${new Date(e.date).toLocaleDateString()}</td>
-            <td>${e.venue || '-'}</td>
-            <td>${e.capacity || 'Unlimited'}</td>
-            <td>${e.isVipOnly ? '<span class="tier-badge tier-gold">VIP Only</span>' : 'Public'}</td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="editItem('event', '${e._id}')"><i class="fas fa-edit"></i></button>
-              <button class="action-btn delete" onclick="deleteItem('event', '${e._id}')"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('eventsTable').innerHTML = html || '<tr><td colspan="7" class="empty-state">No events found</td></tr>';
-      } catch (error) {
-        console.error('Error loading events:', error);
-      }
-    }
-
-    // Load Offers
-    async function loadOffers() {
-      try {
-        const offers = await apiRequest('/offers');
-        const html = offers.map(o => `
-          <tr>
-            <td><strong>${o.title}</strong></td>
-            <td>${o.type}</td>
-            <td>${o.discountPercent ? `${o.discountPercent}%` : o.freeAddon || '-'}</td>
-            <td><code>${o.code || '-'}</code></td>
-            <td><span class="tier-badge tier-${o.minTier || 'member'}">${(o.minTier || 'member').charAt(0).toUpperCase() + (o.minTier || 'member').slice(1)}</span></td>
-            <td>${o.validUntil ? new Date(o.validUntil).toLocaleDateString() : '-'}</td>
-            <td>${o.usedCount || 0}/${o.maxUses || '∞'}</td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="editItem('offer', '${o._id}')"><i class="fas fa-edit"></i></button>
-              <button class="action-btn delete" onclick="deleteItem('offer', '${o._id}')"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('offersTable').innerHTML = html || '<tr><td colspan="8" class="empty-state">No offers found</td></tr>';
-      } catch (error) {
-        console.error('Error loading offers:', error);
-      }
-    }
-
-    // Load Users
-    async function loadUsers() {
-      try {
-        const data = await apiRequest('/admin/users');
-        const users = data.users || [];
-        const html = users.map(u => `
-          <tr>
-            <td><strong>${u.name}</strong></td>
-            <td>${u.email}</td>
-            <td><span class="tier-badge tier-${u.accessLevel === 'investor' ? 'gold' : 'member'}">${u.accessLevel}</span></td>
-            <td>${u.investorTier ? `<span class="tier-badge tier-${u.investorTier}">${u.investorTier}</span>` : '-'}</td>
-            <td>${u.investmentAmount ? `$${u.investmentAmount.toLocaleString()}` : '-'}</td>
-            <td><span class="status-badge status-${u.isActive !== false ? 'active' : 'inactive'}">${u.isActive !== false ? 'Active' : 'Inactive'}</span></td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="editUser('${u._id}')" title="Edit"><i class="fas fa-edit"></i></button>
-              ${u.accessLevel !== 'investor' ? `<button class="btn btn-small btn-success" onclick="upgradeUser('${u._id}')" title="Upgrade to Investor"><i class="fas fa-arrow-up"></i></button>` : ''}
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="7" class="empty-state">No users found</td></tr>';
-      } catch (error) {
-        console.error('Error loading users:', error);
-      }
-    }
-
-    // Load Bookings
-    async function loadBookings() {
-      try {
-        const data = await apiRequest('/admin/bookings');
-        const bookings = data.bookings || [];
-        const html = bookings.map(b => `
-          <tr>
-            <td><strong>${b.userName || 'Unknown'}</strong><br><small>${b.userEmail || ''}</small></td>
-            <td>${b.type}</td>
-            <td>${b.itemName || '-'}</td>
-            <td>${new Date(b.date).toLocaleDateString()}</td>
-            <td>${b.guests || 1}</td>
-            <td>$${b.totalPrice || 0}</td>
-            <td><span class="status-badge status-${b.status}">${b.status}</span></td>
-            <td class="actions">
-              <button class="action-btn edit" onclick="updateBookingStatus('${b._id}', 'confirmed')"><i class="fas fa-check"></i></button>
-              <button class="action-btn delete" onclick="updateBookingStatus('${b._id}', 'cancelled')"><i class="fas fa-times"></i></button>
-            </td>
-          </tr>
-        `).join('');
-        document.getElementById('bookingsTable').innerHTML = html || '<tr><td colspan="8" class="empty-state">No bookings found</td></tr>';
-      } catch (error) {
-        console.error('Error loading bookings:', error);
-      }
-    }
-
-    // Modal Functions
-    function openModal(type, data = null) {
-      currentModal = type;
-      editingId = data?._id || null;
+    function renderDashboardPage() {
+      const d = state.data;
+      const investors = (d.users || []).filter(u => u.accessLevel === 'investor');
+      const totalInvestment = investors.reduce((sum, i) => sum + (i.investmentAmount || 0), 0);
       
-      document.getElementById('modalTitle').textContent = `${editingId ? 'Edit' : 'Add'} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-      document.getElementById('modalBody').innerHTML = getFormHtml(type, data);
-      document.getElementById('modalOverlay').classList.add('active');
-
-      // Add price calculator listener
-      const priceInput = document.getElementById('regularPrice');
-      if (priceInput) {
-        priceInput.addEventListener('input', updatePriceCalculator);
-        if (data?.regularPrice) updatePriceCalculator();
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('modalOverlay').classList.remove('active');
-      currentModal = null;
-      editingId = null;
-    }
-
-    function getFormHtml(type, data = null) {
-      switch(type) {
-        case 'restaurant':
-          return `
-            <div class="form-group">
-              <label class="form-label">Name *</label>
-              <input type="text" class="form-input" id="name" value="${data?.name || ''}" required>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Category *</label>
-                <input type="text" class="form-input" id="category" value="${data?.category || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Price Range</label>
-                <select class="form-select" id="priceRange">
-                  <option value="$" ${data?.priceRange === '$' ? 'selected' : ''}>$ - Budget</option>
-                  <option value="$$" ${data?.priceRange === '$$' || !data ? 'selected' : ''}>$$ - Moderate</option>
-                  <option value="$$$" ${data?.priceRange === '$$$' ? 'selected' : ''}>$$$ - Upscale</option>
-                  <option value="$$$$" ${data?.priceRange === '$$$$' ? 'selected' : ''}>$$$$ - Fine Dining</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="description">${data?.description || ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Image URL</label>
-              <input type="url" class="form-input" id="image" value="${data?.image || ''}" placeholder="https://...">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Regular Price ($) *</label>
-                <input type="number" class="form-input" id="regularPrice" value="${data?.regularPrice || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Rating</label>
-                <input type="number" class="form-input" id="rating" value="${data?.rating || '4.5'}" step="0.1" min="1" max="5">
-              </div>
-            </div>
-            <div class="price-calculator" id="priceCalculator">
-              <strong>Auto-calculated tier prices:</strong>
-              <div class="price-row"><span>Member (10% off):</span> <span id="calcMember">$0</span></div>
-              <div class="price-row"><span>Platinum (15% off):</span> <span id="calcPlatinum">$0</span></div>
-              <div class="price-row"><span>Diamond (25% off):</span> <span id="calcDiamond">$0</span></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Open Hours</label>
-                <input type="text" class="form-input" id="openHours" value="${data?.openHours || ''}" placeholder="6:00 PM - 11:00 PM">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Location</label>
-                <input type="text" class="form-input" id="location" value="${data?.location || ''}">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">
-                <input type="checkbox" id="isFeatured" ${data?.isFeatured ? 'checked' : ''}> Featured Restaurant
-              </label>
-            </div>
-          `;
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Welcome back, ${state.user?.name || 'Admin'}! Here's your overview.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadData()">↻ Refresh Data</button>
+        </div>
         
-        case 'activity':
-          return `
-            <div class="form-group">
-              <label class="form-label">Name *</label>
-              <input type="text" class="form-input" id="name" value="${data?.name || ''}" required>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Category *</label>
-                <input type="text" class="form-input" id="category" value="${data?.category || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Duration</label>
-                <input type="text" class="form-input" id="duration" value="${data?.duration || ''}" placeholder="3 hours">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="description">${data?.description || ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Image URL</label>
-              <input type="url" class="form-input" id="image" value="${data?.image || ''}">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Regular Price ($) *</label>
-                <input type="number" class="form-input" id="regularPrice" value="${data?.regularPrice || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Rating</label>
-                <input type="number" class="form-input" id="rating" value="${data?.rating || '4.5'}" step="0.1" min="1" max="5">
-              </div>
-            </div>
-            <div class="price-calculator" id="priceCalculator">
-              <strong>Auto-calculated tier prices:</strong>
-              <div class="price-row"><span>Member (10% off):</span> <span id="calcMember">$0</span></div>
-              <div class="price-row"><span>Platinum (15% off):</span> <span id="calcPlatinum">$0</span></div>
-              <div class="price-row"><span>Diamond (25% off):</span> <span id="calcDiamond">$0</span></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">
-                <input type="checkbox" id="isFeatured" ${data?.isFeatured ? 'checked' : ''}> Featured Activity
-              </label>
-            </div>
-          `;
+        <div class="stats-grid">
+          <div class="stat-card" onclick="navigate('users')" style="cursor:pointer">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">${d.users?.length || 0}</div>
+          </div>
+          <div class="stat-card" onclick="navigate('investors')" style="cursor:pointer">
+            <div class="stat-label">Investors</div>
+            <div class="stat-value">${investors.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Investment</div>
+            <div class="stat-value" style="font-size:22px;">$${(totalInvestment/1000000).toFixed(1)}M</div>
+          </div>
+          <div class="stat-card" onclick="navigate('restaurants')" style="cursor:pointer">
+            <div class="stat-label">Restaurants</div>
+            <div class="stat-value">${d.restaurants?.length || 0}</div>
+          </div>
+          <div class="stat-card" onclick="navigate('events')" style="cursor:pointer">
+            <div class="stat-label">Events</div>
+            <div class="stat-value">${d.events?.length || 0}</div>
+          </div>
+          <div class="stat-card" onclick="navigate('lodging')" style="cursor:pointer">
+            <div class="stat-label">Lodging</div>
+            <div class="stat-value">${d.lodging?.length || 0}</div>
+          </div>
+          <div class="stat-card" onclick="navigate('activities')" style="cursor:pointer">
+            <div class="stat-label">Activities</div>
+            <div class="stat-value">${d.activities?.length || 0}</div>
+          </div>
+          <div class="stat-card" onclick="navigate('reservations')" style="cursor:pointer">
+            <div class="stat-label">Reservations</div>
+            <div class="stat-value">${d.reservations?.length || 0}</div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quick Actions</h3>
+          </div>
+          <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="navigate('slideshow')">🖼️ Edit Slideshow</button>
+            <button class="btn btn-secondary" onclick="openModal('addRestaurant')">🍽️ Add Restaurant</button>
+            <button class="btn btn-secondary" onclick="openModal('addEvent')">🎉 Add Event</button>
+            <button class="btn btn-secondary" onclick="openModal('addLodging')">🏠 Add Property</button>
+            <button class="btn btn-secondary" onclick="openModal('addActivity')">🏄 Add Activity</button>
+          </div>
+        </div>
+      `;
+    }
 
-        case 'event':
-          return `
-            <div class="form-group">
-              <label class="form-label">Event Name *</label>
-              <input type="text" class="form-input" id="name" value="${data?.name || ''}" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="description">${data?.description || ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Image URL</label>
-              <input type="url" class="form-input" id="image" value="${data?.image || ''}">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Start Date *</label>
-                <input type="date" class="form-input" id="date" value="${data?.date?.split('T')[0] || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-input" id="endDate" value="${data?.endDate?.split('T')[0] || ''}">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Venue</label>
-                <input type="text" class="form-input" id="venue" value="${data?.venue || ''}">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Capacity</label>
-                <input type="number" class="form-input" id="capacity" value="${data?.capacity || ''}">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">
-                <input type="checkbox" id="isVipOnly" ${data?.isVipOnly ? 'checked' : ''} onchange="toggleTierSelect()"> VIP Only Event
-              </label>
-            </div>
-            <div class="form-group" id="tierSelectGroup" style="display: ${data?.isVipOnly ? 'block' : 'none'}">
-              <label class="form-label">Minimum Tier Required</label>
-              <select class="form-select" id="investorTierRequired">
-                <option value="gold" ${data?.investorTierRequired === 'gold' ? 'selected' : ''}>Gold</option>
-                <option value="platinum" ${data?.investorTierRequired === 'platinum' ? 'selected' : ''}>Platinum</option>
-                <option value="diamond" ${data?.investorTierRequired === 'diamond' ? 'selected' : ''}>Diamond</option>
-                <option value="black" ${data?.investorTierRequired === 'black' ? 'selected' : ''}>Black</option>
-                <option value="founders" ${data?.investorTierRequired === 'founders' ? 'selected' : ''}>Founders</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">
-                <input type="checkbox" id="isFeatured" ${data?.isFeatured ? 'checked' : ''}> Featured Event
-              </label>
-            </div>
-          `;
+    // =============================================
+    // SLIDESHOW
+    // =============================================
 
-        case 'offer':
-          return `
+    function renderSlideshowPage() {
+      const slideshow = state.data.content?.find(c => c.key === 'homepage_slideshow');
+      const slides = (slideshow?.slides || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Homepage Slideshow</h1>
+            <p class="page-subtitle">Manage the hero slideshow that appears on the app homepage</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('addSlide')">+ Add New Slide</button>
+        </div>
+        
+        <div class="alert alert-info">
+          <strong>💡 Tip:</strong> The slideshow displays on the mobile app's homepage. Use high-quality images (1200x600px recommended).
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Slides (${slides.length})</h3>
+          </div>
+          <div class="card-body">
+            ${slides.length ? `
+              <div class="slide-list">
+                ${slides.map((s, i) => `
+                  <div class="slide-item">
+                    <img src="${esc(s.imageUrl)}" class="slide-preview" onerror="this.src='https://via.placeholder.com/140x80/1a1a25/606070?text=No+Image'">
+                    <div class="slide-info">
+                      <div class="slide-title">${esc(s.title) || 'Untitled Slide'}</div>
+                      <div class="slide-subtitle">${esc(s.subtitle) || ''}</div>
+                      <div class="slide-desc">${esc(s.description) || 'No description'}</div>
+                      <div class="slide-actions">
+                        <button class="btn btn-secondary btn-sm" onclick='editSlide(${i})'>✏️ Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSlide('${s._id}', '${esc(s.title)}')">🗑️ Delete</button>
+                        <span class="badge ${s.isActive !== false ? 'badge-success' : 'badge-warning'}">${s.isActive !== false ? 'Active' : 'Hidden'}</span>
+                        ${s.buttonText ? `<span class="badge badge-info">Button: ${esc(s.buttonText)}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div class="empty">
+                <div class="empty-icon">🖼️</div>
+                <p>No slides yet. Add your first slide to get started!</p>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // GENERIC CRUD PAGE
+    // =============================================
+
+    function renderCRUDPage(type, singular, columns) {
+      const items = state.data[type] || [];
+      const typeMap = { restaurants: 'Restaurant', events: 'Event', lodging: 'Property', activities: 'Activity', nightlife: 'Venue' };
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">${singular}s</h1>
+            <p class="page-subtitle">${items.length} ${singular.toLowerCase()}${items.length !== 1 ? 's' : ''} in the system</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('add${typeMap[type]}')">+ Add ${singular}</button>
+        </div>
+        
+        <div class="card">
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  ${columns.slice(1).map(c => `<th>${formatColName(c)}</th>`).join('')}
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.length ? items.map(item => `
+                  <tr>
+                    <td><img src="${item.images?.[0]?.url || ''}" class="table-img" onerror="this.src='https://via.placeholder.com/50/1a1a25/606070?text=?'"></td>
+                    <td>
+                      <strong>${esc(item.name || item.title)}</strong>
+                      ${item.shortDescription ? `<br><small style="color:var(--text-muted)">${esc(item.shortDescription.substring(0, 50))}...</small>` : ''}
+                    </td>
+                    ${columns.slice(1).map(c => `<td>${formatValue(item, c)}</td>`).join('')}
+                    <td>
+                      <button class="btn btn-secondary btn-sm" onclick='openEditModal("${type}", "${item._id}")'>Edit</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteItem('${type}', '${item._id}', '${esc(item.name || item.title)}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('') : `<tr><td colspan="${columns.length + 2}" class="empty">No ${type} found</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function formatColName(col) {
+      return col.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).replace('Is ', '').replace('Price Range', 'Price');
+    }
+
+    function formatValue(item, col) {
+      const val = item[col];
+      if (col === 'date' && val) return new Date(val).toLocaleDateString();
+      if (col === 'price') return `$${val || item.pricePerNight || 0}`;
+      if (col === 'rating') return val ? `⭐ ${val}` : '-';
+      if (col === 'isFeatured') return val ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>';
+      if (col === 'isAvailable') return val !== false ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>';
+      if (col === 'accessLevel') return `<span class="badge badge-info">${val || 'all'}</span>`;
+      if (col === 'capacity') return val || '∞';
+      return val || '-';
+    }
+
+    // =============================================
+    // USERS
+    // =============================================
+
+    function renderUsersPage() {
+      const items = state.data.users || [];
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">All Users</h1>
+            <p class="page-subtitle">${items.length} registered users</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="table-container">
+            <table class="table">
+              <thead><tr><th>User</th><th>Access Level</th><th>Investor Tier</th><th>Investment</th><th>Phone</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${items.map(u => `
+                  <tr>
+                    <td>
+                      <div class="user-cell">
+                        <div class="avatar">${(u.name || u.email)?.[0]?.toUpperCase() || '?'}</div>
+                        <div>
+                          <div class="user-name">${esc(u.name) || 'No name'}</div>
+                          <div class="user-email">${esc(u.email)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge badge-${u.accessLevel === 'investor' ? 'gold' : u.accessLevel === 'member' ? 'info' : 'warning'}">${u.accessLevel || 'guest'}</span></td>
+                    <td>${u.investorTier ? `<span class="badge badge-${u.investorTier}">${u.investorTier}</span>` : '-'}</td>
+                    <td>${u.investmentAmount ? '$' + u.investmentAmount.toLocaleString() : '-'}</td>
+                    <td>${esc(u.phone) || '-'}</td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick='openEditModal("users", "${u._id}")'>Edit User</button></td>
+                  </tr>
+                `).join('') || '<tr><td colspan="7" class="empty">No users found</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // INVESTORS
+    // =============================================
+
+    function renderInvestorsPage() {
+      const items = (state.data.users || []).filter(u => u.accessLevel === 'investor');
+      const gold = items.filter(i => i.investorTier === 'gold');
+      const platinum = items.filter(i => i.investorTier === 'platinum');
+      const diamond = items.filter(i => i.investorTier === 'diamond');
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Investors</h1>
+            <p class="page-subtitle">${items.length} investors across all tiers</p>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">🥇 Gold Tier ($2.5M+)</div>
+            <div class="stat-value">${gold.length}</div>
+            <div class="stat-change">$${(gold.reduce((s, i) => s + (i.investmentAmount || 0), 0) / 1000000).toFixed(1)}M total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🥈 Platinum Tier ($15M+)</div>
+            <div class="stat-value">${platinum.length}</div>
+            <div class="stat-change">$${(platinum.reduce((s, i) => s + (i.investmentAmount || 0), 0) / 1000000).toFixed(1)}M total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">💎 Diamond Tier ($70M+)</div>
+            <div class="stat-value">${diamond.length}</div>
+            <div class="stat-change">$${(diamond.reduce((s, i) => s + (i.investmentAmount || 0), 0) / 1000000).toFixed(1)}M total</div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="table-container">
+            <table class="table">
+              <thead><tr><th>Investor</th><th>Tier</th><th>Investment</th><th>Portfolio Value</th><th>ROI</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${items.map(u => {
+                  const roi = u.investmentAmount ? (((u.portfolioValue || u.investmentAmount) - u.investmentAmount) / u.investmentAmount * 100).toFixed(1) : 0;
+                  return `
+                    <tr>
+                      <td>
+                        <div class="user-cell">
+                          <div class="avatar">${(u.name || u.email)?.[0]?.toUpperCase() || '?'}</div>
+                          <div>
+                            <div class="user-name">${esc(u.name) || 'No name'}</div>
+                            <div class="user-email">${esc(u.email)}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="badge badge-${u.investorTier}">${u.investorTier || 'N/A'}</span></td>
+                      <td><strong>$${(u.investmentAmount || 0).toLocaleString()}</strong></td>
+                      <td>$${(u.portfolioValue || 0).toLocaleString()}</td>
+                      <td><span class="stat-change ${roi >= 0 ? 'up' : 'down'}">${roi >= 0 ? '+' : ''}${roi}%</span></td>
+                      <td><button class="btn btn-primary btn-sm" onclick='openEditModal("users", "${u._id}")'>Edit</button></td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="6" class="empty">No investors found</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // RESERVATIONS
+    // =============================================
+
+    function renderReservationsPage() {
+      const items = state.data.reservations || [];
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Reservations</h1>
+            <p class="page-subtitle">${items.length} total reservations</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table class="table">
+              <thead><tr><th>Confirmation</th><th>Type</th><th>Guest</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${items.map(r => `
+                  <tr>
+                    <td><code style="background:var(--bg-tertiary);padding:4px 8px;border-radius:4px;">${r.confirmationNumber || '-'}</code></td>
+                    <td><span class="badge badge-info">${r.type || '-'}</span></td>
+                    <td>${esc(r.user?.name || r.user?.email || 'Guest')}</td>
+                    <td>${r.date ? new Date(r.date).toLocaleDateString() : '-'}</td>
+                    <td><span class="badge ${r.status === 'confirmed' ? 'badge-success' : r.status === 'cancelled' ? 'badge-danger' : 'badge-warning'}">${r.status || 'pending'}</span></td>
+                    <td><button class="btn btn-secondary btn-sm" onclick='openModal("viewReservation", ${JSON.stringify(r).replace(/'/g, "\\'")})'>View</button></td>
+                  </tr>
+                `).join('') || '<tr><td colspan="6" class="empty">No reservations</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // LEADS
+    // =============================================
+
+    function renderLeadsPage() {
+      const items = state.data.leads || [];
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Leads CRM</h1>
+            <p class="page-subtitle">${items.length} leads in pipeline</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('addLead')">+ Add Lead</button>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table class="table">
+              <thead><tr><th>Contact</th><th>Source</th><th>Status</th><th>Score</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${items.map(l => `
+                  <tr>
+                    <td>
+                      <div class="user-cell">
+                        <div class="avatar">${(l.name || l.email)?.[0]?.toUpperCase() || '?'}</div>
+                        <div>
+                          <div class="user-name">${esc(l.name) || 'No name'}</div>
+                          <div class="user-email">${esc(l.email) || '-'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>${l.source || '-'}</td>
+                    <td><span class="badge badge-${l.status === 'closed' ? 'success' : l.status === 'qualified' ? 'info' : 'warning'}">${l.status || 'new'}</span></td>
+                    <td>${l.score || 0}</td>
+                    <td>${new Date(l.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm" onclick='openEditModal("leads", "${l._id}")'>Edit</button>
+                    </td>
+                  </tr>
+                `).join('') || '<tr><td colspan="6" class="empty">No leads</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // SETTINGS
+    // =============================================
+
+    function renderSettingsPage() {
+      const settings = state.data.content?.find(c => c.key === 'app_settings')?.data || {};
+      const contact = state.data.content?.find(c => c.key === 'contact_info')?.data || {};
+      const welcome = state.data.content?.find(c => c.key === 'homepage_welcome') || {};
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">App Settings</h1>
+            <p class="page-subtitle">Configure app branding, contact info, and content</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🎨 Branding</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Primary Color (Gold)</label>
+                <input type="text" class="form-input" value="${settings.primaryColor || '#C9A962'}" id="s-primary">
+                <div class="form-help">Main accent color used throughout the app</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Secondary Color (Dark)</label>
+                <input type="text" class="form-input" value="${settings.secondaryColor || '#1A1A2E'}" id="s-secondary">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Logo URL</label>
+              <input type="text" class="form-input" value="${settings.logoUrl || ''}" id="s-logo" placeholder="https://...">
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">📞 Contact Information</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" value="${contact.email || ''}" id="s-email" placeholder="info@motaresort.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-input" value="${contact.phone || ''}" id="s-phone" placeholder="+1 (888) MOTA">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <input type="text" class="form-input" value="${contact.address || ''}" id="s-address" placeholder="Mahogany Bay, Belize">
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">👋 Welcome Message</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" value="${esc(welcome.title) || ''}" id="s-welcome-title" placeholder="Welcome to MOTA">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Subtitle</label>
+                <input type="text" class="form-input" value="${esc(welcome.subtitle) || ''}" id="s-welcome-subtitle" placeholder="Macau of the Americas">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Body Text</label>
+              <textarea class="form-textarea" id="s-welcome-body" placeholder="Welcome message...">${esc(welcome.body) || ''}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="saveAllSettings()">💾 Save All Settings</button>
+      `;
+    }
+
+    // =============================================
+    // MODALS
+    // =============================================
+
+    function renderModal() {
+      const { type, data } = state.modal;
+      let content = '';
+      
+      if (type === 'addSlide' || type === 'editSlide') content = slideForm(data);
+      else if (type === 'addRestaurant' || type === 'editRestaurant') content = restaurantForm(data);
+      else if (type === 'addEvent' || type === 'editEvent') content = eventForm(data);
+      else if (type === 'addProperty' || type === 'editLodging') content = lodgingForm(data);
+      else if (type === 'addActivity' || type === 'editActivity') content = activityForm(data);
+      else if (type === 'addVenue' || type === 'editNightlife') content = nightlifeForm(data);
+      else if (type === 'editUser') content = userForm(data);
+      else if (type === 'addLead' || type === 'editLead') content = leadForm(data);
+      else if (type === 'viewReservation') content = reservationView(data);
+      else content = '<div class="modal-body">Unknown modal type</div>';
+      
+      return `<div class="modal-overlay" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">${content}</div></div>`;
+    }
+
+    // Slide Form
+    function slideForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Slide' : '➕ Add New Slide'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleSlideSubmit(event, ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
             <div class="form-group">
               <label class="form-label">Title *</label>
-              <input type="text" class="form-input" id="title" value="${data?.title || ''}" required>
+              <input type="text" name="title" class="form-input" value="${esc(d?.title)}" required placeholder="Welcome to Paradise">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subtitle</label>
+              <input type="text" name="subtitle" class="form-input" value="${esc(d?.subtitle)}" placeholder="MOTA Resort & Casino">
             </div>
             <div class="form-group">
               <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="description">${data?.description || ''}</textarea>
+              <textarea name="description" class="form-textarea" placeholder="Experience the ultimate luxury...">${esc(d?.description)}</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Image URL *</label>
+              <input type="url" name="imageUrl" class="form-input" value="${esc(d?.imageUrl)}" required placeholder="https://images.unsplash.com/..." id="slide-img-input" oninput="previewImg(this.value, 'slide-img-preview')">
+              <img id="slide-img-preview" src="${d?.imageUrl || ''}" class="img-preview" style="${d?.imageUrl ? '' : 'display:none'}" onerror="this.style.display='none'">
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Type *</label>
-                <select class="form-select" id="type" required>
-                  <option value="restaurant" ${data?.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
-                  <option value="activity" ${data?.type === 'activity' ? 'selected' : ''}>Activity</option>
-                  <option value="event" ${data?.type === 'event' ? 'selected' : ''}>Event</option>
-                  <option value="general" ${data?.type === 'general' ? 'selected' : ''}>General</option>
-                </select>
+                <label class="form-label">Button Text</label>
+                <input type="text" name="buttonText" class="form-input" value="${esc(d?.buttonText)}" placeholder="Explore">
               </div>
               <div class="form-group">
-                <label class="form-label">Promo Code</label>
-                <input type="text" class="form-input" id="code" value="${data?.code || ''}" style="text-transform: uppercase">
+                <label class="form-label">Button Link</label>
+                <input type="text" name="buttonLink" class="form-input" value="${esc(d?.buttonLink)}" placeholder="/explore">
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Discount %</label>
-                <input type="number" class="form-input" id="discountPercent" value="${data?.discountPercent || ''}" min="0" max="100">
-              </div>
-              <div class="form-group">
-                <label class="form-label">OR Free Addon</label>
-                <input type="text" class="form-input" id="freeAddon" value="${data?.freeAddon || ''}" placeholder="e.g., Spa Treatment">
+            <div class="form-group">
+              <div class="toggle ${d?.isActive !== false ? 'active' : ''}" onclick="this.classList.toggle('active')">
+                <div class="toggle-switch"></div>
+                <span class="toggle-label">Active (visible on app)</span>
               </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Valid From</label>
-                <input type="date" class="form-input" id="validFrom" value="${data?.validFrom?.split('T')[0] || ''}">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Valid Until</label>
-                <input type="date" class="form-input" id="validUntil" value="${data?.validUntil?.split('T')[0] || ''}">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Minimum Tier</label>
-                <select class="form-select" id="minTier">
-                  <option value="member" ${data?.minTier === 'member' ? 'selected' : ''}>Member</option>
-                  <option value="gold" ${data?.minTier === 'gold' ? 'selected' : ''}>Gold</option>
-                  <option value="platinum" ${data?.minTier === 'platinum' ? 'selected' : ''}>Platinum</option>
-                  <option value="diamond" ${data?.minTier === 'diamond' ? 'selected' : ''}>Diamond</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Max Uses</label>
-                <input type="number" class="form-input" id="maxUses" value="${data?.maxUses || 100}">
-              </div>
-            </div>
-          `;
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update Slide' : 'Add Slide'}</button>
+          </div>
+        </form>
+      `;
+    }
 
-        case 'user':
-          return `
-            <div class="form-group">
-              <label class="form-label">Name</label>
-              <input type="text" class="form-input" id="name" value="${data?.name || ''}" required>
+    // Restaurant Form
+    function restaurantForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Restaurant' : '➕ Add Restaurant'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'restaurants', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name)}" required></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Cuisine *</label><input type="text" name="cuisine" class="form-input" value="${esc(d?.cuisine)}" required placeholder="Fine Dining, Asian Fusion..."></div>
+              <div class="form-group"><label class="form-label">Price Range</label>
+                <select name="priceRange" class="form-select">
+                  <option value="$" ${d?.priceRange === '$' ? 'selected' : ''}>$ Budget</option>
+                  <option value="$$" ${d?.priceRange === '$$' ? 'selected' : ''}>$$ Moderate</option>
+                  <option value="$$$" ${d?.priceRange === '$$$' ? 'selected' : ''}>$$$ Upscale</option>
+                  <option value="$$$$" ${d?.priceRange === '$$$$' || !d ? 'selected' : ''}>$$$$ Fine Dining</option>
+                </select>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-input" id="email" value="${data?.email || ''}" readonly>
+            <div class="form-group"><label class="form-label">Short Description</label><input type="text" name="shortDescription" class="form-input" value="${esc(d?.shortDescription)}" placeholder="One-line description for cards"></div>
+            <div class="form-group"><label class="form-label">Full Description</label><textarea name="description" class="form-textarea">${esc(d?.description)}</textarea></div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}"></div>
+            <div class="form-row-3">
+              <div class="form-group"><label class="form-label">Rating (1-5)</label><input type="number" name="rating" class="form-input" min="1" max="5" step="0.1" value="${d?.rating || 4.5}"></div>
+              <div class="form-group"><label class="form-label">Dress Code</label>
+                <select name="dressCode" class="form-select">
+                  <option value="casual" ${d?.dressCode === 'casual' ? 'selected' : ''}>Casual</option>
+                  <option value="smart casual" ${d?.dressCode === 'smart casual' ? 'selected' : ''}>Smart Casual</option>
+                  <option value="business casual" ${d?.dressCode === 'business casual' ? 'selected' : ''}>Business Casual</option>
+                  <option value="formal" ${d?.dressCode === 'formal' ? 'selected' : ''}>Formal</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Reviews</label><input type="number" name="reviewCount" class="form-input" value="${d?.reviewCount || 0}"></div>
             </div>
+            <div class="form-row">
+              <div class="form-group"><div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured"><div class="toggle-switch"></div><span class="toggle-label">Featured</span></div></div>
+              <div class="form-group"><div class="toggle ${d?.dogFriendly ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="dogFriendly"><div class="toggle-switch"></div><span class="toggle-label">Dog Friendly</span></div></div>
+              <div class="form-group"><div class="toggle ${d?.kidsFriendly ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="kidsFriendly"><div class="toggle-switch"></div><span class="toggle-label">Kids Friendly</span></div></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Event Form
+    function eventForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Event' : '➕ Add Event'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'events', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Event Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name || d?.title)}" required></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Date & Time *</label><input type="datetime-local" name="date" class="form-input" value="${d?.date ? new Date(d.date).toISOString().slice(0,16) : ''}" required></div>
+              <div class="form-group"><label class="form-label">Capacity</label><input type="number" name="capacity" class="form-input" value="${d?.capacity || ''}" placeholder="Leave empty for unlimited"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Short Description</label><input type="text" name="shortDescription" class="form-input" value="${esc(d?.shortDescription)}"></div>
+            <div class="form-group"><label class="form-label">Full Description</label><textarea name="description" class="form-textarea">${esc(d?.description)}</textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Venue</label><input type="text" name="venue" class="form-input" value="${esc(d?.venue)}" placeholder="Grand Ballroom"></div>
+              <div class="form-group"><label class="form-label">Price ($)</label><input type="number" name="price" class="form-input" value="${d?.price || 0}"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Access Level</label>
+                <select name="accessLevel" class="form-select">
+                  <option value="all" ${d?.accessLevel === 'all' ? 'selected' : ''}>All Guests</option>
+                  <option value="member" ${d?.accessLevel === 'member' ? 'selected' : ''}>Members Only</option>
+                  <option value="investor" ${d?.accessLevel === 'investor' ? 'selected' : ''}>Investors Only</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <option value="Gala" ${d?.category === 'Gala' ? 'selected' : ''}>Gala</option>
+                  <option value="Dining" ${d?.category === 'Dining' ? 'selected' : ''}>Dining</option>
+                  <option value="Entertainment" ${d?.category === 'Entertainment' ? 'selected' : ''}>Entertainment</option>
+                  <option value="Investor" ${d?.category === 'Investor' ? 'selected' : ''}>Investor</option>
+                  <option value="VIP" ${d?.category === 'VIP' ? 'selected' : ''}>VIP</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured"><div class="toggle-switch"></div><span class="toggle-label">Featured Event</span></div></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Lodging Form
+    function lodgingForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Property' : '➕ Add Property'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'lodging', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Property Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name)}" required></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                  <option value="Suite" ${d?.type === 'Suite' ? 'selected' : ''}>Suite</option>
+                  <option value="Villa" ${d?.type === 'Villa' ? 'selected' : ''}>Villa</option>
+                  <option value="Bungalow" ${d?.type === 'Bungalow' ? 'selected' : ''}>Bungalow</option>
+                  <option value="Penthouse" ${d?.type === 'Penthouse' ? 'selected' : ''}>Penthouse</option>
+                  <option value="Cottage" ${d?.type === 'Cottage' ? 'selected' : ''}>Cottage</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Price/Night ($) *</label><input type="number" name="price" class="form-input" value="${d?.price || d?.pricePerNight || ''}" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Short Description</label><input type="text" name="shortDescription" class="form-input" value="${esc(d?.shortDescription)}"></div>
+            <div class="form-group"><label class="form-label">Full Description</label><textarea name="description" class="form-textarea">${esc(d?.description)}</textarea></div>
+            <div class="form-row-3">
+              <div class="form-group"><label class="form-label">Bedrooms</label><input type="number" name="bedrooms" class="form-input" value="${d?.bedrooms || 1}"></div>
+              <div class="form-group"><label class="form-label">Bathrooms</label><input type="number" name="bathrooms" class="form-input" value="${d?.bathrooms || 1}"></div>
+              <div class="form-group"><label class="form-label">Max Guests</label><input type="number" name="maxGuests" class="form-input" value="${d?.maxGuests || 2}"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}"></div>
+            <div class="form-row">
+              <div class="form-group"><div class="toggle ${d?.isAvailable !== false ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isAvailable"><div class="toggle-switch"></div><span class="toggle-label">Available for Booking</span></div></div>
+              <div class="form-group"><div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured"><div class="toggle-switch"></div><span class="toggle-label">Featured Property</span></div></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Activity Form
+    function activityForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Activity' : '➕ Add Activity'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'activities', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Activity Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name)}" required></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <option value="Water Sports" ${d?.category === 'Water Sports' ? 'selected' : ''}>Water Sports</option>
+                  <option value="Adventure" ${d?.category === 'Adventure' ? 'selected' : ''}>Adventure</option>
+                  <option value="Cultural" ${d?.category === 'Cultural' ? 'selected' : ''}>Cultural</option>
+                  <option value="Wellness" ${d?.category === 'Wellness' ? 'selected' : ''}>Wellness</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Price ($) *</label><input type="number" name="price" class="form-input" value="${d?.price || ''}" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Short Description</label><input type="text" name="shortDescription" class="form-input" value="${esc(d?.shortDescription)}"></div>
+            <div class="form-group"><label class="form-label">Full Description</label><textarea name="description" class="form-textarea">${esc(d?.description)}</textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Duration</label><input type="text" name="duration" class="form-input" value="${esc(d?.duration)}" placeholder="3 hours, Full Day..."></div>
+              <div class="form-group"><label class="form-label">Skill Level</label>
+                <select name="skillLevel" class="form-select">
+                  <option value="all levels" ${d?.skillLevel === 'all levels' ? 'selected' : ''}>All Levels</option>
+                  <option value="beginner" ${d?.skillLevel === 'beginner' ? 'selected' : ''}>Beginner</option>
+                  <option value="intermediate" ${d?.skillLevel === 'intermediate' ? 'selected' : ''}>Intermediate</option>
+                  <option value="advanced" ${d?.skillLevel === 'advanced' ? 'selected' : ''}>Advanced</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}"></div>
+            <div class="form-group"><div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured"><div class="toggle-switch"></div><span class="toggle-label">Featured Activity</span></div></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Nightlife Form
+    function nightlifeForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Venue' : '➕ Add Venue'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'nightlife', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Venue Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name)}" required></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                  <option value="Rooftop Bar" ${d?.type === 'Rooftop Bar' ? 'selected' : ''}>Rooftop Bar</option>
+                  <option value="Nightclub" ${d?.type === 'Nightclub' ? 'selected' : ''}>Nightclub</option>
+                  <option value="Lounge" ${d?.type === 'Lounge' ? 'selected' : ''}>Lounge</option>
+                  <option value="Beach Bar" ${d?.type === 'Beach Bar' ? 'selected' : ''}>Beach Bar</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Price Range</label>
+                <select name="priceRange" class="form-select">
+                  <option value="$$" ${d?.priceRange === '$$' ? 'selected' : ''}>$$</option>
+                  <option value="$$$" ${d?.priceRange === '$$$' ? 'selected' : ''}>$$$</option>
+                  <option value="$$$$" ${d?.priceRange === '$$$$' ? 'selected' : ''}>$$$$</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-textarea">${esc(d?.description)}</textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Hours</label><input type="text" name="hours" class="form-input" value="${esc(d?.hours)}" placeholder="5:00 PM - 1:00 AM"></div>
+              <div class="form-group"><label class="form-label">Music Type</label><input type="text" name="musicType" class="form-input" value="${esc(d?.musicType)}" placeholder="EDM, Jazz, Lounge..."></div>
+            </div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}"></div>
+            <div class="form-group"><div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured"><div class="toggle-switch"></div><span class="toggle-label">Featured Venue</span></div></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // USER FORM - FULL EDITING
+    function userForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">✏️ Edit User</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleUserSubmit(event, '${d?._id}')">
+          <div class="modal-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border);">
+              <div class="avatar avatar-lg">${(d?.name || d?.email)?.[0]?.toUpperCase() || '?'}</div>
+              <div>
+                <h3 style="margin-bottom:4px;">${esc(d?.name) || 'No name'}</h3>
+                <p style="color:var(--text-secondary);margin:0;">${esc(d?.email)}</p>
+                <p style="color:var(--text-muted);margin:4px 0 0;font-size:12px;">Joined ${new Date(d?.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" class="form-input" value="${esc(d?.name)}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" class="form-input" value="${esc(d?.phone)}" placeholder="+1 (555) 000-0000">
+              </div>
+            </div>
+            
+            <div class="divider"></div>
+            <h4 style="margin-bottom:16px;color:var(--text-secondary);">Access & Permissions</h4>
+            
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Access Level</label>
-                <select class="form-select" id="accessLevel">
-                  <option value="member" ${data?.accessLevel === 'member' ? 'selected' : ''}>Member</option>
-                  <option value="investor" ${data?.accessLevel === 'investor' ? 'selected' : ''}>Investor</option>
+                <select name="accessLevel" class="form-select">
+                  <option value="guest" ${d?.accessLevel === 'guest' ? 'selected' : ''}>Guest</option>
+                  <option value="member" ${d?.accessLevel === 'member' ? 'selected' : ''}>Member</option>
+                  <option value="investor" ${d?.accessLevel === 'investor' ? 'selected' : ''}>Investor</option>
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Investor Tier</label>
-                <select class="form-select" id="investorTier">
-                  <option value="">None</option>
-                  <option value="gold" ${data?.investorTier === 'gold' ? 'selected' : ''}>Gold</option>
-                  <option value="platinum" ${data?.investorTier === 'platinum' ? 'selected' : ''}>Platinum</option>
-                  <option value="diamond" ${data?.investorTier === 'diamond' ? 'selected' : ''}>Diamond</option>
-                  <option value="black" ${data?.investorTier === 'black' ? 'selected' : ''}>Black</option>
-                  <option value="founders" ${data?.investorTier === 'founders' ? 'selected' : ''}>Founders</option>
+                <select name="investorTier" class="form-select">
+                  <option value="" ${!d?.investorTier ? 'selected' : ''}>None</option>
+                  <option value="gold" ${d?.investorTier === 'gold' ? 'selected' : ''}>🥇 Gold ($2.5M+)</option>
+                  <option value="platinum" ${d?.investorTier === 'platinum' ? 'selected' : ''}>🥈 Platinum ($15M+)</option>
+                  <option value="diamond" ${d?.investorTier === 'diamond' ? 'selected' : ''}>💎 Diamond ($70M+)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="divider"></div>
+            <h4 style="margin-bottom:16px;color:var(--text-secondary);">Investment Details</h4>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Investment Amount ($)</label>
+                <input type="number" name="investmentAmount" class="form-input" value="${d?.investmentAmount || 0}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Portfolio Value ($)</label>
+                <input type="number" name="portfolioValue" class="form-input" value="${d?.portfolioValue || 0}">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <div class="toggle ${d?.isActive !== false ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isActive">
+                <div class="toggle-switch"></div>
+                <span class="toggle-label">Account Active</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Lead Form
+    function leadForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${d ? '✏️ Edit Lead' : '➕ Add Lead'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleItemSubmit(event, 'leads', ${d ? `'${d._id}'` : 'null'})">
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Name *</label><input type="text" name="name" class="form-input" value="${esc(d?.name)}" required></div>
+              <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-input" value="${esc(d?.email)}" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-input" value="${esc(d?.phone)}"></div>
+              <div class="form-group"><label class="form-label">Source</label>
+                <select name="source" class="form-select">
+                  <option value="website" ${d?.source === 'website' ? 'selected' : ''}>Website</option>
+                  <option value="referral" ${d?.source === 'referral' ? 'selected' : ''}>Referral</option>
+                  <option value="event" ${d?.source === 'event' ? 'selected' : ''}>Event</option>
+                  <option value="social" ${d?.source === 'social' ? 'selected' : ''}>Social Media</option>
+                  <option value="advertising" ${d?.source === 'advertising' ? 'selected' : ''}>Advertising</option>
                 </select>
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Investment Amount ($)</label>
-                <input type="number" class="form-input" id="investmentAmount" value="${data?.investmentAmount || 0}">
+              <div class="form-group"><label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                  <option value="new" ${d?.status === 'new' ? 'selected' : ''}>New</option>
+                  <option value="contacted" ${d?.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                  <option value="qualified" ${d?.status === 'qualified' ? 'selected' : ''}>Qualified</option>
+                  <option value="proposal" ${d?.status === 'proposal' ? 'selected' : ''}>Proposal Sent</option>
+                  <option value="negotiation" ${d?.status === 'negotiation' ? 'selected' : ''}>Negotiation</option>
+                  <option value="closed" ${d?.status === 'closed' ? 'selected' : ''}>Closed Won</option>
+                  <option value="lost" ${d?.status === 'lost' ? 'selected' : ''}>Closed Lost</option>
+                </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">Portfolio Value ($)</label>
-                <input type="number" class="form-input" id="portfolioValue" value="${data?.portfolioValue || 0}">
-              </div>
+              <div class="form-group"><label class="form-label">Lead Score (0-100)</label><input type="number" name="score" class="form-input" min="0" max="100" value="${d?.score || 0}"></div>
             </div>
-            <div class="form-group">
-              <label class="form-label">
-                <input type="checkbox" id="isActive" ${data?.isActive !== false ? 'checked' : ''}> Active User
-              </label>
+            <div class="form-group"><label class="form-label">Notes</label><textarea name="notes" class="form-textarea">${esc(d?.notes)}</textarea></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${d ? 'Update' : 'Create'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Reservation View
+    function reservationView(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">📅 Reservation Details</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:grid;gap:16px;">
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="color:var(--text-secondary);">Confirmation #</span>
+              <code style="background:var(--bg-tertiary);padding:4px 8px;border-radius:4px;">${d?.confirmationNumber || '-'}</code>
             </div>
-          `;
-
-        case 'upgrade':
-          return `
-            <p style="margin-bottom: 20px; color: var(--text-gray)">Upgrade this user to an investor with a specific tier.</p>
-            <div class="form-group">
-              <label class="form-label">Investor Tier *</label>
-              <select class="form-select" id="investorTier" required>
-                <option value="gold">Gold ($0 - $249,999)</option>
-                <option value="platinum">Platinum ($250,000 - $499,999)</option>
-                <option value="diamond">Diamond ($500,000 - $999,999)</option>
-                <option value="black">Black ($1,000,000+)</option>
-                <option value="founders">Founders (Original Investors)</option>
-              </select>
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="color:var(--text-secondary);">Type</span>
+              <span class="badge badge-info">${d?.type || '-'}</span>
             </div>
-            <div class="form-group">
-              <label class="form-label">Investment Amount ($) *</label>
-              <input type="number" class="form-input" id="investmentAmount" required placeholder="Enter investment amount">
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="color:var(--text-secondary);">Status</span>
+              <span class="badge ${d?.status === 'confirmed' ? 'badge-success' : 'badge-warning'}">${d?.status || 'pending'}</span>
             </div>
-          `;
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="color:var(--text-secondary);">Guest</span>
+              <span>${esc(d?.user?.name || d?.user?.email || 'Guest')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="color:var(--text-secondary);">Date</span>
+              <span>${d?.date ? new Date(d.date).toLocaleString() : '-'}</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>
+      `;
+    }
 
-        default:
-          return '<p>Unknown form type</p>';
+    // =============================================
+    // FORM HANDLERS
+    // =============================================
+
+    function getFormData(form) {
+      const data = {};
+      new FormData(form).forEach((v, k) => {
+        if (v === '') return;
+        if (!isNaN(v) && v !== '') v = Number(v);
+        data[k] = v;
+      });
+      form.querySelectorAll('.toggle').forEach(t => {
+        const field = t.dataset.field;
+        if (field) data[field] = t.classList.contains('active');
+      });
+      if (data.imageUrl) {
+        data.images = [{ url: data.imageUrl, isPrimary: true }];
+        delete data.imageUrl;
       }
+      return data;
     }
 
-    function toggleTierSelect() {
-      const checkbox = document.getElementById('isVipOnly');
-      const tierGroup = document.getElementById('tierSelectGroup');
-      tierGroup.style.display = checkbox.checked ? 'block' : 'none';
-    }
-
-    function updatePriceCalculator() {
-      const price = parseFloat(document.getElementById('regularPrice').value) || 0;
-      document.getElementById('calcMember').textContent = `$${Math.round(price * 0.9)}`;
-      document.getElementById('calcPlatinum').textContent = `$${Math.round(price * 0.85)}`;
-      document.getElementById('calcDiamond').textContent = `$${Math.round(price * 0.75)}`;
-    }
-
-    // Save Item
-    async function saveItem() {
-      try {
-        let endpoint, body;
-
-        switch(currentModal) {
-          case 'restaurant':
-            body = {
-              name: document.getElementById('name').value,
-              category: document.getElementById('category').value,
-              description: document.getElementById('description').value,
-              image: document.getElementById('image').value,
-              regularPrice: parseFloat(document.getElementById('regularPrice').value),
-              rating: parseFloat(document.getElementById('rating').value),
-              priceRange: document.getElementById('priceRange').value,
-              openHours: document.getElementById('openHours').value,
-              location: document.getElementById('location').value,
-              isFeatured: document.getElementById('isFeatured').checked
-            };
-            endpoint = editingId ? `/admin/restaurants/${editingId}` : '/admin/restaurants';
-            break;
-
-          case 'activity':
-            body = {
-              name: document.getElementById('name').value,
-              category: document.getElementById('category').value,
-              description: document.getElementById('description').value,
-              image: document.getElementById('image').value,
-              regularPrice: parseFloat(document.getElementById('regularPrice').value),
-              rating: parseFloat(document.getElementById('rating').value),
-              duration: document.getElementById('duration').value,
-              isFeatured: document.getElementById('isFeatured').checked
-            };
-            endpoint = editingId ? `/admin/activities/${editingId}` : '/admin/activities';
-            break;
-
-          case 'event':
-            body = {
-              name: document.getElementById('name').value,
-              description: document.getElementById('description').value,
-              image: document.getElementById('image').value,
-              date: document.getElementById('date').value,
-              endDate: document.getElementById('endDate').value,
-              venue: document.getElementById('venue').value,
-              capacity: parseInt(document.getElementById('capacity').value) || null,
-              isVipOnly: document.getElementById('isVipOnly').checked,
-              investorTierRequired: document.getElementById('isVipOnly').checked ? document.getElementById('investorTierRequired').value : null,
-              isFeatured: document.getElementById('isFeatured').checked
-            };
-            endpoint = editingId ? `/admin/events/${editingId}` : '/admin/events';
-            break;
-
-          case 'offer':
-            body = {
-              title: document.getElementById('title').value,
-              description: document.getElementById('description').value,
-              type: document.getElementById('type').value,
-              code: document.getElementById('code').value.toUpperCase(),
-              discountPercent: parseInt(document.getElementById('discountPercent').value) || 0,
-              freeAddon: document.getElementById('freeAddon').value,
-              validFrom: document.getElementById('validFrom').value,
-              validUntil: document.getElementById('validUntil').value,
-              minTier: document.getElementById('minTier').value,
-              maxUses: parseInt(document.getElementById('maxUses').value) || 100
-            };
-            endpoint = editingId ? `/admin/offers/${editingId}` : '/admin/offers';
-            break;
-
-          case 'user':
-            body = {
-              name: document.getElementById('name').value,
-              accessLevel: document.getElementById('accessLevel').value,
-              investorTier: document.getElementById('investorTier').value || null,
-              investmentAmount: parseFloat(document.getElementById('investmentAmount').value) || 0,
-              portfolioValue: parseFloat(document.getElementById('portfolioValue').value) || 0,
-              isActive: document.getElementById('isActive').checked
-            };
-            endpoint = `/admin/users/${editingId}`;
-            break;
-
-          case 'upgrade':
-            body = {
-              investorTier: document.getElementById('investorTier').value,
-              investmentAmount: parseFloat(document.getElementById('investmentAmount').value)
-            };
-            endpoint = `/admin/users/${editingId}/upgrade-to-investor`;
-            await apiRequest(endpoint, 'POST', body);
-            showToast('User upgraded to investor successfully!');
-            closeModal();
-            loadUsers();
-            loadStats();
-            return;
-        }
-
-        await apiRequest(endpoint, editingId ? 'PUT' : 'POST', body);
-        showToast(`${currentModal} ${editingId ? 'updated' : 'created'} successfully!`);
-        closeModal();
-        
-        // Reload current page data
-        navigateTo(currentPage);
-        loadStats();
-      } catch (error) {
-        console.error('Save error:', error);
-        showToast('Error saving item', true);
-      }
-    }
-
-    // Edit Item
-    async function editItem(type, id) {
-      try {
-        let data;
-        switch(type) {
-          case 'restaurant':
-            data = await apiRequest(`/restaurants/${id}`);
-            break;
-          case 'activity':
-            data = await apiRequest(`/activities/${id}`);
-            break;
-          case 'event':
-            data = await apiRequest(`/events/${id}`);
-            break;
-          case 'offer':
-            data = await apiRequest(`/offers/${id}`);
-            break;
-        }
-        openModal(type, data);
-      } catch (error) {
-        console.error('Error loading item:', error);
-        showToast('Error loading item', true);
-      }
-    }
-
-    // Edit User
-    async function editUser(id) {
-      try {
-        const data = await apiRequest(`/admin/users/${id}`);
-        openModal('user', data);
-      } catch (error) {
-        console.error('Error loading user:', error);
-        showToast('Error loading user', true);
-      }
-    }
-
-    // Upgrade User
-    function upgradeUser(id) {
-      editingId = id;
-      openModal('upgrade');
-    }
-
-    // Delete Item
-    async function deleteItem(type, id) {
-      if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
-
-      try {
-        await apiRequest(`/admin/${type}s/${id}`, 'DELETE');
-        showToast(`${type} deleted successfully!`);
-        navigateTo(currentPage);
-        loadStats();
-      } catch (error) {
-        console.error('Delete error:', error);
-        showToast('Error deleting item', true);
-      }
-    }
-
-    // Update Booking Status
-    async function updateBookingStatus(id, status) {
-      try {
-        await apiRequest(`/admin/bookings/${id}`, 'PUT', { status });
-        showToast(`Booking ${status}!`);
-        loadBookings();
-      } catch (error) {
-        console.error('Error updating booking:', error);
-        showToast('Error updating booking', true);
-      }
-    }
-
-    // Filter Table
-    function filterTable(tableId, query) {
-      const table = document.getElementById(tableId);
-      const rows = table.getElementsByTagName('tr');
-      const lowerQuery = query.toLowerCase();
-
-      for (let row of rows) {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(lowerQuery) ? '' : 'none';
-      }
-    }
-
-    // Toast
-    function showToast(message, isError = false) {
-      const toast = document.getElementById('toast');
-      const toastMessage = document.getElementById('toastMessage');
+    window.handleSlideSubmit = async function(e, id) {
+      e.preventDefault();
+      const data = getFormData(e.target);
+      data.isActive = e.target.querySelector('.toggle')?.classList.contains('active') ?? true;
       
-      toastMessage.textContent = message;
-      toast.classList.toggle('error', isError);
-      toast.classList.add('active');
+      const slideshow = state.data.content?.find(c => c.key === 'homepage_slideshow') || { slides: [] };
+      let slides = [...(slideshow.slides || [])];
+      
+      if (id) {
+        slides = slides.map(s => s._id === id ? { ...s, ...data } : s);
+      } else {
+        slides.push({ ...data, order: slides.length });
+      }
+      
+      await saveContent('homepage_slideshow', { slides });
+    };
 
-      setTimeout(() => {
-        toast.classList.remove('active');
-      }, 3000);
+    window.editSlide = function(index) {
+      const slideshow = state.data.content?.find(c => c.key === 'homepage_slideshow');
+      const slide = slideshow?.slides?.[index];
+      if (slide) openModal('editSlide', slide);
+    };
+
+    window.deleteSlide = async function(id, title) {
+      if (!confirm(`Delete slide "${title || 'this slide'}"?`)) return;
+      const slideshow = state.data.content?.find(c => c.key === 'homepage_slideshow');
+      const slides = (slideshow?.slides || []).filter(s => s._id !== id);
+      await saveContent('homepage_slideshow', { slides });
+    };
+
+    window.handleItemSubmit = async function(e, type, id) {
+      e.preventDefault();
+      await saveItem(type, id, getFormData(e.target));
+    };
+
+    window.handleUserSubmit = async function(e, id) {
+      e.preventDefault();
+      const data = getFormData(e.target);
+      data.isActive = e.target.querySelector('.toggle[data-field="isActive"]')?.classList.contains('active') ?? true;
+      await saveItem('users', id, data);
+    };
+
+    window.openEditModal = function(type, id) {
+      const item = state.data[type]?.find(i => i._id === id);
+      if (!item) return alert('Item not found');
+      
+      const modalMap = {
+        restaurants: 'editRestaurant',
+        events: 'editEvent',
+        lodging: 'editLodging',
+        activities: 'editActivity',
+        nightlife: 'editNightlife',
+        users: 'editUser',
+        leads: 'editLead'
+      };
+      openModal(modalMap[type], item);
+    };
+
+    window.saveAllSettings = async function() {
+      const settings = {
+        primaryColor: document.getElementById('s-primary').value,
+        secondaryColor: document.getElementById('s-secondary').value,
+        logoUrl: document.getElementById('s-logo').value
+      };
+      const contact = {
+        email: document.getElementById('s-email').value,
+        phone: document.getElementById('s-phone').value,
+        address: document.getElementById('s-address').value
+      };
+      const welcome = {
+        title: document.getElementById('s-welcome-title').value,
+        subtitle: document.getElementById('s-welcome-subtitle').value,
+        body: document.getElementById('s-welcome-body').value
+      };
+      
+      try {
+        await Promise.all([
+          api('/content/app_settings', { method: 'PUT', body: JSON.stringify({ data: settings }) }),
+          api('/content/contact_info', { method: 'PUT', body: JSON.stringify({ data: contact }) }),
+          api('/content/homepage_welcome', { method: 'PUT', body: JSON.stringify(welcome) })
+        ]);
+        showAlert('All settings saved successfully!', 'success');
+        loadData();
+      } catch (err) {
+        alert('Error saving: ' + err.message);
+      }
+    };
+
+    window.previewImg = function(url, id) {
+      const img = document.getElementById(id);
+      if (img) {
+        img.src = url;
+        img.style.display = url ? 'block' : 'none';
+      }
+    };
+
+    // =============================================
+    // EVENTS
+    // =============================================
+
+    function attachEvents() {
+      document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = await login(
+          document.getElementById('login-email').value,
+          document.getElementById('login-password').value
+        );
+        if (err) {
+          const el = document.getElementById('login-error');
+          el.textContent = err;
+          el.classList.remove('hidden');
+        }
+      });
+
+      document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+        el.addEventListener('click', () => navigate(el.dataset.page));
+      });
+
+      document.getElementById('logout-btn')?.addEventListener('click', logout);
     }
+
+    // =============================================
+    // INIT
+    // =============================================
+
+    checkAuth();
+    render();
+    if (state.isLoggedIn) loadData();
   </script>
 </body>
 </html>

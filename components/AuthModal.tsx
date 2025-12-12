@@ -21,7 +21,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
 // Colors
@@ -104,20 +104,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.iconWrap}>
-            <LinearGradient 
-              colors={['#E8C547', '#D4AF37', '#B8952F']} 
-              style={styles.iconGradient}
-            >
-              <MaterialCommunityIcons name="diamond-stone" size={32} color={C.bg} />
-            </LinearGradient>
-          </View>
           <Text style={styles.title}>
             {mode === 'signup' ? 'Create Free Account' : 'Welcome Back'}
           </Text>
@@ -194,13 +183,14 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
           {/* Submit Button */}
           <TouchableOpacity 
-            onPress={handleSubmit} 
+            style={styles.submitBtn} 
+            onPress={handleSubmit}
             disabled={loading}
             activeOpacity={0.85}
           >
             <LinearGradient
               colors={['#E8C547', '#D4AF37', '#B8952F']}
-              style={styles.submitBtn}
+              style={styles.submitGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
@@ -208,34 +198,37 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 <ActivityIndicator color={C.bg} />
               ) : (
                 <>
-                  <Text style={styles.submitBtnText}>
-                    {mode === 'signup' ? 'Create Free Account' : 'Sign In'}
+                  <Text style={styles.submitText}>
+                    {mode === 'signup' ? 'Create Account' : 'Sign In'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={20} color={C.bg} />
+                  <Ionicons name="arrow-forward" size={20} color={C.bg} style={{ marginLeft: 8 }} />
                 </>
               )}
             </LinearGradient>
           </TouchableOpacity>
-
-          {/* Free Badge (signup only) */}
-          {mode === 'signup' && (
-            <View style={styles.freeBadge}>
-              <Ionicons name="checkmark-circle" size={16} color={C.success} />
-              <Text style={styles.freeBadgeText}>100% FREE • No credit card required</Text>
-            </View>
-          )}
         </View>
 
         {/* Toggle Mode */}
-        <View style={styles.toggleWrap}>
+        <TouchableOpacity 
+          style={styles.toggleBtn}
+          onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
+        >
           <Text style={styles.toggleText}>
-            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
-          </Text>
-          <TouchableOpacity onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}>
+            {mode === 'signup' 
+              ? 'Already have an account? ' 
+              : "Don't have an account? "
+            }
             <Text style={styles.toggleLink}>
-              {mode === 'signup' ? 'Sign In' : 'Create Free Account'}
+              {mode === 'signup' ? 'Sign In' : 'Sign Up'}
             </Text>
-          </TouchableOpacity>
+          </Text>
+        </TouchableOpacity>
+
+        {/* Demo Accounts Info */}
+        <View style={styles.demoInfo}>
+          <Text style={styles.demoTitle}>Demo Accounts</Text>
+          <Text style={styles.demoText}>Member: member@demo.com / demo123</Text>
+          <Text style={styles.demoText}>Investor: investor@demo.com / demo123</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -245,33 +238,20 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
+    padding: 20,
   },
   header: {
     alignItems: 'center',
     marginBottom: 24,
   },
-  iconWrap: {
-    marginBottom: 16,
-  },
-  iconGradient: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '700',
     color: C.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: C.textSec,
     textAlign: 'center',
   },
@@ -289,7 +269,7 @@ const styles = StyleSheet.create({
   benefitIcon: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: C.goldMuted,
     justifyContent: 'center',
     alignItems: 'center',
@@ -302,66 +282,67 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   form: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: C.card,
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    marginBottom: 12,
+    height: 56,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
     fontSize: 15,
     color: C.text,
   },
   submitBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  submitGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
-    borderRadius: 16,
-    marginTop: 8,
   },
-  submitBtnText: {
-    fontSize: 17,
+  submitText: {
+    fontSize: 16,
     fontWeight: '700',
     color: C.bg,
-    marginRight: 8,
   },
-  freeBadge: {
-    flexDirection: 'row',
+  toggleBtn: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  freeBadgeText: {
-    fontSize: 13,
-    color: C.success,
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  toggleWrap: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 24,
   },
   toggleText: {
     fontSize: 14,
     color: C.textSec,
   },
   toggleLink: {
-    fontSize: 14,
     color: C.gold,
     fontWeight: '600',
-    marginLeft: 6,
+  },
+  demoInfo: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+  },
+  demoTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textSec,
+    marginBottom: 8,
+  },
+  demoText: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginBottom: 4,
   },
 });

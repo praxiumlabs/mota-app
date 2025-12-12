@@ -1,1606 +1,940 @@
 /**
  * MOTA - Macau of the Americas
- * Premium Casino Resort App
- * 
- * Focus: Guest Experience - Make their stay easy and enjoyable
- * Navigation: Home | Explore | Events | Concierge | Profile
- * 
- * v2.2 - Enhanced slideshow & investor profile
+ * Premium Casino Resort App v3.3
+ * Complete with MOTA Card, VIP Concierge, Portfolio, Investment Timeline
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Dimensions, StatusBar, ActivityIndicator, RefreshControl, FlatList, TextInput, Modal, Alert, ImageBackground, Linking, Animated } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, 
+  Dimensions, StatusBar, ActivityIndicator, RefreshControl, FlatList, 
+  TextInput, Alert, Modal
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import BottomSheet from './components/BottomSheet';
-import AuthModal from './components/AuthModal';
+import { C, G, PLACEHOLDER_IMAGE } from './constants/theme';
+import InvestmentBar from './components/InvestmentBar';
+import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import FleetScreen from './screens/FleetScreen';
+import DetailScreen from './screens/DetailScreen';
+import ReservationsScreen from './screens/ReservationsScreen';
+import FavoritesScreen from './screens/FavoritesScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import HelpScreen from './screens/HelpScreen';
 import api from './services/api';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// PREMIUM COLOR PALETTE
-const C = {
-  bg: '#0A122A', card: '#101C40', cardLight: '#152347',
-  gold: '#D4AF37', goldLight: '#E8C547', goldDark: '#B8952F', goldMuted: 'rgba(212,175,55,0.15)',
-  text: '#F5F5F5', textSec: '#A0AEC0', textMuted: '#718096',
-  success: '#48BB78', error: '#FC8181', blue: '#4299E1', purple: '#9F7AEA', cyan: '#38B2AC',
-  silver: '#C0C0C0', platinum: '#E5E4E2', diamond: '#B9F2FF',
+// ============================================
+// HERO SLIDES
+// ============================================
+const DefaultSlides = [
+  { id: 1, title: 'Luxury Retreats', subtitle: 'WHERE PARADISE MEETS PERFECTION', description: 'World-class accommodations with breathtaking Caribbean views', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80' },
+  { id: 2, title: 'World-Class Gaming', subtitle: 'THE ULTIMATE ENTERTAINMENT', description: 'Premier casino experience with exclusive VIP lounges', imageUrl: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&q=80' },
+  { id: 3, title: 'Outdoor Adventures', subtitle: 'EXPLORE THE UNTAMED BEAUTY', description: 'From pristine beaches to lush jungles, discover Belize', imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80' },
+  { id: 4, title: 'Culinary Excellence', subtitle: 'A FEAST FOR THE SENSES', description: 'Exquisite cuisines crafted by world-renowned chefs', imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80' },
+  { id: 5, title: 'Vibrant Nightlife', subtitle: 'WHERE THE NIGHT COMES ALIVE', description: 'Exclusive clubs, lounges, and entertainment venues', imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&q=80' },
+];
+
+// ============================================
+// INVESTOR TIER BENEFITS
+// ============================================
+const TierBenefits: Record<string, any> = {
+  gold: {
+    id: 'gold', name: 'Gold', investment: '$2.5M', phase: 'Phase 2 Investment',
+    color: '#D4AF37', gradient: ['#E8C547', '#D4AF37', '#B8952F'], creditLine: '$2,500,000',
+    benefits: [
+      'Complimentary chips: $50K annually',
+      '7 complimentary nights per year',
+      '2 business-class plane tickets annually',
+      'Priority reservations & concierge',
+      'Exclusive event access',
+      'Annual membership renewal',
+    ]
+  },
+  platinum: {
+    id: 'platinum', name: 'Platinum', investment: '$15M', phase: 'Phase 2 Investment',
+    color: '#E5E4E2', gradient: ['#E8E8E8', '#E5E4E2', '#D4D4D4'], creditLine: '$15,000,000',
+    benefits: [
+      'All Gold benefits plus:',
+      'Complimentary chips: $300K annually',
+      '30 complimentary nights per year',
+      'Private jet access (shared)',
+      'VIP gaming floor access',
+      'Personal account manager',
+      'Priority villa reservations',
+    ]
+  },
+  diamond: {
+    id: 'diamond', name: 'Diamond', investment: '$70M', phase: 'Phase 2 Investment',
+    color: '#B9F2FF', gradient: ['#E0F7FA', '#B9F2FF', '#81D4FA'], creditLine: '$70,000,000',
+    benefits: [
+      'All Platinum benefits plus:',
+      'Complimentary chips: $1.4M annually',
+      '90+ complimentary nights per year',
+      'Dedicated private aircraft',
+      'Resort ownership privileges',
+      '24/7 dedicated concierge team',
+      'Bespoke experience curation',
+    ]
+  }
 };
 
-const G = {
-  gold: ['#E8C547', '#D4AF37', '#B8952F'] as const,
-  dark: ['#101C40', '#0A122A'] as const,
-  card: ['#152347', '#101C40'] as const,
-  overlay: ['transparent', 'rgba(10,18,42,0.3)', 'rgba(10,18,42,0.85)'] as const,
-  silver: ['#E8E8E8', '#C0C0C0', '#A8A8A8'] as const,
-  platinum: ['#E8E8E8', '#E5E4E2', '#D4D4D4'] as const,
-  diamond: ['#E0F7FA', '#B9F2FF', '#81D4FA'] as const,
-  black: ['#434343', '#000000'] as const,
-  founders: ['#FFD700', '#FFA500', '#FF8C00'] as const,
-};
-
-// INVESTOR TIERS DATA
-const InvestorTiers = [
-  { id: 'silver', name: 'Silver', minInvestment: 50000, discount: 5, color: C.silver, gradient: G.silver, 
-    benefits: ['5% Resort Discount', 'Priority Reservations', 'Welcome Amenity', 'Member Events Access'] },
-  { id: 'gold', name: 'Gold', minInvestment: 100000, discount: 10, color: C.gold, gradient: G.gold,
-    benefits: ['10% Resort Discount', 'Room Upgrades', 'Spa Credits ($200/yr)', 'Golf Access', 'Concierge Priority'] },
-  { id: 'platinum', name: 'Platinum', minInvestment: 250000, discount: 20, color: C.platinum, gradient: G.platinum,
-    benefits: ['20% Resort Discount', 'Suite Upgrades', 'Spa Credits ($500/yr)', 'Airport Transfers', 'Private Events', 'Yacht Day (1/yr)'] },
-  { id: 'diamond', name: 'Diamond', minInvestment: 500000, discount: 30, color: C.diamond, gradient: G.diamond,
-    benefits: ['30% Resort Discount', 'Villa Access', 'Unlimited Spa', 'Private Chef (2x/yr)', 'Helicopter Transfer', 'Yacht Week', 'Founders Events'] },
-  { id: 'black', name: 'Black', minInvestment: 1000000, discount: 40, color: '#000', gradient: G.black,
-    benefits: ['40% Resort Discount', 'Dedicated Villa', 'Personal Concierge', 'Unlimited Transfers', 'Investment Advisory', 'Board Dinners'] },
-  { id: 'founders', name: 'Founders', minInvestment: 2500000, discount: 50, color: '#FFD700', gradient: G.founders,
-    benefits: ['50% Lifetime Discount', 'Ownership Suite', '24/7 Personal Staff', 'Equity Participation', 'Board Seat Observer', 'Legacy Benefits'] },
+// ============================================
+// INVESTMENT TIMELINE
+// ============================================
+const InvestmentTimeline = [
+  { phase: 1, name: 'Infrastructure Development', years: '2023-2025', status: 'completed' },
+  { phase: 2, name: 'Mahogany Bay Resort', years: '2026-2028', status: 'active', amount: '$10,000,000', date: 'Nov 2025' },
+  { phase: 3, name: 'Secret Beach Development', years: '2027-2031', status: 'upcoming' },
+  { phase: 4, name: 'Crown Jewel Casino Resort', years: '2031-2035', status: 'upcoming' },
+  { phase: 5, name: 'Full Destination Launch', years: '2036-2045', status: 'upcoming' },
 ];
 
-// HERO SLIDES - Premium resort imagery with elegant titles
-const HeroSlides = [
-  { 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200',
-    title: 'Paradise Awaits',
-    subtitle: 'Belize\'s Premier Destination'
-  },
-  { 
-    image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200',
-    title: 'Unrivaled Luxury',
-    subtitle: 'Where Dreams Meet Reality'
-  },
-  { 
-    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200',
-    title: 'Caribbean Elegance',
-    subtitle: 'A World Apart'
-  },
-  { 
-    image: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=1200',
-    title: 'Suite Dreams',
-    subtitle: 'Curated Perfection'
-  },
-  { 
-    image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200',
-    title: 'Endless Horizons',
-    subtitle: 'Your Story Begins Here'
-  },
-];
-
-// ROOMS DATA
-const Rooms = [
-  { id: '1', name: 'Oceanfront Suite', type: 'Suite', beds: 'King', size: '850 sq ft', price: 599, image: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800', amenities: ['Ocean View', 'Butler Service'] },
-  { id: '2', name: 'Overwater Villa', type: 'Villa', beds: '2 Kings', size: '1,800 sq ft', price: 1299, image: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800', amenities: ['Glass Floor', 'Private Pool'] },
-  { id: '3', name: 'Beachfront Bungalow', type: 'Bungalow', beds: 'King', size: '1,200 sq ft', price: 899, image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', amenities: ['Beach Access', 'Hammock'] },
-  { id: '4', name: 'Presidential Villa', type: 'Villa', beds: '3 Kings', size: '4,500 sq ft', price: 3999, image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800', amenities: ['Private Chef', 'Helipad'] },
-];
-
-// CARS DATA
-const Cars = [
-  { id: '1', name: 'Lamborghini Huracán', price: 1500, image: 'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600', cat: 'Supercar' },
-  { id: '2', name: 'Ferrari 488 GTB', price: 1800, image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=600', cat: 'Supercar' },
-  { id: '3', name: 'Rolls-Royce Ghost', price: 2000, image: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=600', cat: 'Luxury' },
-  { id: '4', name: 'Bentley Continental', price: 1200, image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600', cat: 'Luxury' },
-];
-
-// YACHTS DATA
-const Yachts = [
-  { id: '1', name: 'Sunset Cruise', duration: '3 hours', price: 2500, image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600', capacity: '12 guests' },
-  { id: '2', name: 'Island Hopping', duration: 'Full Day', price: 5000, image: 'https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600', capacity: '20 guests' },
-  { id: '3', name: 'Private Charter', duration: 'Custom', price: 8000, image: 'https://images.unsplash.com/photo-1540946485063-a40da27545f8?w=600', capacity: '30 guests' },
-];
-
-// COMPONENTS
-const GoldBtn = ({ title, icon, onPress, lg, style }: any) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={style}>
-    <LinearGradient colors={G.gold} style={[s.goldBtn, lg && s.goldBtnLg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+// ============================================
+// REUSABLE COMPONENTS
+// ============================================
+const GoldBtn = ({ title, icon, onPress, lg, style, disabled }: any) => (
+  <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={style} disabled={disabled}>
+    <LinearGradient colors={disabled ? [C.textMuted, C.textMuted] : G.gold} style={[s.goldBtn, lg && s.goldBtnLg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
       <Text style={[s.goldBtnText, lg && s.goldBtnTextLg]}>{title}</Text>
-      {icon ? <Ionicons name={icon} size={lg ? 20 : 16} color={C.bg} style={{ marginLeft: 8 }} /> : null}
+      {icon && <Ionicons name={icon} size={lg ? 20 : 16} color={C.bg} style={{ marginLeft: 8 }} />}
     </LinearGradient>
   </TouchableOpacity>
 );
 
-// INVESTOR CARD COMPONENT
-function InvestorCard({ user, tier, compact = false }: { user: any; tier: any; compact?: boolean }) {
-  const cardHeight = compact ? 180 : 220;
-  
-  // Generate investor ID from user id
-  const investorId = user?._id ? `MOTA-${user._id.slice(-8).toUpperCase()}` : 'MOTA-00000000';
-  
+const FilterChip = ({ label, active, onPress }: any) => (
+  <TouchableOpacity onPress={onPress} style={[s.filterChip, active && s.filterChipActive]} activeOpacity={0.7}>
+    <Text style={[s.filterChipText, active && s.filterChipTextActive]}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const ItemCard = ({ item, onPress }: any) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE;
   return (
-    <View style={[s.investorCard, { height: cardHeight }]}>
-      <LinearGradient 
-        colors={tier?.gradient || G.gold} 
-        style={s.investorCardGrad}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Card Pattern Overlay */}
-        <View style={s.cardPattern}>
-          {[...Array(6)].map((_, i) => (
-            <View key={i} style={[s.cardPatternLine, { top: 20 + i * 35, opacity: 0.1 }]} />
-          ))}
+    <TouchableOpacity style={s.itemCard} onPress={onPress} activeOpacity={0.9}>
+      <Image source={{ uri: imageError ? PLACEHOLDER_IMAGE : imageUrl }} style={s.itemCardImage} onError={() => setImageError(true)} />
+      <LinearGradient colors={G.overlay} style={s.itemCardOverlay} />
+      <View style={s.itemCardContent}>
+        <Text style={s.itemCardName} numberOfLines={1}>{item.name}</Text>
+        {(item.cuisine || item.category) && <Text style={s.itemCardSub}>{item.cuisine || item.category}</Text>}
+        <View style={s.itemCardFooter}>
+          {item.priceRange && <Text style={s.itemCardPrice}>{item.priceRange}</Text>}
+          {item.price && <Text style={s.itemCardPrice}>${item.price}</Text>}
+          {item.rating && (
+            <View style={s.itemCardRating}>
+              <Ionicons name="star" size={12} color={C.gold} />
+              <Text style={s.itemCardRatingText}>{item.rating}</Text>
+            </View>
+          )}
         </View>
-        
-        {/* Top Row */}
-        <View style={s.cardTop}>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+// ============================================
+// MOTA CARD COMPONENT
+// ============================================
+const MOTACard = ({ tier, user }: { tier: string; user: any }) => {
+  const tierInfo = TierBenefits[tier];
+  if (!tierInfo) return null;
+  return (
+    <View style={s.motaCardContainer}>
+      <LinearGradient colors={tierInfo.gradient} style={s.motaCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View style={s.motaCardHeader}>
           <View>
-            <Text style={s.cardLogo}>MOTA</Text>
-            <Text style={s.cardLogoSub}>INVESTOR</Text>
+            <Text style={s.motaCardLogo}>MOTA</Text>
+            <Text style={s.motaCardType}>{tierInfo.name} Card</Text>
           </View>
-          <View style={s.cardTierBadge}>
-            <MaterialCommunityIcons 
-              name={tier?.id === 'diamond' ? 'diamond-stone' : tier?.id === 'platinum' ? 'star-circle' : 'shield-crown'} 
-              size={16} 
-              color={tier?.id === 'diamond' || tier?.id === 'platinum' ? C.bg : '#FFF'} 
-            />
-            <Text style={[s.cardTierText, (tier?.id === 'diamond' || tier?.id === 'platinum') && { color: C.bg }]}>
-              {tier?.name || 'Member'}
-            </Text>
-          </View>
+          <View style={s.motaCardChip}><Ionicons name="diamond" size={24} color={C.bg} /></View>
         </View>
-        
-        {/* QR Pattern */}
-        <View style={s.cardQR}>
-          {[...Array(25)].map((_, i) => (
-            <View 
-              key={i} 
-              style={[
-                s.qrBlock, 
-                { opacity: Math.random() > 0.5 ? 0.9 : 0.3 },
-                (tier?.id === 'diamond' || tier?.id === 'platinum') && { backgroundColor: C.bg }
-              ]} 
-            />
-          ))}
-        </View>
-        
-        {/* Bottom Info */}
-        <View style={s.cardBottom}>
+        <Text style={s.motaCardNumber}>•••• •••• •••• {user?.id?.slice(-4) || '0000'}</Text>
+        <View style={s.motaCardFooter}>
           <View>
-            <Text style={[s.cardName, (tier?.id === 'diamond' || tier?.id === 'platinum') && { color: C.bg }]}>
-              {user?.name || 'Investor'}
-            </Text>
-            <Text style={[s.cardId, (tier?.id === 'diamond' || tier?.id === 'platinum') && { color: 'rgba(0,0,0,0.6)' }]}>
-              {investorId}
-            </Text>
+            <Text style={s.motaCardLabel}>MEMBER</Text>
+            <Text style={s.motaCardValue}>{user?.name?.toUpperCase() || 'MEMBER'}</Text>
           </View>
-          <View style={s.cardDiscount}>
-            <Text style={[s.cardDiscountValue, (tier?.id === 'diamond' || tier?.id === 'platinum') && { color: C.bg }]}>
-              {tier?.discount || 0}%
-            </Text>
-            <Text style={[s.cardDiscountLabel, (tier?.id === 'diamond' || tier?.id === 'platinum') && { color: 'rgba(0,0,0,0.6)' }]}>
-              OFF
-            </Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={s.motaCardLabel}>CREDIT LINE</Text>
+            <Text style={s.motaCardValue}>{tierInfo.creditLine}</Text>
           </View>
         </View>
-        
-        {/* Contactless Icon */}
-        <View style={[s.contactlessIcon, (tier?.id === 'diamond' || tier?.id === 'platinum') && { borderColor: 'rgba(0,0,0,0.3)' }]}>
-          <MaterialCommunityIcons 
-            name="contactless-payment" 
-            size={18} 
-            color={(tier?.id === 'diamond' || tier?.id === 'platinum') ? C.bg : '#FFF'} 
-          />
-        </View>
+        <View style={s.motaCardPattern}><Ionicons name="diamond-outline" size={120} color="rgba(0,0,0,0.05)" /></View>
       </LinearGradient>
     </View>
   );
-}
+};
 
-// INVESTMENT PROGRESS COMPONENT
-function InvestmentProgress({ user, currentTier, nextTier }: { user: any; currentTier: any; nextTier: any | null }) {
-  const currentAmount = user?.investmentAmount || 0;
-  const nextRequired = nextTier?.minInvestment || currentTier?.minInvestment || 0;
-  const currentMin = currentTier?.minInvestment || 0;
-  
-  const progress = nextTier 
-    ? Math.min(100, ((currentAmount - currentMin) / (nextRequired - currentMin)) * 100)
-    : 100;
-  
-  const amountToNext = nextTier ? nextRequired - currentAmount : 0;
-  
+// ============================================
+// TIER BENEFITS CARD
+// ============================================
+const TierBenefitsCard = ({ tier }: { tier: string }) => {
+  const tierInfo = TierBenefits[tier];
+  if (!tierInfo) return null;
   return (
-    <View style={s.progressSection}>
-      <View style={s.progressHeader}>
-        <Text style={s.progressTitle}>Investment Progress</Text>
-        {nextTier ? (
-          <Text style={s.progressNextTier}>Next: {nextTier.name}</Text>
-        ) : (
-          <Text style={s.progressMaxTier}>Maximum Tier ✨</Text>
-        )}
-      </View>
-      
-      <View style={s.progressAmounts}>
-        <Text style={s.progressCurrent}>${currentAmount.toLocaleString()}</Text>
-        {nextTier ? (
-          <Text style={s.progressTarget}>${nextRequired.toLocaleString()}</Text>
-        ) : null}
-      </View>
-      
-      <View style={s.progressBarBg}>
-        <LinearGradient 
-          colors={currentTier?.gradient || G.gold} 
-          style={[s.progressBarFill, { width: `${progress}%` }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        />
-      </View>
-      
-      {nextTier ? (
-        <Text style={s.progressRemaining}>
-          ${amountToNext.toLocaleString()} more to unlock {nextTier.name}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-// TIER BENEFITS COMPARISON
-function TierBenefitsComparison({ currentTier, nextTier }: { currentTier: any; nextTier: any | null }) {
-  if (!nextTier) return null;
-  
-  const newBenefits = nextTier.benefits.filter((b: string) => !currentTier.benefits.includes(b));
-  
-  return (
-    <View style={s.benefitsSection}>
-      <Text style={s.benefitsSectionTitle}>Unlock with {nextTier.name}</Text>
-      <View style={s.benefitsList}>
-        {newBenefits.map((benefit: string, index: number) => (
-          <View key={index} style={s.benefitItem}>
-            <View style={[s.benefitIcon, { backgroundColor: `${nextTier.color}30` }]}>
-              <Ionicons name="lock-open" size={14} color={nextTier.color} />
-            </View>
-            <Text style={s.benefitText}>{benefit}</Text>
+    <View style={s.tierBenefitsCard}>
+      <LinearGradient colors={tierInfo.gradient} style={s.tierBenefitsHeader}>
+        <Ionicons name="diamond" size={24} color={C.bg} />
+        <Text style={s.tierBenefitsTitle}>{tierInfo.name} Benefits</Text>
+        <Text style={s.tierBenefitsInvestment}>{tierInfo.investment}</Text>
+      </LinearGradient>
+      <View style={s.tierBenefitsList}>
+        {tierInfo.benefits.map((benefit: string, index: number) => (
+          <View key={index} style={s.tierBenefitItem}>
+            <Ionicons name="checkmark-circle" size={18} color={C.success} />
+            <Text style={s.tierBenefitText}>{benefit}</Text>
           </View>
         ))}
-        <View style={s.benefitItem}>
-          <View style={[s.benefitIcon, { backgroundColor: `${nextTier.color}30` }]}>
-            <Ionicons name="pricetag" size={14} color={nextTier.color} />
-          </View>
-          <Text style={s.benefitText}>{nextTier.discount}% Resort Discount (up from {currentTier.discount}%)</Text>
+        <View style={s.tierBenefitItem}>
+          <Ionicons name="checkmark-circle" size={18} color={C.success} />
+          <Text style={s.tierBenefitText}>Flexible credit line of {tierInfo.creditLine}</Text>
         </View>
       </View>
     </View>
   );
-}
+};
 
-// CURRENT BENEFITS LIST
-function CurrentBenefits({ tier }: { tier: any }) {
-  return (
-    <View style={s.currentBenefitsSection}>
-      <Text style={s.currentBenefitsTitle}>Your {tier.name} Benefits</Text>
-      <View style={s.currentBenefitsList}>
-        {tier.benefits.map((benefit: string, index: number) => (
-          <View key={index} style={s.currentBenefitItem}>
-            <Ionicons name="checkmark-circle" size={18} color={C.success} />
-            <Text style={s.currentBenefitText}>{benefit}</Text>
-          </View>
-        ))}
+// ============================================
+// PORTFOLIO OVERVIEW COMPONENT
+// ============================================
+const PortfolioOverview = ({ user }: { user: any }) => (
+  <View style={s.portfolioContainer}>
+    <Text style={s.portfolioTitle}>Portfolio Overview</Text>
+    <Text style={s.portfolioSubtitle}>Your investment journey and returns</Text>
+    <View style={s.portfolioStats}>
+      <View style={s.portfolioStat}>
+        <Text style={s.portfolioStatLabel}>Total Invested</Text>
+        <Text style={s.portfolioStatValue}>${((user?.investmentAmount || 0) / 1000000).toFixed(1)}M</Text>
+      </View>
+      <View style={s.portfolioStat}>
+        <Text style={s.portfolioStatLabel}>Current Value</Text>
+        <Text style={[s.portfolioStatValue, { color: C.success }]}>${((user?.portfolioValue || 0) / 1000000).toFixed(1)}M</Text>
+      </View>
+      <View style={s.portfolioStat}>
+        <Text style={s.portfolioStatLabel}>ROI</Text>
+        <Text style={[s.portfolioStatValue, { color: C.success }]}>+{(((user?.portfolioValue || 0) - (user?.investmentAmount || 1)) / (user?.investmentAmount || 1) * 100).toFixed(1)}%</Text>
       </View>
     </View>
-  );
-}
+    <Text style={s.timelineTitle}>Investment Timeline</Text>
+    <View style={s.timeline}>
+      {InvestmentTimeline.map((phase, index) => (
+        <View key={phase.phase} style={s.timelineItem}>
+          <View style={s.timelineDot}>
+            <View style={[s.timelineDotInner, phase.status === 'completed' && s.timelineDotCompleted, phase.status === 'active' && s.timelineDotActive]}>
+              {phase.status === 'completed' && <Ionicons name="checkmark" size={12} color="#fff" />}
+            </View>
+            {index < InvestmentTimeline.length - 1 && <View style={[s.timelineLine, phase.status === 'completed' && s.timelineLineCompleted]} />}
+          </View>
+          <View style={s.timelineContent}>
+            <Text style={s.timelinePhase}>Phase {phase.phase}</Text>
+            <Text style={s.timelineName}>{phase.name}</Text>
+            <Text style={s.timelineYears}>{phase.years}</Text>
+            {phase.amount && <Text style={s.timelineAmount}>{phase.amount}</Text>}
+            {phase.date && <Text style={s.timelineDate}>{phase.date}</Text>}
+            {phase.status === 'completed' && <View style={s.timelineStatusBadge}><Text style={s.timelineStatusText}>Completed</Text></View>}
+          </View>
+        </View>
+      ))}
+    </View>
+    <View style={s.dividendsCard}>
+      <View style={s.dividendsHeader}>
+        <Ionicons name="cash-outline" size={24} color={C.gold} />
+        <Text style={s.dividendsTitle}>Dividends</Text>
+      </View>
+      <Text style={s.dividendsNote}>Dividends will be paid out quarterly following completion of Phase 3</Text>
+      <View style={s.dividendsExpected}>
+        <Text style={s.dividendsLabel}>Next Expected</Text>
+        <Text style={s.dividendsAmount}>$864,000</Text>
+        <Text style={s.dividendsDate}>Q1 2031</Text>
+      </View>
+    </View>
+    <View style={s.portfolioLinks}>
+      {[
+        { icon: 'document-text-outline', title: 'Document Vault', sub: 'Access investment documents' },
+        { icon: 'trending-up-outline', title: 'Project Updates', sub: 'Latest development progress' },
+        { icon: 'clipboard-outline', title: 'Required Forms', sub: 'KYC and investor agreements' },
+      ].map((link, i) => (
+        <TouchableOpacity key={i} style={s.portfolioLink}>
+          <View style={s.portfolioLinkIcon}><Ionicons name={link.icon as any} size={22} color={C.gold} /></View>
+          <View style={s.portfolioLinkContent}>
+            <Text style={s.portfolioLinkTitle}>{link.title}</Text>
+            <Text style={s.portfolioLinkSub}>{link.sub}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+);
 
-// RESERVATION MODAL
-function ReservationModal({ visible, onClose, item, type }: any) {
-  const { user } = useAuth();
-  const [date, setDate] = useState('Today');
-  const [time, setTime] = useState('7:00 PM');
-  const [guests, setGuests] = useState(2);
-  const [loading, setLoading] = useState(false);
-  
-  if (!item) return null;
-  
-  const dates = ['Today', 'Tomorrow', 'Sat 14', 'Sun 15'];
-  const times = ['6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'];
-  
-  const handleBook = async () => {
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to make a reservation.');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      await api.createBooking({
-        type,
-        itemId: item._id || item.id,
-        itemName: item.name,
-        date,
-        time,
-        guests,
-      });
-      Alert.alert('Reservation Confirmed! ✨', `Your ${type} reservation at ${item.name} has been confirmed.`, [{ text: 'Done', onPress: onClose }]);
-    } catch (error: any) {
-      Alert.alert('Booking Failed', error.message || 'Please try again');
-    } finally {
-      setLoading(false);
-    }
+// ============================================
+// SERVICE REQUEST MODAL
+// ============================================
+const ServiceModal = ({ visible, service, onClose, onSubmit }: any) => {
+  const [notes, setNotes] = useState('');
+  const serviceOptions: Record<string, string[]> = {
+    'Dining': ['Fine Dining', 'Casual Dining', 'Private Chef', 'Room Service'],
+    'Lodging': ['Suite Upgrade', 'Villa Booking', 'Extended Stay', 'Special Arrangement'],
+    'Yacht Charter': ['Half Day Charter', 'Full Day Charter', 'Sunset Cruise', 'Fishing Trip'],
+    'Transport': ['Airport Transfer', 'Luxury Vehicle', 'Helicopter', 'Private Jet'],
+    'Events': ['VIP Access', 'Private Event', 'Group Booking', 'Special Seating'],
+    'Special': ['Anniversary', 'Birthday', 'Proposal', 'Custom Request'],
+    'Private Tour': ['Mayan Ruins', 'Jungle Adventure', 'Island Hopping', 'Cultural Experience'],
+    'Spa & Wellness': ['Couples Massage', 'Day Package', 'Private Suite', 'Wellness Retreat'],
   };
-
+  const options = serviceOptions[service?.title] || [];
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide">
       <View style={s.modalOverlay}>
-        <LinearGradient colors={[C.card, C.bg]} style={s.resModal}>
-          <View style={s.resHeader}>
-            <View>
-              <Text style={s.resTitle}>{item.name}</Text>
-              <Text style={s.resSub}>{type === 'restaurant' ? 'Table Reservation' : 'Book Experience'}</Text>
-            </View>
-            <TouchableOpacity style={s.closeBtn} onPress={onClose}><Ionicons name="close" size={24} color={C.text} /></TouchableOpacity>
+        <View style={s.modalContent}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>{service?.title || 'Service'} Request</Text>
+            <TouchableOpacity onPress={onClose} style={s.modalClose}><Ionicons name="close" size={24} color={C.text} /></TouchableOpacity>
           </View>
-          <ScrollView style={s.resContent} showsVerticalScrollIndicator={false}>
-            <Text style={s.inputLabel}>Select Date</Text>
-            <View style={s.dateRow}>
-              {dates.map(d => (
-                <TouchableOpacity key={d} onPress={() => setDate(d)} style={[s.dateOpt, date === d && s.dateOptActive]}>
-                  {date === d ? <LinearGradient colors={G.gold} style={StyleSheet.absoluteFill} /> : null}
-                  <Text style={[s.dateOptText, date === d && s.dateOptTextActive]}>{d}</Text>
-                </TouchableOpacity>
+          <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+            <Text style={s.modalLabel}>Select Service Type</Text>
+            <View style={s.serviceOptions}>
+              {options.map((opt: string, i: number) => (
+                <TouchableOpacity key={i} style={s.serviceOption}><Text style={s.serviceOptionText}>{opt}</Text></TouchableOpacity>
               ))}
             </View>
-            <Text style={s.inputLabel}>Select Time</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {times.map(t => (
-                <TouchableOpacity key={t} onPress={() => setTime(t)} style={[s.timeOpt, time === t && s.timeOptActive]}>
-                  {time === t ? <LinearGradient colors={G.gold} style={StyleSheet.absoluteFill} /> : null}
-                  <Text style={[s.timeOptText, time === t && s.timeOptTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={s.inputLabel}>Number of Guests</Text>
-            <View style={s.guestSel}>
-              <TouchableOpacity style={s.guestBtn} onPress={() => setGuests(Math.max(1, guests - 1))}><Ionicons name="remove-circle" size={32} color={C.gold} /></TouchableOpacity>
-              <Text style={s.guestCount}>{guests}</Text>
-              <TouchableOpacity style={s.guestBtn} onPress={() => setGuests(Math.min(20, guests + 1))}><Ionicons name="add-circle" size={32} color={C.gold} /></TouchableOpacity>
-            </View>
-            <View style={s.summaryCard}>
-              <View style={s.summaryRow}><Text style={s.summaryLabel}>Date</Text><Text style={s.summaryValue}>{date}</Text></View>
-              <View style={s.summaryRow}><Text style={s.summaryLabel}>Time</Text><Text style={s.summaryValue}>{time}</Text></View>
-              <View style={[s.summaryRow, { borderBottomWidth: 0 }]}><Text style={s.summaryLabel}>Guests</Text><Text style={s.summaryValue}>{guests} {guests === 1 ? 'person' : 'people'}</Text></View>
-            </View>
+            <Text style={s.modalLabel}>Preferred Date</Text>
+            <TextInput style={s.modalInput} placeholder="Select date" placeholderTextColor={C.textMuted} />
+            <Text style={s.modalLabel}>Preferred Time</Text>
+            <TextInput style={s.modalInput} placeholder="Select time" placeholderTextColor={C.textMuted} />
+            <Text style={s.modalLabel}>Number of Guests</Text>
+            <TextInput style={s.modalInput} placeholder="2" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
+            <Text style={s.modalLabel}>Special Requests</Text>
+            <TextInput style={[s.modalInput, s.modalTextarea]} placeholder="Any special requirements..." placeholderTextColor={C.textMuted} multiline value={notes} onChangeText={setNotes} />
           </ScrollView>
-          <View style={s.resFooter}>
-            <GoldBtn title={loading ? "Booking..." : "Confirm Reservation"} icon="checkmark-circle" lg onPress={handleBook} style={{ width: '100%' }} />
+          <View style={s.modalFooter}>
+            <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}><Text style={s.modalCancelText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => { onSubmit({ notes }); onClose(); }}>
+              <LinearGradient colors={G.gold} style={s.modalSubmitBtn}><Text style={s.modalSubmitText}>Submit Request</Text></LinearGradient>
+            </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
       </View>
     </Modal>
   );
-}
+};
 
-// PREMIUM HERO SLIDESHOW
-function HeroSlideshow({ heroIndex }: { heroIndex: number }) {
-  const insets = useSafeAreaInsets();
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  
-  useEffect(() => {
-    // Fade out then in on slide change
-    Animated.sequence([
-      Animated.timing(fadeAnim, { toValue: 0.7, duration: 300, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, [heroIndex]);
-  
-  const slide = HeroSlides[heroIndex];
-  
-  return (
-    <View style={s.heroSection}>
-      <Image source={{ uri: slide.image }} style={s.heroImage} />
-      
-      {/* Gradient Overlay */}
-      <LinearGradient 
-        colors={['rgba(10,18,42,0.3)', 'rgba(10,18,42,0.1)', 'rgba(10,18,42,0.7)', 'rgba(10,18,42,0.95)']} 
-        locations={[0, 0.3, 0.7, 1]}
-        style={s.heroOverlay}
-      >
-        {/* Top Bar */}
-        <View style={[s.heroTopBar, { paddingTop: insets.top + 10 }]}>
-          <Text style={s.heroLogo}>MOTA</Text>
-          <View style={s.heroTopRight}>
-            <View style={s.liveBadge}>
-              <View style={s.liveDot} />
-              <Text style={s.liveText}>BELIZE</Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Center Content */}
-        <Animated.View style={[s.heroCenter, { opacity: fadeAnim }]}>
-          <Text style={s.heroSubtitle}>{slide.subtitle}</Text>
-          <Text style={s.heroTitle}>{slide.title}</Text>
-          <View style={s.heroLine} />
-        </Animated.View>
-        
-        {/* Bottom Dots */}
-        <View style={s.heroBottom}>
-          <View style={s.heroDots}>
-            {HeroSlides.map((_, i) => (
-              <View key={i} style={[s.heroDot, heroIndex === i && s.heroDotActive]} />
+// ============================================
+// VIP PROMO MODAL
+// ============================================
+const VIPPromoModal = ({ visible, onClose }: any) => (
+  <Modal visible={visible} transparent animationType="fade">
+    <View style={s.modalOverlay}>
+      <View style={[s.modalContent, { maxHeight: '80%' }]}>
+        <LinearGradient colors={G.gold} style={s.vipPromoHeader}>
+          <Ionicons name="diamond" size={48} color={C.bg} />
+          <Text style={s.vipPromoTitle}>VIP Concierge</Text>
+          <Text style={s.vipPromoSubtitle}>Exclusive Benefit for MOTA Investors</Text>
+        </LinearGradient>
+        <ScrollView style={s.modalBody}>
+          <Text style={s.vipPromoText}>VIP Concierge is an exclusive benefit available only to MOTA investors. Unlock premium services and personalized experiences.</Text>
+          <Text style={s.vipBenefitsTitle}>VIP Benefits Include:</Text>
+          {['24/7 Dedicated Concierge Team', 'Priority Reservations at All Venues', 'Private Jet & Yacht Arrangements', 'Bespoke Experience Curation', 'Exclusive Event Access', 'Personal Account Manager'].map((b, i) => (
+            <View key={i} style={s.vipBenefitItem}><Ionicons name="checkmark-circle" size={20} color={C.gold} /><Text style={s.vipBenefitText}>{b}</Text></View>
+          ))}
+          <View style={s.vipTiersPreview}>
+            <Text style={s.vipTiersTitle}>Investment Tiers</Text>
+            {Object.values(TierBenefits).map((tier: any) => (
+              <View key={tier.id} style={s.vipTierRow}>
+                <LinearGradient colors={tier.gradient} style={s.vipTierBadge}><Text style={s.vipTierName}>{tier.name}</Text></LinearGradient>
+                <Text style={s.vipTierAmount}>{tier.investment}</Text>
+              </View>
             ))}
           </View>
+        </ScrollView>
+        <View style={s.modalFooter}>
+          <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}><Text style={s.modalCancelText}>Close</Text></TouchableOpacity>
+          <TouchableOpacity onPress={onClose}><LinearGradient colors={G.gold} style={s.modalSubmitBtn}><Text style={s.modalSubmitText}>Learn More</Text></LinearGradient></TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     </View>
-  );
-}
+  </Modal>
+);
 
-// HOME SCREEN
-function HomeScreen({ onNavigate, onShowAuth }: { onNavigate: (tab: string, params?: any) => void; onShowAuth: () => void }) {
+// ============================================
+// MAIN APP CONTENT
+// ============================================
+function AppContent() {
   const insets = useSafeAreaInsets();
-  const { user, getDiscountPercent } = useAuth();
-  const [heroIndex, setHeroIndex] = useState(0);
+  const { user, logout, isInvestor } = useAuth();
+  const [currentScreen, setCurrentScreen] = useState('main');
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItemType, setSelectedItemType] = useState<string>('');
+  const [slides, setSlides] = useState(DefaultSlides);
   const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [lodging, setLodging] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [resType, setResType] = useState<string>('restaurant');
-  
-  const isLoggedIn = !!user;
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [exploreCategory, setExploreCategory] = useState('All');
+  const [priceFilter, setPriceFilter] = useState('All');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slideRef = useRef<FlatList>(null);
+  const [serviceModal, setServiceModal] = useState<any>(null);
+  const [vipPromoVisible, setVipPromoVisible] = useState(false);
+  const [conciergeTab, setConciergeTab] = useState<'standard' | 'vip'>('standard');
+  const [luxuryExpanded, setLuxuryExpanded] = useState(false);
 
-  // Hero slideshow
+  const loadData = useCallback(async () => {
+    try {
+      const [slidesData, restaurantsData, eventsData, activitiesData, lodgingData] = await Promise.all([
+        api.getSlideshow(), api.getRestaurants({ featured: true }), api.getEvents({ upcoming: true }), api.getActivities({ featured: true }), api.getLodging({ featured: true }),
+      ]);
+      if (slidesData.length > 0) setSlides(slidesData);
+      if (restaurantsData.length > 0) setRestaurants(restaurantsData);
+      if (eventsData.length > 0) setEvents(eventsData);
+      if (activitiesData.length > 0) setActivities(activitiesData);
+      if (lodgingData.length > 0) setLodging(lodgingData);
+      if (user) { try { const r = await api.get('/notifications/unread-count'); setNotificationCount(r.data.count || 0); } catch {} }
+    } catch {} finally { setLoading(false); setRefreshing(false); }
+  }, [user]);
+
+  useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
-    const timer = setInterval(() => setHeroIndex(i => (i + 1) % HeroSlides.length), 5000);
+    if (activeTab !== 0) return;
+    const timer = setInterval(() => { setCurrentSlide(p => { const n = (p + 1) % slides.length; slideRef.current?.scrollToIndex({ index: n, animated: true }); return n; }); }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length, activeTab]);
 
-  const fetchData = useCallback(async () => {
-    try { 
-      const [r, a, e] = await Promise.all([
-        api.getRestaurants().catch(() => []), 
-        api.getActivities().catch(() => []), 
-        api.getEvents().catch(() => [])
-      ]); 
-      setRestaurants(r || []); 
-      setActivities(a || []); 
-      setEvents(e || []); 
-    } finally { 
-      setLoading(false); 
-      setRefreshing(false); 
-    }
-  }, []);
+  const onRefresh = () => { setRefreshing(true); loadData(); };
+  const openDetail = (item: any, type: string) => { setSelectedItem(item); setSelectedItemType(type); setCurrentScreen('detail'); };
+  const getTierGradient = () => user?.investorTier === 'diamond' ? G.diamond : user?.investorTier === 'platinum' ? G.platinum : G.gold;
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleBooking = (item: any, type: string) => {
-    if (!user) {
-      onShowAuth();
-      return;
-    }
-    setSelectedItem(item);
-    setResType(type);
+  const getFilteredItems = () => {
+    let items: any[] = [];
+    if (exploreCategory === 'All' || exploreCategory === 'Lodging') items = [...items, ...lodging.map(l => ({ ...l, _type: 'lodging' }))];
+    if (exploreCategory === 'All' || exploreCategory === 'Eateries') items = [...items, ...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
+    if (exploreCategory === 'All' || exploreCategory === 'Experiences') items = [...items, ...activities.map(a => ({ ...a, _type: 'activity' }))];
+    if (priceFilter !== 'All') items = items.filter(item => (priceFilter === '$' && item.priceRange === '$') || (priceFilter === '$$' && (item.priceRange === '$$' || item.price < 200)) || (priceFilter === '$$$' && (item.priceRange === '$$$' || (item.price >= 200 && item.price < 500))) || (priceFilter === '$$$$' && (item.priceRange === '$$$$' || item.price >= 500)));
+    return items;
   };
 
-  // Quick Actions
-  const quickActions = [
-    { id: 'lodging', icon: 'bed-outline', label: 'Lodging', color: C.gold },
-    { id: 'dining', icon: 'restaurant-outline', label: 'Dining', color: C.purple },
-    { id: 'experiences', icon: 'compass-outline', label: 'Experiences', color: C.cyan },
-    { id: 'gaming', icon: 'game-controller-outline', label: 'Gaming', color: C.success },
-  ];
-
-  const handleQuickAction = (id: string) => {
-    switch(id) {
-      case 'lodging': onNavigate('explore', { tab: 'rooms' }); break;
-      case 'dining': onNavigate('explore', { tab: 'dining' }); break;
-      case 'experiences': onNavigate('explore', { tab: 'activities' }); break;
-      case 'gaming': Alert.alert('Casino', 'Opening soon!'); break;
-    }
+  const handleServiceRequest = (service: any) => {
+    if (!user) { Alert.alert('Sign In Required', 'Please sign in to request concierge services.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign In', onPress: () => setCurrentScreen('login') }]); return; }
+    setServiceModal(service);
   };
 
-  if (loading) return <View style={s.loadingContainer}><ActivityIndicator size="large" color={C.gold} /></View>;
+  // Screen routing
+  if (currentScreen === 'login') return <LoginScreen onBack={() => setCurrentScreen('main')} onSwitchToSignup={() => setCurrentScreen('signup')} />;
+  if (currentScreen === 'signup') return <SignupScreen onBack={() => setCurrentScreen('main')} onSwitchToLogin={() => setCurrentScreen('login')} />;
+  if (currentScreen === 'notifications') return <NotificationsScreen onBack={() => { setCurrentScreen('main'); loadData(); }} />;
+  if (currentScreen === 'editProfile') return <EditProfileScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'fleet') return <FleetScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'reservations') return <ReservationsScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'favorites') return <FavoritesScreen onBack={() => setCurrentScreen('main')} onOpenDetail={(item, type) => { setSelectedItem(item); setSelectedItemType(type); setCurrentScreen('detail'); }} />;
+  if (currentScreen === 'settings') return <SettingsScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'help') return <HelpScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'detail' && selectedItem) return <DetailScreen item={selectedItem} type={selectedItemType as any} onBack={() => { setCurrentScreen('main'); setSelectedItem(null); }} />;
 
-  return (
-    <View style={s.container}>
-      <StatusBar barStyle="light-content" />
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={C.gold} />}
-      >
-        {/* PREMIUM HERO */}
-        <HeroSlideshow heroIndex={heroIndex} />
-
-        {/* QUICK ACTIONS */}
-        <View style={s.quickActionsSection}>
-          <View style={s.quickActionsGrid}>
-            {quickActions.map(action => (
-              <TouchableOpacity 
-                key={action.id} 
-                style={s.quickActionItem} 
-                onPress={() => handleQuickAction(action.id)}
-                activeOpacity={0.7}
-              >
-                <LinearGradient colors={G.card} style={s.quickActionBubble}>
-                  <View style={[s.quickActionIconWrap, { backgroundColor: `${action.color}20` }]}>
-                    <Ionicons name={action.icon as any} size={28} color={action.color} />
-                  </View>
-                </LinearGradient>
-                <Text style={s.quickActionLabel}>{action.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* FEATURED ROOMS */}
-        <View style={s.section}>
-          <View style={s.secHeader}>
-            <Text style={s.secTitle}>Featured Suites</Text>
-            <TouchableOpacity onPress={() => onNavigate('explore', { tab: 'rooms' })}>
-              <Text style={s.secAction}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={Rooms.slice(0, 4)}
-            contentContainerStyle={{ paddingLeft: 20 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={s.roomCard} activeOpacity={0.9}>
-                <ImageBackground source={{ uri: item.image }} style={s.roomImage} imageStyle={{ borderRadius: 20 }}>
-                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.roomOverlay}>
-                    <View>
-                      <View style={s.roomAmenities}>
-                        {item.amenities.map((a, i) => (
-                          <View key={i} style={s.amenityTag}><Text style={s.amenityText}>{a}</Text></View>
-                        ))}
-                      </View>
-                      <Text style={s.roomName}>{item.name}</Text>
-                      <Text style={s.roomDetails}>{item.type} • {item.beds} • {item.size}</Text>
-                    </View>
-                    <View style={s.roomFooter}>
-                      <Text style={s.roomPrice}>${item.price}</Text>
-                      <Text style={s.perNight}>/ night</Text>
-                    </View>
-                  </LinearGradient>
-                </ImageBackground>
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item.id}
-          />
-        </View>
-
-        {/* DINING */}
-        <View style={s.section}>
-          <View style={s.secHeader}>
-            <Text style={s.secTitle}>Dining</Text>
-            <TouchableOpacity onPress={() => onNavigate('explore', { tab: 'dining' })}>
-              <Text style={s.secAction}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          {(restaurants.length > 0 ? restaurants : [
-            { _id: '1', name: 'The Pearl', category: 'Fine Dining', cuisine: 'Seafood', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600', priceRange: '$$$$' },
-            { _id: '2', name: 'Jade Garden', category: 'Asian', cuisine: 'Pan-Asian', image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600', priceRange: '$$$' },
-          ]).slice(0, 3).map((rest: any) => (
-            <TouchableOpacity key={rest._id} style={s.listCard} onPress={() => handleBooking(rest, 'restaurant')} activeOpacity={0.85}>
-              <Image source={{ uri: rest.image }} style={s.listImg} />
-              <View style={s.listContent}>
-                <Text style={s.listName}>{rest.name}</Text>
-                <Text style={s.listCat}>{rest.cuisine || rest.category}</Text>
-                <View style={s.listFooter}>
-                  <Text style={s.listPrice}>{rest.priceRange || '$$$'}</Text>
-                  <View style={s.listRating}>
-                    <Ionicons name="star" size={14} color={C.gold} />
-                    <Text style={s.listRatingText}>4.8</Text>
-                  </View>
-                </View>
+  // ============================================
+  // HOME TAB
+  // ============================================
+  const renderHomeTab = () => (
+    <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
+      <View style={s.heroContainer}>
+        <FlatList ref={slideRef} data={slides} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
+          keyExtractor={(_, i) => `slide-${i}`}
+          renderItem={({ item }) => (
+            <View style={s.heroSlide}>
+              <Image source={{ uri: item.imageUrl || item.image }} style={s.heroImage} />
+              <LinearGradient colors={G.overlay} style={s.heroOverlay} />
+              <View style={s.heroContent}>
+                <Text style={s.heroSubtitle}>{item.subtitle}</Text>
+                <Text style={s.heroTitle}>{item.title}</Text>
+                <Text style={s.heroDesc}>{item.description}</Text>
               </View>
-              <View style={s.listAction}>
-                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-              </View>
-            </TouchableOpacity>
-          ))}
+            </View>
+          )}
+        />
+        <View style={s.slideIndicators}>{slides.map((_, i) => <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />)}</View>
+      </View>
+      {isInvestor && user?.investorTier && <InvestmentBar investmentAmount={user.investmentAmount || 0} portfolioValue={user.portfolioValue || 0} tier={user.investorTier} />}
+      <View style={s.searchSection}>
+        <View style={s.searchBar}>
+          <Ionicons name="sparkles" size={20} color={C.gold} />
+          <TextInput style={s.searchInput} placeholder="Ask me anything..." placeholderTextColor={C.textMuted} />
+          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
         </View>
-
-        {/* UPCOMING EVENTS */}
-        <View style={s.section}>
-          <View style={s.secHeader}>
-            <Text style={s.secTitle}>Upcoming Events</Text>
-            <TouchableOpacity onPress={() => onNavigate('events')}>
-              <Text style={s.secAction}>View All</Text>
-            </TouchableOpacity>
+      </View>
+      <View style={s.quickCats}>
+        {[{ icon: 'bed-outline', label: 'Lodging' }, { icon: 'restaurant-outline', label: 'Eateries' }, { icon: 'compass-outline', label: 'Experiences' }, { icon: 'wine-outline', label: 'Nightlife' }].map((cat, i) => (
+          <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
+            <LinearGradient colors={G.card} style={s.quickCatIcon}><Ionicons name={cat.icon as any} size={24} color={C.gold} /></LinearGradient>
+            <Text style={s.quickCatLabel}>{cat.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {[{ title: 'Featured Destinations', data: lodging, type: 'lodging', filter: 'Lodging' }, { title: 'Featured Dining', data: restaurants, type: 'restaurant', filter: 'Eateries' }, { title: 'Upcoming Events', data: events, type: 'event' }, { title: 'Experiences', data: activities, type: 'activity', filter: 'Experiences' }].map((section, si) => (
+        <View key={si} style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>{section.title}</Text>
+            <TouchableOpacity onPress={() => { if (section.filter) setExploreCategory(section.filter); setActiveTab(section.type === 'event' ? 2 : 1); }}><Text style={s.sectionMore}>View all</Text></TouchableOpacity>
           </View>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={events.length > 0 ? events : [
-              { _id: '1', name: 'Costa Maya Festival', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800', date: '2025-08-01', venue: 'Beach Pavilion' },
-              { _id: '2', name: 'Lobster Fest', image: 'https://images.unsplash.com/photo-1559742811-822873691df8?w=800', date: '2025-06-15', venue: 'Main Restaurant' },
-            ]}
-            contentContainerStyle={{ paddingLeft: 20 }}
-            renderItem={({ item }: any) => (
-              <TouchableOpacity style={s.eventCard} activeOpacity={0.9} onPress={() => onNavigate('events')}>
-                <Image source={{ uri: item.image }} style={s.eventImage} />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.eventOverlay}>
-                  <Text style={s.eventDate}>{item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}</Text>
-                  <Text style={s.eventName}>{item.name}</Text>
-                  <Text style={s.eventVenue}>{item.venue || 'MOTA Resort'}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item: any) => item._id}
-          />
+          <FlatList data={section.data.slice(0, 5)} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }} keyExtractor={(item) => item._id || item.id} renderItem={({ item }) => <ItemCard item={item} onPress={() => openDetail(item, section.type)} />} />
         </View>
+      ))}
+      <View style={{ height: 100 }} />
+    </ScrollView>
+  );
 
-        <View style={{ height: 120 }} />
+  // ============================================
+  // EXPLORE TAB
+  // ============================================
+  const renderExploreTab = () => (
+    <View style={{ flex: 1 }}>
+      <View style={[s.searchSection, { paddingTop: 10 }]}>
+        <View style={s.searchBar}>
+          <Ionicons name="sparkles" size={20} color={C.gold} />
+          <TextInput style={s.searchInput} placeholder="Ask me anything..." placeholderTextColor={C.textMuted} />
+          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
+        </View>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
+        {['All', 'Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />)}
       </ScrollView>
-
-      <ReservationModal 
-        visible={!!selectedItem} 
-        onClose={() => setSelectedItem(null)} 
-        item={selectedItem} 
-        type={resType} 
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.filterRow, { marginTop: 0 }]} contentContainerStyle={{ paddingHorizontal: 16 }}>
+        {['All', '$', '$$', '$$$', '$$$$'].map((price) => <FilterChip key={price} label={price === 'All' ? 'Any Price' : price} active={priceFilter === price} onPress={() => setPriceFilter(price)} />)}
+      </ScrollView>
+      <FlatList data={getFilteredItems()} numColumns={2} keyExtractor={(item, i) => item._id || `item-${i}`} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} columnWrapperStyle={{ justifyContent: 'space-between' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
+            <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
+            <View style={s.exploreCardContent}>
+              <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
+              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
+              {item.rating && <View style={s.exploreCardRating}><Ionicons name="star" size={12} color={C.gold} /><Text style={s.exploreCardRatingText}>{item.rating}</Text></View>}
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<View style={s.emptyContainer}><Ionicons name="search-outline" size={48} color={C.textMuted} /><Text style={s.emptyTitle}>No Results</Text></View>}
       />
     </View>
   );
-}
 
-// EXPLORE SCREEN
-function ExploreScreen({ onShowAuth, initialTab }: { onShowAuth: () => void; initialTab?: string }) {
-  const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState(initialTab || 'rooms');
-  const [search, setSearch] = useState('');
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [resType, setResType] = useState<string>('restaurant');
-
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => { if (initialTab) setActiveTab(initialTab); }, [initialTab]);
-
-  const fetchData = async () => { 
-    try { 
-      const [r, a] = await Promise.all([
-        api.getRestaurants().catch(() => []), 
-        api.getActivities().catch(() => [])
-      ]); 
-      setRestaurants(r || []); 
-      setActivities(a || []); 
-    } finally { 
-      setLoading(false); 
-    } 
-  };
-
-  const handleBooking = (item: any, type: string) => {
-    if (!user) {
-      onShowAuth();
-      return;
-    }
-    setSelectedItem(item);
-    setResType(type);
-  };
-
-  const tabs = [
-    { id: 'rooms', icon: 'bed-outline', label: 'Rooms' },
-    { id: 'dining', icon: 'restaurant-outline', label: 'Dining' },
-    { id: 'activities', icon: 'compass-outline', label: 'Activities' },
-    { id: 'rentals', icon: 'car-sport-outline', label: 'Rentals' },
-  ];
-
-  const getItems = () => {
-    switch(activeTab) {
-      case 'rooms': return Rooms.map(r => ({ ...r, type: 'room' }));
-      case 'dining': return (restaurants.length > 0 ? restaurants : [
-        { _id: '1', name: 'The Pearl', category: 'Fine Dining', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600' },
-        { _id: '2', name: 'Jade Garden', category: 'Pan-Asian', image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600' },
-        { _id: '3', name: 'Steakhouse', category: 'American', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600' },
-      ]).map(r => ({ ...r, type: 'restaurant' }));
-      case 'activities': return (activities.length > 0 ? activities : [
-        { _id: '1', name: 'Spa & Wellness', category: 'Relaxation', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600' },
-        { _id: '2', name: 'Scuba Diving', category: 'Water Sports', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600' },
-        { _id: '3', name: 'Golf Course', category: 'Sports', image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600' },
-      ]).map(a => ({ ...a, type: 'activity' }));
-      case 'rentals': return Cars.map(c => ({ ...c, type: 'rental', category: c.cat }));
-      default: return [];
-    }
-  };
-
-  const items = getItems().filter(item => !search || item.name.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <View style={s.container}>
-      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-        <View style={s.exploreHeader}>
-          <Text style={s.exploreTitle}>Explore</Text>
-        </View>
-
-        <View style={s.searchBar}>
-          <Ionicons name="search" size={20} color={C.textMuted} />
-          <TextInput style={s.searchInput} placeholder="Search..." placeholderTextColor={C.textMuted} value={search} onChangeText={setSearch} />
-          {search ? (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={20} color={C.textMuted} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }} style={s.tabsScroll}>
-          {tabs.map(tab => (
-            <TouchableOpacity key={tab.id} onPress={() => setActiveTab(tab.id)} style={[s.tabPill, activeTab === tab.id && s.tabPillActive]} activeOpacity={0.8}>
-              {activeTab === tab.id ? <LinearGradient colors={G.gold} style={StyleSheet.absoluteFill} /> : null}
-              <Ionicons name={tab.icon as any} size={18} color={activeTab === tab.id ? C.bg : C.textSec} />
-              <Text style={[s.tabPillText, activeTab === tab.id && s.tabPillTextActive]}>{tab.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <View style={{ paddingHorizontal: 20 }}>
-          {loading ? (
-            <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
-          ) : items.length === 0 ? (
-            <View style={s.emptyState}>
-              <Ionicons name="search-outline" size={48} color={C.textMuted} />
-              <Text style={s.emptyStateTitle}>No results found</Text>
+  // ============================================
+  // EVENTS TAB
+  // ============================================
+  const renderEventsTab = () => (
+    <FlatList data={events} keyExtractor={(item) => item._id || item.id} contentContainerStyle={{ padding: 20, paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+      renderItem={({ item }) => (
+        <TouchableOpacity style={s.eventListCard} onPress={() => openDetail(item, 'event')}>
+          <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.eventListImage} />
+          <View style={s.eventListContent}>
+            <View style={s.eventListDate}><Text style={s.eventListDay}>{new Date(item.date).getDate()}</Text><Text style={s.eventListMonth}>{new Date(item.date).toLocaleString('en', { month: 'short' })}</Text></View>
+            <View style={s.eventListInfo}>
+              <Text style={s.eventListName} numberOfLines={2}>{item.name}</Text>
+              <Text style={s.eventListVenue}>{item.venue}</Text>
+              <View style={s.eventListFooter}>
+                {item.price ? <Text style={s.eventListPrice}>${item.price}</Text> : <Text style={s.eventListFree}>FREE</Text>}
+                <GoldBtn title="RSVP" onPress={() => openDetail(item, 'event')} />
+              </View>
             </View>
-          ) : (
-            items.map((item: any, index) => (
-              <TouchableOpacity 
-                key={item._id || item.id || index} 
-                style={s.exploreListCard} 
-                activeOpacity={0.85}
-                onPress={() => item.type === 'restaurant' ? handleBooking(item, 'restaurant') : item.type === 'activity' ? handleBooking(item, 'activity') : null}
-              >
-                <Image source={{ uri: item.image }} style={s.listImg} />
-                <View style={s.listContent}>
-                  <Text style={s.listName}>{item.name}</Text>
-                  <Text style={s.listCat}>{item.category || item.cuisine || item.type}</Text>
-                  {item.price ? (
-                    <View style={s.listFooter}>
-                      <Text style={s.listPrice}>${typeof item.price === 'number' ? item.price.toLocaleString() : item.price}</Text>
-                      {item.type === 'rental' ? <Text style={s.listPriceUnit}>/day</Text> : item.type === 'room' ? <Text style={s.listPriceUnit}>/night</Text> : null}
-                    </View>
-                  ) : null}
-                </View>
-                <View style={s.listAction}>
-                  <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-      </ScrollView>
-
-      <ReservationModal visible={!!selectedItem} onClose={() => setSelectedItem(null)} item={selectedItem} type={resType} />
-    </View>
+          </View>
+        </TouchableOpacity>
+      )}
+      ListEmptyComponent={<View style={s.emptyContainer}><Ionicons name="calendar-outline" size={48} color={C.textMuted} /><Text style={s.emptyTitle}>No Events</Text></View>}
+    />
   );
-}
 
-// EVENTS SCREEN
-function EventsScreen({ onShowAuth }: { onShowAuth: () => void }) {
-  const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const data = await api.getEvents();
-        setEvents(data || []);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvents();
-  }, []);
-
-  const handleRSVP = (event: any) => {
-    if (!user) {
-      onShowAuth();
-      return;
-    }
-    Alert.alert('RSVP Confirmed!', `You're registered for ${event.name}`);
-  };
-
-  const displayEvents = events.length > 0 ? events : [
-    { _id: '1', name: 'Costa Maya Festival', description: 'Annual celebration of Central American culture', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800', date: '2025-08-01', venue: 'Beach Pavilion' },
-    { _id: '2', name: 'Lobster Fest', description: 'Week-long celebration of lobster season', image: 'https://images.unsplash.com/photo-1559742811-822873691df8?w=800', date: '2025-06-15', venue: 'Main Restaurant' },
-    { _id: '3', name: 'New Year Gala', description: 'Exclusive celebration to ring in the new year', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800', date: '2025-12-31', venue: 'Grand Ballroom' },
-  ];
-
-  return (
-    <View style={s.container}>
-      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-        <View style={s.exploreHeader}>
-          <Text style={s.exploreTitle}>Events</Text>
-        </View>
-
-        {loading ? (
-          <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
-        ) : (
-          <View style={{ paddingHorizontal: 20 }}>
-            {displayEvents.map((event: any) => (
-              <TouchableOpacity key={event._id} style={s.eventListCard} activeOpacity={0.9}>
-                <Image source={{ uri: event.image }} style={s.eventListImg} />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)']} style={s.eventListOverlay}>
-                  <View style={s.eventListDate}>
-                    <Text style={s.eventListMonth}>
-                      {event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : 'TBD'}
-                    </Text>
-                    <Text style={s.eventListDay}>
-                      {event.date ? new Date(event.date).getDate() : '--'}
-                    </Text>
-                  </View>
-                  <View style={s.eventListContent}>
-                    <Text style={s.eventListName}>{event.name}</Text>
-                    <Text style={s.eventListDesc}>{event.description}</Text>
-                    <View style={s.eventListFooter}>
-                      <View style={s.eventListVenue}>
-                        <Ionicons name="location-outline" size={14} color={C.textSec} />
-                        <Text style={s.eventListVenueText}>{event.venue || 'MOTA Resort'}</Text>
-                      </View>
-                      <TouchableOpacity onPress={() => handleRSVP(event)}>
-                        <LinearGradient colors={G.gold} style={s.rsvpBtn}>
-                          <Text style={s.rsvpBtnText}>RSVP</Text>
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </LinearGradient>
+  // ============================================
+  // CONCIERGE TAB
+  // ============================================
+  const renderConciergeTab = () => (
+    <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <View style={s.conciergeTabRow}>
+        <TouchableOpacity style={[s.conciergeTabBtn, conciergeTab === 'standard' && s.conciergeTabBtnActive]} onPress={() => setConciergeTab('standard')}>
+          <Ionicons name="person" size={18} color={conciergeTab === 'standard' ? C.bg : C.textSec} />
+          <Text style={[s.conciergeTabText, conciergeTab === 'standard' && s.conciergeTabTextActive]}>Concierge</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.conciergeTabBtn, conciergeTab === 'vip' && s.conciergeTabBtnActive, !isInvestor && s.conciergeTabBtnDisabled]} onPress={() => isInvestor ? setConciergeTab('vip') : setVipPromoVisible(true)}>
+          <Ionicons name="diamond" size={18} color={conciergeTab === 'vip' ? C.bg : isInvestor ? C.gold : C.textMuted} />
+          <Text style={[s.conciergeTabText, conciergeTab === 'vip' && s.conciergeTabTextActive, !isInvestor && { color: C.textMuted }]}>VIP Concierge</Text>
+          {!isInvestor && <Ionicons name="lock-closed" size={14} color={C.textMuted} style={{ marginLeft: 4 }} />}
+        </TouchableOpacity>
+      </View>
+      <View style={s.conciergeHeader}>
+        <LinearGradient colors={conciergeTab === 'vip' && isInvestor ? getTierGradient() : G.gold} style={s.conciergeHeaderGrad}>
+          <Ionicons name={conciergeTab === 'vip' ? 'diamond' : 'person'} size={28} color={C.bg} />
+          <View style={{ marginLeft: 14, flex: 1 }}>
+            <Text style={s.conciergeHeaderTitle}>{conciergeTab === 'vip' ? 'VIP Concierge' : 'Concierge Services'}</Text>
+            <Text style={s.conciergeHeaderSub}>{conciergeTab === 'vip' ? 'Exclusive Investor Services' : '24/7 Personalized Assistance'}</Text>
+          </View>
+        </LinearGradient>
+      </View>
+      <Text style={s.conciergeSectionTitle}>Available Services</Text>
+      <View style={s.servicesGrid}>
+        {[{ icon: 'restaurant-outline', title: 'Dining', desc: 'Reserve tables at any restaurant' }, { icon: 'bed-outline', title: 'Lodging', desc: 'Book suites and villas' }, { icon: 'calendar-outline', title: 'Events', desc: 'VIP event access' }, { icon: 'gift-outline', title: 'Special', desc: 'Celebrations & requests' }, { icon: 'map-outline', title: 'Private Tour', desc: 'Guided tours & experiences' }, { icon: 'leaf-outline', title: 'Spa & Wellness', desc: 'Relaxation & treatments' }].map((service, i) => (
+          <TouchableOpacity key={i} style={s.serviceCard} activeOpacity={0.8} onPress={() => handleServiceRequest(service)}>
+            <LinearGradient colors={G.card} style={s.serviceCardGrad}>
+              <View style={s.serviceIconWrap}><Ionicons name={service.icon as any} size={24} color={C.gold} /></View>
+              <Text style={s.serviceTitle}>{service.title}</Text>
+              <Text style={s.serviceDesc}>{service.desc}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={s.luxurySection}>
+        <TouchableOpacity style={s.luxuryHeader} onPress={() => setLuxuryExpanded(!luxuryExpanded)}>
+          <LinearGradient colors={G.gold} style={s.luxuryHeaderGrad}>
+            <Ionicons name="sparkles" size={22} color={C.bg} />
+            <Text style={s.luxuryHeaderText}>Luxury Experiences</Text>
+            <Ionicons name={luxuryExpanded ? 'chevron-up' : 'chevron-down'} size={22} color={C.bg} />
+          </LinearGradient>
+        </TouchableOpacity>
+        {luxuryExpanded && (
+          <View style={s.luxuryContent}>
+            <TouchableOpacity style={s.luxuryItem} onPress={() => setCurrentScreen('fleet')}>
+              <Ionicons name="car-sport" size={22} color={C.gold} />
+              <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>PCH Exotic Fleet</Text><Text style={s.luxuryItemDesc}>Luxury car rentals</Text></View>
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity style={s.luxuryItem} onPress={() => handleServiceRequest({ title: 'Yacht Charter' })}>
+              <Ionicons name="boat" size={22} color={C.gold} />
+              <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>Yacht Charter</Text><Text style={s.luxuryItemDesc}>Private yacht experiences</Text></View>
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
+            {isInvestor && (
+              <TouchableOpacity style={s.luxuryItem} onPress={() => handleServiceRequest({ title: 'Transport' })}>
+                <Ionicons name="airplane" size={22} color={C.gold} />
+                <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>Private Aviation</Text><Text style={s.luxuryItemDesc}>Jet & helicopter transfers</Text></View>
+                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
               </TouchableOpacity>
-            ))}
+            )}
           </View>
         )}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
-}
 
-// CONCIERGE SCREEN
-function ConciergeScreen({ onShowAuth }: { onShowAuth: () => void }) {
-  const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-
-  const handleService = (service: string) => {
+  // ============================================
+  // PROFILE TAB
+  // ============================================
+  const renderProfileTab = () => {
     if (!user) {
-      onShowAuth();
-      return;
+      return (
+        <View style={s.profileGuest}>
+          <LinearGradient colors={G.gold} style={s.profileGuestIcon}><Ionicons name="person" size={48} color={C.bg} /></LinearGradient>
+          <Text style={s.profileGuestTitle}>Welcome to MOTA</Text>
+          <Text style={s.profileGuestSub}>Sign in to access your account, bookings, and exclusive member benefits.</Text>
+          <GoldBtn title="Sign In" lg onPress={() => setCurrentScreen('login')} style={{ marginTop: 20, width: '100%' }} />
+          <TouchableOpacity style={{ marginTop: 16 }} onPress={() => setCurrentScreen('signup')}><Text style={s.profileGuestLink}>Don't have an account? <Text style={{ color: C.gold }}>Sign Up</Text></Text></TouchableOpacity>
+        </View>
+      );
     }
-    Alert.alert(service, 'Our concierge team will contact you shortly.');
-  };
-
-  const services = [
-    { id: 'airport', icon: 'airplane-outline', title: 'Airport Transfers', desc: 'Luxury pickup & dropoff' },
-    { id: 'dining', icon: 'restaurant-outline', title: 'Dining Reservations', desc: 'VIP table arrangements' },
-    { id: 'spa', icon: 'fitness-outline', title: 'Spa Appointments', desc: 'Wellness & relaxation' },
-    { id: 'tours', icon: 'map-outline', title: 'Private Tours', desc: 'Guided local experiences' },
-    { id: 'tickets', icon: 'ticket-outline', title: 'Event Tickets', desc: 'Shows & entertainment' },
-    { id: 'special', icon: 'gift-outline', title: 'Special Requests', desc: 'Celebrations & more' },
-  ];
-
-  return (
-    <View style={s.container}>
-      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 120 }}>
-        <View style={s.exploreHeader}>
-          <Text style={s.exploreTitle}>Concierge</Text>
-        </View>
-
-        <View style={s.conciergeSection}>
-          <Text style={s.conciergeSectionTitle}>Services</Text>
-          <View style={s.servicesGrid}>
-            {services.map(service => (
-              <TouchableOpacity key={service.id} style={s.serviceCard} onPress={() => handleService(service.title)} activeOpacity={0.85}>
-                <LinearGradient colors={G.card} style={s.serviceCardGrad}>
-                  <View style={s.serviceIconWrap}>
-                    <Ionicons name={service.icon as any} size={28} color={C.gold} />
-                  </View>
-                  <Text style={s.serviceTitle}>{service.title}</Text>
-                  <Text style={s.serviceDesc}>{service.desc}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={s.conciergeSection}>
-          <Text style={s.conciergeSectionTitle}>PCH Exotic Fleet</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={Cars}
-            contentContainerStyle={{ marginTop: 16 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={s.carCard} activeOpacity={0.9} onPress={() => handleService(`${item.name} Rental`)}>
-                <Image source={{ uri: item.image }} style={s.carImage} />
-                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.carOverlay}>
-                  <Text style={s.carName}>{item.name}</Text>
-                  <View style={s.carFooter}>
-                    <Text style={s.carPrice}>${item.price}</Text>
-                    <Text style={s.carPriceUnit}>/day</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item.id}
-          />
-        </View>
-
-        <View style={s.conciergeSection}>
-          <Text style={s.conciergeSectionTitle}>Yacht Charters</Text>
-          {Yachts.map(yacht => (
-            <TouchableOpacity key={yacht.id} style={s.yachtCard} activeOpacity={0.85} onPress={() => handleService(`${yacht.name} Charter`)}>
-              <Image source={{ uri: yacht.image }} style={s.yachtImage} />
-              <View style={s.yachtContent}>
-                <Text style={s.yachtName}>{yacht.name}</Text>
-                <Text style={s.yachtDetails}>{yacht.duration} • {yacht.capacity}</Text>
-                <Text style={s.yachtPrice}>From ${yacht.price.toLocaleString()}</Text>
-              </View>
-              <View style={s.yachtAction}>
-                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-          <TouchableOpacity onPress={() => handleService('Personal Concierge')} activeOpacity={0.85}>
-            <LinearGradient colors={G.gold} style={s.contactConciergeBtn}>
-              <MaterialCommunityIcons name="headset" size={24} color={C.bg} />
-              <View style={{ marginLeft: 16, flex: 1 }}>
-                <Text style={s.contactConciergeTitle}>Contact Concierge</Text>
-                <Text style={s.contactConciergeSub}>Available 24/7</Text>
-              </View>
-              <Ionicons name="call" size={20} color={C.bg} />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-// PROFILE SCREEN - Enhanced for Investors
-function ProfileScreen({ onShowAuthModal }: { onShowAuthModal: () => void }) {
-  const insets = useSafeAreaInsets();
-  const { user, logout, getDiscountPercent, refreshUser, isInvestor } = useAuth();
-  const [refreshing, setRefreshing] = useState(false);
-  const isLoggedIn = !!user;
-  const disc = getDiscountPercent();
-  
-  // Get investor tier info
-  const investorTierName = user?.investorTier || 'silver';
-  const currentTier = InvestorTiers.find(t => t.id === investorTierName) || InvestorTiers[0];
-  const currentTierIndex = InvestorTiers.findIndex(t => t.id === investorTierName);
-  const nextTier = currentTierIndex < InvestorTiers.length - 1 ? InvestorTiers[currentTierIndex + 1] : null;
-  
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refreshUser();
-    setRefreshing(false);
-  };
-
-  // Guest View
-  if (!isLoggedIn) return (
-    <View style={s.container}>
-      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-      <ScrollView contentContainerStyle={[s.profileGuestContainer, { paddingTop: insets.top + 40 }]}>
-        <View style={s.profileGuestIcon}>
-          <LinearGradient colors={G.gold} style={s.profileGuestIconGrad}>
-            <MaterialCommunityIcons name="account-outline" size={48} color={C.bg} />
-          </LinearGradient>
-        </View>
-        <Text style={s.profileGuestTitle}>Welcome to MOTA</Text>
-        <Text style={s.profileGuestSub}>Sign in to access your bookings, favorites, and personalized recommendations</Text>
-        <View style={s.profileGuestBenefits}>
-          {[
-            { icon: 'calendar', text: 'Manage reservations' },
-            { icon: 'heart', text: 'Save your favorites' },
-            { icon: 'ticket', text: 'Access your tickets' },
-            { icon: 'time', text: 'View booking history' },
-          ].map((b, i) => (
-            <View key={i} style={s.profileGuestBenefit}>
-              <View style={s.profileGuestBenefitIcon}>
-                <Ionicons name={b.icon as any} size={20} color={C.gold} />
-              </View>
-              <Text style={s.profileGuestBenefitText}>{b.text}</Text>
-            </View>
-          ))}
-        </View>
-        <GoldBtn title="Sign In" icon="arrow-forward" lg onPress={onShowAuthModal} style={{ width: '100%' }} />
-        <TouchableOpacity onPress={onShowAuthModal} style={{ marginTop: 16 }}>
-          <Text style={s.profileGuestSignIn}>Don't have an account? <Text style={{ color: C.gold }}>Create one</Text></Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
-  );
-
-  // INVESTOR PROFILE VIEW
-  if (isInvestor) {
+    const tierInfo = TierBenefits[user.investorTier as string];
     return (
-      <View style={s.container}>
-        <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 120 }} 
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.gold} />}
-        >
-          {/* Investor Header */}
-          <View style={s.investorProfileHeader}>
-            <Text style={s.investorWelcome}>Welcome back,</Text>
-            <Text style={s.investorName}>{user?.name || 'Investor'}</Text>
-            <View style={[s.investorBadge, { backgroundColor: `${currentTier.color}30` }]}>
-              <MaterialCommunityIcons 
-                name={currentTier.id === 'diamond' ? 'diamond-stone' : currentTier.id === 'platinum' ? 'star-circle' : 'shield-crown'} 
-                size={16} 
-                color={currentTier.color} 
-              />
-              <Text style={[s.investorBadgeText, { color: currentTier.color }]}>{currentTier.name} Investor</Text>
-            </View>
-          </View>
-          
-          {/* Investor Card */}
-          <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-            <InvestorCard user={user} tier={currentTier} />
-          </View>
-          
-          {/* Investment Progress */}
-          <View style={{ paddingHorizontal: 20 }}>
-            <InvestmentProgress user={user} currentTier={currentTier} nextTier={nextTier} />
-          </View>
-          
-          {/* Quick Stats */}
-          <View style={s.investorStats}>
-            <View style={s.investorStatCard}>
-              <Text style={s.investorStatValue}>${(user?.investmentAmount || 0).toLocaleString()}</Text>
-              <Text style={s.investorStatLabel}>Invested</Text>
-            </View>
-            <View style={s.investorStatCard}>
-              <Text style={s.investorStatValue}>${(user?.portfolioValue || 0).toLocaleString()}</Text>
-              <Text style={s.investorStatLabel}>Portfolio</Text>
-            </View>
-            <View style={s.investorStatCard}>
-              <Text style={[s.investorStatValue, { color: C.success }]}>{disc}%</Text>
-              <Text style={s.investorStatLabel}>Discount</Text>
-            </View>
-          </View>
-          
-          {/* Next Tier Benefits */}
-          {nextTier ? (
-            <View style={{ paddingHorizontal: 20 }}>
-              <TierBenefitsComparison currentTier={currentTier} nextTier={nextTier} />
-            </View>
-          ) : null}
-          
-          {/* Current Benefits */}
-          <View style={{ paddingHorizontal: 20 }}>
-            <CurrentBenefits tier={currentTier} />
-          </View>
-          
-          {/* Quick Actions for Investors */}
-          <View style={s.investorActions}>
-            <Text style={s.investorActionsTitle}>Quick Actions</Text>
-            <View style={s.investorActionsGrid}>
-              {[
-                { icon: 'document-text', label: 'Documents', action: () => Alert.alert('Documents', 'Investment documents coming soon') },
-                { icon: 'headset', label: 'Concierge', action: () => Alert.alert('VIP Concierge', 'Your dedicated concierge will contact you') },
-                { icon: 'gift', label: 'Benefits', action: () => Alert.alert('Benefits', 'View your exclusive benefits') },
-                { icon: 'trending-up', label: 'Invest More', action: () => Linking.openURL('https://macauoftheamericas.com') },
-              ].map((action, i) => (
-                <TouchableOpacity key={i} style={s.investorActionBtn} onPress={action.action} activeOpacity={0.8}>
-                  <LinearGradient colors={G.card} style={s.investorActionGrad}>
-                    <Ionicons name={action.icon as any} size={24} color={C.gold} />
-                    <Text style={s.investorActionLabel}>{action.label}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          
-          {/* Settings & Support */}
-          {[
-            { 
-              title: 'Settings', 
-              items: [
-                { icon: 'person-outline', label: 'Edit Profile' },
-                { icon: 'notifications-outline', label: 'Notifications' },
-                { icon: 'lock-closed-outline', label: 'Privacy & Security' },
-              ] 
-            },
-            { 
-              title: 'Support', 
-              items: [
-                { icon: 'help-circle-outline', label: 'Help Center' },
-                { icon: 'chatbubble-outline', label: 'Contact Us' },
-              ] 
-            },
-          ].map((sec, si) => (
-            <View key={si} style={s.profileSection}>
-              <Text style={s.profileSecTitle}>{sec.title}</Text>
-              <LinearGradient colors={G.card} style={s.profileMenu}>
-                {sec.items.map((item: any, ii) => (
-                  <TouchableOpacity 
-                    key={ii} 
-                    style={[s.profileMenuItem, ii < sec.items.length - 1 && s.profileMenuItemBorder]} 
-                    onPress={() => Alert.alert(item.label)}
-                  >
-                    <View style={s.profileMenuItemIcon}>
-                      <Ionicons name={item.icon} size={22} color={C.gold} />
-                    </View>
-                    <Text style={s.profileMenuItemLabel}>{item.label}</Text>
-                    <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-                  </TouchableOpacity>
-                ))}
-              </LinearGradient>
-            </View>
-          ))}
-
-          <View style={s.profileSection}>
-            <TouchableOpacity 
-              style={s.logoutBtn} 
-              onPress={() => Alert.alert('Sign Out', 'Are you sure?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Sign Out', style: 'destructive', onPress: logout }
-              ])}
-            >
-              <Ionicons name="log-out-outline" size={22} color={C.error} />
-              <Text style={s.logoutBtnText}>Sign Out</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={s.profileVersion}>MOTA v2.2</Text>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  // MEMBER PROFILE VIEW (non-investor)
-  return (
-    <View style={s.container}>
-      <LinearGradient colors={[C.bg, C.card, C.bg]} style={StyleSheet.absoluteFill} />
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 120 }} 
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.gold} />}
-      >
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.profileHeader}>
-          <LinearGradient colors={G.gold} style={s.profileAvatar}>
-            <Text style={s.profileAvatarText}>{user?.name ? user.name[0].toUpperCase() : 'U'}</Text>
-          </LinearGradient>
-          <Text style={s.profileName}>{user?.name || 'User'}</Text>
-          <Text style={s.profileEmail}>{user?.email || ''}</Text>
-          <View style={s.memberBadge}>
-            <Ionicons name="star" size={14} color={C.gold} />
-            <Text style={s.memberBadgeText}>Member</Text>
-          </View>
+          <LinearGradient colors={getTierGradient()} style={s.profileAvatar}><Text style={s.profileAvatarText}>{user.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}</Text></LinearGradient>
+          <Text style={s.profileName}>{user.name}</Text>
+          <Text style={s.profileEmail}>{user.email}</Text>
+          {user.investorTier && <View style={[s.tierBadge, { backgroundColor: tierInfo?.color + '30' }]}><Ionicons name="diamond" size={14} color={tierInfo?.color || C.gold} /><Text style={[s.tierBadgeText, { color: tierInfo?.color || C.gold }]}>{tierInfo?.name} Investor</Text></View>}
         </View>
-
-        <View style={s.profileStats}>
-          {[
-            { v: '0', l: 'Bookings' },
-            { v: '0', l: 'Favorites' },
-            { v: '0', l: 'Reviews' },
-          ].map((st, i) => (
-            <View key={i} style={s.profileStatCard}>
-              <Text style={s.profileStatV}>{st.v}</Text>
-              <Text style={s.profileStatL}>{st.l}</Text>
-            </View>
+        {isInvestor && user.investorTier && <MOTACard tier={user.investorTier} user={user} />}
+        {isInvestor && user.investorTier && <View style={{ paddingHorizontal: 20 }}><TierBenefitsCard tier={user.investorTier} /></View>}
+        {isInvestor && user.investorTier && <PortfolioOverview user={user} />}
+        <View style={s.profileMenu}>
+          {[{ icon: 'person-outline', label: 'Edit Profile', screen: 'editProfile' }, { icon: 'notifications-outline', label: 'Notifications', screen: 'notifications', badge: notificationCount }, { icon: 'bookmark-outline', label: 'My Reservations', screen: 'reservations' }, { icon: 'heart-outline', label: 'Favorites', screen: 'favorites' }, { icon: 'settings-outline', label: 'Settings', screen: 'settings' }, { icon: 'help-circle-outline', label: 'Help & Support', screen: 'help' }].map((item, i) => (
+            <TouchableOpacity key={i} style={s.profileMenuItem} onPress={() => setCurrentScreen(item.screen)}>
+              <View style={s.profileMenuIcon}><Ionicons name={item.icon as any} size={22} color={C.gold} /></View>
+              <Text style={s.profileMenuText}>{item.label}</Text>
+              {item.badge && item.badge > 0 && <View style={s.notificationBadge}><Text style={s.notificationBadgeText}>{item.badge}</Text></View>}
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
           ))}
+          {isInvestor && (
+            <TouchableOpacity style={s.profileMenuItem} onPress={() => Alert.alert('Contact Support', 'Chat feature coming soon!')}>
+              <View style={s.profileMenuIcon}><Ionicons name="chatbubble-outline" size={22} color={C.gold} /></View>
+              <Text style={s.profileMenuText}>Contact Us</Text>
+              <View style={s.liveIndicator}><Text style={s.liveIndicatorText}>LIVE</Text></View>
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
-
-        {[
-          { 
-            title: 'Account', 
-            items: [
-              { icon: 'person-outline', label: 'Edit Profile' },
-              { icon: 'heart-outline', label: 'Favorites' },
-              { icon: 'time-outline', label: 'Booking History' },
-            ] 
-          },
-          { 
-            title: 'Settings', 
-            items: [
-              { icon: 'notifications-outline', label: 'Notifications' },
-              { icon: 'lock-closed-outline', label: 'Privacy & Security' },
-              { icon: 'language-outline', label: 'Language' },
-            ] 
-          },
-          { 
-            title: 'Support', 
-            items: [
-              { icon: 'help-circle-outline', label: 'Help Center' },
-              { icon: 'chatbubble-outline', label: 'Contact Us' },
-              { icon: 'document-text-outline', label: 'Terms & Conditions' },
-            ] 
-          },
-        ].map((sec, si) => (
-          <View key={si} style={s.profileSection}>
-            <Text style={s.profileSecTitle}>{sec.title}</Text>
-            <LinearGradient colors={G.card} style={s.profileMenu}>
-              {sec.items.map((item: any, ii) => (
-                <TouchableOpacity 
-                  key={ii} 
-                  style={[s.profileMenuItem, ii < sec.items.length - 1 && s.profileMenuItemBorder]} 
-                  onPress={() => Alert.alert(item.label)}
-                >
-                  <View style={s.profileMenuItemIcon}>
-                    <Ionicons name={item.icon} size={22} color={C.gold} />
-                  </View>
-                  <Text style={s.profileMenuItemLabel}>{item.label}</Text>
-                  <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-                </TouchableOpacity>
-              ))}
-            </LinearGradient>
-          </View>
-        ))}
-
-        <View style={s.profileSection}>
-          <TouchableOpacity 
-            style={s.logoutBtn} 
-            onPress={() => Alert.alert('Sign Out', 'Are you sure?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Sign Out', style: 'destructive', onPress: logout }
-            ])}
-          >
-            <Ionicons name="log-out-outline" size={22} color={C.error} />
-            <Text style={s.logoutBtnText}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={s.profileVersion}>MOTA v2.2</Text>
+        <TouchableOpacity style={s.logoutBtn} onPress={() => Alert.alert('Logout', 'Are you sure?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Logout', style: 'destructive', onPress: logout }])}>
+          <Ionicons name="log-out-outline" size={20} color={C.error} /><Text style={s.logoutBtnText}>Logout</Text>
+        </TouchableOpacity>
+        <Text style={s.versionText}>MOTA v3.3.0</Text>
       </ScrollView>
-    </View>
-  );
-}
-
-// MAIN APP
-function MainApp() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [exploreParams, setExploreParams] = useState<any>({});
-  const insets = useSafeAreaInsets();
-
-  const handleNavigate = (tab: string, params?: any) => { 
-    if (params) setExploreParams(params); 
-    setActiveTab(tab); 
+    );
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'explore': return <ExploreScreen onShowAuth={() => setShowAuthModal(true)} initialTab={exploreParams?.tab} />;
-      case 'events': return <EventsScreen onShowAuth={() => setShowAuthModal(true)} />;
-      case 'concierge': return <ConciergeScreen onShowAuth={() => setShowAuthModal(true)} />;
-      case 'profile': return <ProfileScreen onShowAuthModal={() => setShowAuthModal(true)} />;
-      default: return <HomeScreen onShowAuth={() => setShowAuthModal(true)} onNavigate={handleNavigate} />;
-    }
-  };
-
-  const navItems = [
-    { id: 'home', icon: 'home', label: 'Home' },
-    { id: 'explore', icon: 'compass', label: 'Explore' },
-    { id: 'events', icon: 'calendar', label: 'Events' },
-    { id: 'concierge', icon: 'headset', label: 'Concierge' },
-    { id: 'profile', icon: 'person', label: 'Profile' },
-  ];
+  // Main render
+  const tabs = [{ icon: 'home', label: 'Home' }, { icon: 'compass', label: 'Explore' }, { icon: 'calendar', label: 'Events' }, { icon: 'diamond', label: 'Concierge' }, { icon: 'person', label: 'Profile' }];
+  if (loading) return <LinearGradient colors={G.dark} style={s.loadingContainer}><ActivityIndicator size="large" color={C.gold} /><Text style={s.loadingText}>Loading MOTA...</Text></LinearGradient>;
 
   return (
-    <View style={s.container}>
-      {renderContent()}
-      
-      <View style={[s.navBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <LinearGradient colors={['rgba(10,18,42,0.95)', 'rgba(10,18,42,0.99)']} style={StyleSheet.absoluteFill} />
-        {navItems.map(item => (
-          <TouchableOpacity 
-            key={item.id} 
-            style={s.navItem} 
-            onPress={() => { setExploreParams({}); setActiveTab(item.id); }} 
-            activeOpacity={0.7}
-          >
-            {activeTab === item.id ? (
-              <LinearGradient colors={G.gold} style={s.navItemActive}>
-                <Ionicons name={item.icon as any} size={20} color={C.bg} />
-              </LinearGradient>
-            ) : (
-              <Ionicons name={`${item.icon}-outline` as any} size={20} color={C.textMuted} />
-            )}
-            <Text style={[s.navLabel, activeTab === item.id && s.navLabelActive]}>{item.label}</Text>
+    <LinearGradient colors={G.dark} style={s.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={[s.header, { paddingTop: insets.top + 10 }]}>
+        <View><Text style={s.headerLogo}>MOTA</Text><Text style={s.headerSub}>Macau of the Americas</Text></View>
+        <View style={s.headerRight}>
+          <TouchableOpacity style={s.headerBtn} onPress={() => setCurrentScreen('notifications')}>
+            <Ionicons name="notifications-outline" size={22} color={C.text} />
+            {notificationCount > 0 && <View style={s.headerBadge}><Text style={s.headerBadgeText}>{notificationCount > 9 ? '9+' : notificationCount}</Text></View>}
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{ flex: 1 }}>
+        {activeTab === 0 && renderHomeTab()}
+        {activeTab === 1 && renderExploreTab()}
+        {activeTab === 2 && renderEventsTab()}
+        {activeTab === 3 && renderConciergeTab()}
+        {activeTab === 4 && renderProfileTab()}
+      </View>
+      <LinearGradient colors={[C.bg, C.card]} style={[s.navBar, { paddingBottom: insets.bottom + 8 }]}>
+        {tabs.map((tab, i) => (
+          <TouchableOpacity key={i} style={s.navItem} onPress={() => setActiveTab(i)}>
+            <View style={[s.navItemIcon, activeTab === i && s.navItemIconActive]}><Ionicons name={(activeTab === i ? tab.icon : tab.icon + '-outline') as any} size={22} color={activeTab === i ? C.gold : C.textMuted} /></View>
+            <Text style={[s.navLabel, activeTab === i && s.navLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
-      </View>
-
-      <BottomSheet isVisible={showAuthModal} onClose={() => setShowAuthModal(false)}>
-        <AuthModal onClose={() => setShowAuthModal(false)} />
-      </BottomSheet>
-    </View>
+      </LinearGradient>
+      <ServiceModal visible={!!serviceModal} service={serviceModal} onClose={() => setServiceModal(null)} onSubmit={() => Alert.alert('Request Submitted', 'Our concierge team will contact you shortly.')} />
+      <VIPPromoModal visible={vipPromoVisible} onClose={() => setVipPromoVisible(false)} />
+    </LinearGradient>
   );
 }
-
-// STYLES
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  loadingContainer: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
-  
-  // Premium Hero
-  heroSection: { height: height * 0.48 },
-  heroImage: { width: '100%', height: '100%' },
-  heroOverlay: { ...StyleSheet.absoluteFillObject },
-  heroTopBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24 },
-  heroLogo: { fontSize: 32, fontWeight: '800', color: C.gold, letterSpacing: 8 },
-  heroTopRight: { flexDirection: 'row', alignItems: 'center' },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.success, marginRight: 6 },
-  liveText: { fontSize: 11, fontWeight: '700', color: C.text, letterSpacing: 1 },
-  heroCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
-  heroSubtitle: { fontSize: 14, fontWeight: '500', color: C.gold, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 },
-  heroTitle: { fontSize: 38, fontWeight: '300', color: C.text, textAlign: 'center', letterSpacing: 1, lineHeight: 46 },
-  heroLine: { width: 60, height: 2, backgroundColor: C.gold, marginTop: 20, borderRadius: 1 },
-  heroBottom: { paddingBottom: 30, alignItems: 'center' },
-  heroDots: { flexDirection: 'row', justifyContent: 'center' },
-  heroDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)', marginHorizontal: 4 },
-  heroDotActive: { backgroundColor: C.gold, width: 24 },
-
-  // Quick Actions
-  quickActionsSection: { marginTop: -30, paddingHorizontal: 20, marginBottom: 24 },
-  quickActionsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-  quickActionItem: { alignItems: 'center', width: (width - 60) / 4 },
-  quickActionBubble: { width: 70, height: 70, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  quickActionIconWrap: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  quickActionLabel: { fontSize: 12, fontWeight: '600', color: C.text, textAlign: 'center' },
-
-  // Sections
-  section: { marginBottom: 28 },
-  secHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
-  secTitle: { fontSize: 20, fontWeight: '700', color: C.text },
-  secAction: { fontSize: 14, fontWeight: '600', color: C.gold },
-
-  // Room Cards
-  roomCard: { width: width * 0.72, marginRight: 16, borderRadius: 20, overflow: 'hidden' },
-  roomImage: { width: '100%', height: 260 },
-  roomOverlay: { flex: 1, padding: 18, justifyContent: 'flex-end' },
-  roomName: { fontSize: 18, fontWeight: '700', color: C.text, marginTop: 8 },
-  roomDetails: { fontSize: 13, color: C.textSec, marginTop: 4 },
-  roomAmenities: { flexDirection: 'row' },
-  amenityTag: { backgroundColor: C.goldMuted, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginRight: 8 },
-  amenityText: { fontSize: 11, color: C.gold, fontWeight: '500' },
-  roomFooter: { flexDirection: 'row', alignItems: 'baseline', marginTop: 12 },
-  roomPrice: { fontSize: 22, fontWeight: '700', color: C.gold },
-  perNight: { fontSize: 13, color: C.textSec, marginLeft: 4 },
-
-  // List Cards
-  listCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 16, marginBottom: 12, marginHorizontal: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  exploreListCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 16, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  listImg: { width: 90, height: 90 },
-  listContent: { flex: 1, padding: 14 },
-  listName: { fontSize: 16, fontWeight: '700', color: C.text },
-  listCat: { fontSize: 13, color: C.textSec, marginTop: 2 },
-  listFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  listPrice: { fontSize: 15, fontWeight: '700', color: C.gold },
-  listPriceUnit: { fontSize: 12, color: C.textSec, marginLeft: 2 },
-  listRating: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
-  listRatingText: { fontSize: 13, color: C.text, marginLeft: 4, fontWeight: '600' },
-  listAction: { paddingRight: 16 },
-
-  // Event Cards
-  eventCard: { width: 200, height: 240, marginRight: 16, borderRadius: 20, overflow: 'hidden' },
-  eventImage: { width: '100%', height: '100%' },
-  eventOverlay: { ...StyleSheet.absoluteFillObject, padding: 16, justifyContent: 'flex-end' },
-  eventDate: { fontSize: 12, color: C.gold, fontWeight: '700', marginBottom: 4 },
-  eventName: { fontSize: 16, fontWeight: '700', color: C.text },
-  eventVenue: { fontSize: 12, color: C.textSec, marginTop: 4 },
-
-  // Event List
-  eventListCard: { borderRadius: 20, overflow: 'hidden', marginBottom: 16, height: 200 },
-  eventListImg: { width: '100%', height: '100%' },
-  eventListOverlay: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', padding: 20 },
-  eventListDate: { backgroundColor: C.bg, borderRadius: 12, padding: 12, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
-  eventListMonth: { fontSize: 11, color: C.gold, fontWeight: '700' },
-  eventListDay: { fontSize: 24, color: C.text, fontWeight: '700' },
-  eventListContent: { flex: 1, marginLeft: 16, justifyContent: 'flex-end' },
-  eventListName: { fontSize: 20, fontWeight: '700', color: C.text },
-  eventListDesc: { fontSize: 13, color: C.textSec, marginTop: 4 },
-  eventListFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
-  eventListVenue: { flexDirection: 'row', alignItems: 'center' },
-  eventListVenueText: { fontSize: 12, color: C.textSec, marginLeft: 4 },
-  rsvpBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
-  rsvpBtnText: { fontSize: 12, fontWeight: '700', color: C.bg },
-
-  // Concierge
-  conciergeSection: { paddingHorizontal: 20, marginBottom: 28 },
-  conciergeSectionTitle: { fontSize: 20, fontWeight: '700', color: C.text, marginBottom: 16 },
-  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  serviceCard: { width: '50%', padding: 6 },
-  serviceCardGrad: { borderRadius: 20, padding: 20, alignItems: 'center' },
-  serviceIconWrap: { width: 56, height: 56, borderRadius: 18, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  serviceTitle: { fontSize: 14, fontWeight: '700', color: C.text, textAlign: 'center' },
-  serviceDesc: { fontSize: 12, color: C.textSec, textAlign: 'center', marginTop: 4 },
-  carCard: { width: 200, height: 150, marginRight: 16, borderRadius: 16, overflow: 'hidden' },
-  carImage: { width: '100%', height: '100%' },
-  carOverlay: { ...StyleSheet.absoluteFillObject, padding: 16, justifyContent: 'flex-end' },
-  carName: { fontSize: 14, fontWeight: '700', color: C.text },
-  carFooter: { flexDirection: 'row', alignItems: 'baseline', marginTop: 4 },
-  carPrice: { fontSize: 16, fontWeight: '700', color: C.gold },
-  carPriceUnit: { fontSize: 11, color: C.textSec, marginLeft: 2 },
-  yachtCard: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 16, overflow: 'hidden', marginBottom: 12 },
-  yachtImage: { width: 100, height: 100 },
-  yachtContent: { flex: 1, padding: 14, justifyContent: 'center' },
-  yachtName: { fontSize: 16, fontWeight: '700', color: C.text },
-  yachtDetails: { fontSize: 13, color: C.textSec, marginTop: 4 },
-  yachtPrice: { fontSize: 14, fontWeight: '700', color: C.gold, marginTop: 8 },
-  yachtAction: { justifyContent: 'center', paddingRight: 16 },
-  contactConciergeBtn: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 20 },
-  contactConciergeTitle: { fontSize: 16, fontWeight: '700', color: C.bg },
-  contactConciergeSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
-
-  // Explore
-  exploreHeader: { paddingHorizontal: 20, paddingBottom: 16 },
-  exploreTitle: { fontSize: 32, fontWeight: '800', color: C.text },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, marginHorizontal: 20, paddingHorizontal: 16, borderRadius: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  searchInput: { flex: 1, paddingVertical: 14, paddingHorizontal: 12, fontSize: 15, color: C.text },
-  tabsScroll: { marginBottom: 16 },
-  tabPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25, backgroundColor: C.card, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginRight: 10 },
-  tabPillActive: { borderColor: C.gold },
-  tabPillText: { fontSize: 13, fontWeight: '600', color: C.textSec, marginLeft: 8 },
-  tabPillTextActive: { color: C.bg },
-  emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyStateTitle: { fontSize: 18, fontWeight: '600', color: C.textMuted, marginTop: 16 },
-
-  // Investor Card
-  investorCard: { borderRadius: 20, overflow: 'hidden', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12 },
-  investorCardGrad: { flex: 1, padding: 20 },
-  cardPattern: { ...StyleSheet.absoluteFillObject },
-  cardPatternLine: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: '#FFF' },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardLogo: { fontSize: 24, fontWeight: '800', color: '#FFF', letterSpacing: 4 },
-  cardLogoSub: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.7)', letterSpacing: 2, marginTop: 2 },
-  cardTierBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  cardTierText: { fontSize: 12, fontWeight: '700', color: '#FFF', marginLeft: 6 },
-  cardQR: { position: 'absolute', right: 20, top: '40%', width: 50, height: 50, flexDirection: 'row', flexWrap: 'wrap' },
-  qrBlock: { width: 8, height: 8, backgroundColor: '#FFF', margin: 1, borderRadius: 1 },
-  cardBottom: { flex: 1, justifyContent: 'flex-end', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  cardName: { fontSize: 18, fontWeight: '700', color: '#FFF' },
-  cardId: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4, fontFamily: 'monospace' },
-  cardDiscount: { alignItems: 'flex-end' },
-  cardDiscountValue: { fontSize: 28, fontWeight: '800', color: '#FFF' },
-  cardDiscountLabel: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
-  contactlessIcon: { position: 'absolute', right: 20, bottom: 20, width: 30, height: 30, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
-
-  // Investment Progress
-  progressSection: { backgroundColor: C.card, borderRadius: 20, padding: 20, marginBottom: 20 },
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  progressTitle: { fontSize: 16, fontWeight: '700', color: C.text },
-  progressNextTier: { fontSize: 12, fontWeight: '600', color: C.gold },
-  progressMaxTier: { fontSize: 12, fontWeight: '600', color: C.success },
-  progressAmounts: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  progressCurrent: { fontSize: 20, fontWeight: '700', color: C.text },
-  progressTarget: { fontSize: 14, fontWeight: '600', color: C.textMuted },
-  progressBarBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 4 },
-  progressRemaining: { fontSize: 12, color: C.textSec, marginTop: 12, textAlign: 'center' },
-
-  // Benefits
-  benefitsSection: { backgroundColor: C.card, borderRadius: 20, padding: 20, marginBottom: 20 },
-  benefitsSectionTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 16 },
-  benefitsList: {},
-  benefitItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  benefitIcon: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  benefitText: { fontSize: 14, color: C.text, flex: 1 },
-  currentBenefitsSection: { backgroundColor: C.card, borderRadius: 20, padding: 20, marginBottom: 20 },
-  currentBenefitsTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 16 },
-  currentBenefitsList: {},
-  currentBenefitItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  currentBenefitText: { fontSize: 14, color: C.textSec, marginLeft: 10 },
-
-  // Investor Profile
-  investorProfileHeader: { alignItems: 'center', paddingVertical: 24 },
-  investorWelcome: { fontSize: 14, color: C.textSec },
-  investorName: { fontSize: 28, fontWeight: '700', color: C.text, marginTop: 4 },
-  investorBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 12 },
-  investorBadgeText: { fontSize: 13, fontWeight: '600', marginLeft: 8 },
-  investorStats: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 20 },
-  investorStatCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, alignItems: 'center', marginHorizontal: 4 },
-  investorStatValue: { fontSize: 18, fontWeight: '700', color: C.gold },
-  investorStatLabel: { fontSize: 11, color: C.textMuted, marginTop: 4 },
-  investorActions: { paddingHorizontal: 20, marginBottom: 24 },
-  investorActionsTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 16 },
-  investorActionsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-  investorActionBtn: { width: '23%' },
-  investorActionGrad: { borderRadius: 16, padding: 16, alignItems: 'center' },
-  investorActionLabel: { fontSize: 11, color: C.textSec, marginTop: 8, textAlign: 'center' },
-
-  // Profile
-  profileGuestContainer: { flex: 1, alignItems: 'center', paddingHorizontal: 32 },
-  profileGuestIcon: { marginBottom: 24 },
-  profileGuestIconGrad: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center' },
-  profileGuestTitle: { fontSize: 28, fontWeight: '700', color: C.text, marginBottom: 12, textAlign: 'center' },
-  profileGuestSub: { fontSize: 15, color: C.textSec, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  profileGuestBenefits: { width: '100%', marginBottom: 32 },
-  profileGuestBenefit: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  profileGuestBenefitIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  profileGuestBenefitText: { fontSize: 15, color: C.text, fontWeight: '500' },
-  profileGuestSignIn: { fontSize: 14, color: C.textSec },
-  profileHeader: { alignItems: 'center', paddingVertical: 32 },
-  profileAvatar: { width: 90, height: 90, borderRadius: 45, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  profileAvatarText: { fontSize: 36, fontWeight: '700', color: C.bg },
-  profileName: { fontSize: 24, fontWeight: '700', color: C.text },
-  profileEmail: { fontSize: 14, color: C.textSec, marginTop: 4 },
-  memberBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldMuted, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 12 },
-  memberBadgeText: { fontSize: 13, color: C.gold, fontWeight: '600', marginLeft: 6 },
-  profileStats: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 24 },
-  profileStatCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, alignItems: 'center', marginHorizontal: 4 },
-  profileStatV: { fontSize: 24, fontWeight: '700', color: C.gold },
-  profileStatL: { fontSize: 11, color: C.textMuted, marginTop: 4 },
-  profileSection: { paddingHorizontal: 20, marginBottom: 24 },
-  profileSecTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 },
-  profileMenu: { borderRadius: 20, overflow: 'hidden' },
-  profileMenuItem: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  profileMenuItemBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  profileMenuItemIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.goldMuted, justifyContent: 'center', alignItems: 'center' },
-  profileMenuItemLabel: { flex: 1, fontSize: 15, fontWeight: '500', color: C.text, marginLeft: 14 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
-  logoutBtnText: { fontSize: 15, fontWeight: '600', color: C.error, marginLeft: 8 },
-  profileVersion: { fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 24 },
-
-  // Navigation
-  navBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', overflow: 'hidden' },
-  navItem: { flex: 1, alignItems: 'center' },
-  navItemActive: { width: 40, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  navLabel: { fontSize: 10, color: C.textMuted, marginTop: 4, fontWeight: '500' },
-  navLabelActive: { color: C.gold, fontWeight: '600' },
-
-  // Buttons
-  goldBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14 },
-  goldBtnLg: { paddingVertical: 18, borderRadius: 16 },
-  goldBtnText: { fontSize: 14, fontWeight: '700', color: C.bg },
-  goldBtnTextLg: { fontSize: 16 },
-
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  resModal: { height: height * 0.85, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
-  resHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 24, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
-  resTitle: { fontSize: 22, fontWeight: '700', color: C.text },
-  resSub: { fontSize: 14, color: C.gold, marginTop: 4 },
-  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center' },
-  resContent: { flex: 1, padding: 24 },
-  inputLabel: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 12, marginTop: 20 },
-  dateRow: { flexDirection: 'row' },
-  dateOpt: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', marginRight: 10, overflow: 'hidden' },
-  dateOptActive: {},
-  dateOptText: { fontSize: 14, fontWeight: '600', color: C.textSec },
-  dateOptTextActive: { color: C.bg },
-  timeOpt: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12, backgroundColor: C.card, marginRight: 10, overflow: 'hidden' },
-  timeOptActive: {},
-  timeOptText: { fontSize: 14, fontWeight: '600', color: C.textSec },
-  timeOptTextActive: { color: C.bg },
-  guestSel: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 12, paddingVertical: 8 },
-  guestBtn: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
-  guestCount: { flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '700', color: C.text },
-  summaryCard: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginTop: 24 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  summaryLabel: { fontSize: 14, color: C.textSec },
-  summaryValue: { fontSize: 14, fontWeight: '600', color: C.text },
-  resFooter: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
-});
 
 export default function App() {
-  return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <MainApp />
-      </AuthProvider>
-    </SafeAreaProvider>
-  );
+  return <SafeAreaProvider><AuthProvider><AppContent /></AuthProvider></SafeAreaProvider>;
 }
+
+// ============================================
+// STYLES
+// ============================================
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: C.textSec, marginTop: 16, fontSize: 14 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12 },
+  headerLogo: { fontSize: 28, fontWeight: '800', color: C.gold, letterSpacing: 3 },
+  headerSub: { fontSize: 10, color: C.textMuted, letterSpacing: 2, textTransform: 'uppercase' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  headerBadge: { position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.error, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  headerBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+  heroContainer: { height: 280 },
+  heroSlide: { width, height: 280 },
+  heroImage: { width: '100%', height: '100%', position: 'absolute' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject },
+  heroContent: { position: 'absolute', bottom: 50, left: 20, right: 20 },
+  heroSubtitle: { fontSize: 11, color: C.gold, letterSpacing: 2, fontWeight: '600', marginBottom: 6 },
+  heroTitle: { fontSize: 28, fontWeight: '800', color: C.text, marginBottom: 6 },
+  heroDesc: { fontSize: 14, color: C.textSec, lineHeight: 20 },
+  slideIndicators: { position: 'absolute', bottom: 20, alignSelf: 'center', flexDirection: 'row', gap: 8 },
+  slideIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
+  slideIndicatorActive: { backgroundColor: C.gold, width: 24 },
+  searchSection: { paddingHorizontal: 20, paddingVertical: 16 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 16, height: 50, borderWidth: 1, borderColor: C.cardLight },
+  searchInput: { flex: 1, fontSize: 15, color: C.text, marginLeft: 12 },
+  aiTag: { backgroundColor: C.gold, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  aiTagText: { fontSize: 10, fontWeight: '700', color: C.bg },
+  quickCats: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 10, marginBottom: 20 },
+  quickCat: { alignItems: 'center' },
+  quickCatIcon: { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  quickCatLabel: { fontSize: 12, color: C.textSec, fontWeight: '500' },
+  section: { marginBottom: 28 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: '700', color: C.text },
+  sectionMore: { fontSize: 14, color: C.gold, fontWeight: '600' },
+  itemCard: { width: 200, height: 240, marginRight: 16, borderRadius: 16, overflow: 'hidden', backgroundColor: C.card },
+  itemCardImage: { width: '100%', height: '100%', position: 'absolute' },
+  itemCardOverlay: { ...StyleSheet.absoluteFillObject },
+  itemCardContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 14 },
+  itemCardName: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 2 },
+  itemCardSub: { fontSize: 12, color: C.textSec },
+  itemCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  itemCardPrice: { fontSize: 14, fontWeight: '600', color: C.gold },
+  itemCardRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  itemCardRatingText: { fontSize: 12, color: C.text, fontWeight: '600' },
+  filterRow: { marginBottom: 12 },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, marginRight: 8, borderWidth: 1, borderColor: C.cardLight },
+  filterChipActive: { backgroundColor: C.gold, borderColor: C.gold },
+  filterChipText: { fontSize: 13, color: C.textSec, fontWeight: '600' },
+  filterChipTextActive: { color: C.bg },
+  exploreCard: { width: (width - 48) / 2, height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16, backgroundColor: C.card },
+  exploreCardImage: { width: '100%', height: '100%', position: 'absolute' },
+  exploreCardOverlay: { ...StyleSheet.absoluteFillObject },
+  exploreCardContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12 },
+  exploreCardName: { fontSize: 14, fontWeight: '700', color: C.text },
+  exploreCardSub: { fontSize: 11, color: C.textSec },
+  exploreCardRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
+  exploreCardRatingText: { fontSize: 11, color: C.text },
+  eventListCard: { backgroundColor: C.card, borderRadius: 16, marginBottom: 16, overflow: 'hidden', flexDirection: 'row' },
+  eventListImage: { width: 100, height: 120 },
+  eventListContent: { flex: 1, padding: 14, flexDirection: 'row' },
+  eventListDate: { alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  eventListDay: { fontSize: 24, fontWeight: '800', color: C.gold },
+  eventListMonth: { fontSize: 12, color: C.textSec, textTransform: 'uppercase' },
+  eventListInfo: { flex: 1 },
+  eventListName: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
+  eventListVenue: { fontSize: 12, color: C.textSec, marginBottom: 8 },
+  eventListFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  eventListPrice: { fontSize: 16, fontWeight: '700', color: C.gold },
+  eventListFree: { fontSize: 14, fontWeight: '600', color: C.success },
+  conciergeTabRow: { flexDirection: 'row', padding: 16, gap: 12 },
+  conciergeTabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10, backgroundColor: C.card, gap: 8 },
+  conciergeTabBtnActive: { backgroundColor: C.gold },
+  conciergeTabBtnDisabled: { opacity: 0.7 },
+  conciergeTabText: { fontSize: 14, fontWeight: '600', color: C.textSec },
+  conciergeTabTextActive: { color: C.bg },
+  conciergeHeader: { paddingHorizontal: 16 },
+  conciergeHeaderGrad: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 16 },
+  conciergeHeaderTitle: { fontSize: 18, fontWeight: '700', color: C.bg },
+  conciergeHeaderSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
+  conciergeSectionTitle: { fontSize: 18, fontWeight: '700', color: C.text, paddingHorizontal: 20, marginTop: 24, marginBottom: 16 },
+  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, justifyContent: 'space-between' },
+  serviceCard: { width: (width - 48) / 2, marginBottom: 16, marginHorizontal: 4 },
+  serviceCardGrad: { padding: 16, borderRadius: 16, alignItems: 'center' },
+  serviceIconWrap: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  serviceTitle: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
+  serviceDesc: { fontSize: 11, color: C.textSec, textAlign: 'center' },
+  luxurySection: { paddingHorizontal: 16, marginTop: 16 },
+  luxuryHeader: { borderRadius: 12, overflow: 'hidden' },
+  luxuryHeaderGrad: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  luxuryHeaderText: { flex: 1, fontSize: 16, fontWeight: '700', color: C.bg },
+  luxuryContent: { backgroundColor: C.card, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, marginTop: -8, paddingTop: 8 },
+  luxuryItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  luxuryItemInfo: { flex: 1, marginLeft: 14 },
+  luxuryItemTitle: { fontSize: 15, fontWeight: '600', color: C.text },
+  luxuryItemDesc: { fontSize: 12, color: C.textSec },
+  profileGuest: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
+  profileGuestIcon: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  profileGuestTitle: { fontSize: 24, fontWeight: '700', color: C.text, marginBottom: 8 },
+  profileGuestSub: { fontSize: 14, color: C.textSec, textAlign: 'center', lineHeight: 22 },
+  profileGuestLink: { fontSize: 14, color: C.textSec },
+  profileHeader: { alignItems: 'center', paddingVertical: 30 },
+  profileAvatar: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  profileAvatarText: { fontSize: 32, fontWeight: '700', color: C.bg },
+  profileName: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 4 },
+  profileEmail: { fontSize: 14, color: C.textSec },
+  tierBadge: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, gap: 6 },
+  tierBadgeText: { fontSize: 13, fontWeight: '600' },
+  profileMenu: { marginTop: 20, marginHorizontal: 20, backgroundColor: C.card, borderRadius: 16 },
+  profileMenuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  profileMenuIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
+  profileMenuText: { flex: 1, fontSize: 15, color: C.text, marginLeft: 14, fontWeight: '500' },
+  notificationBadge: { backgroundColor: C.error, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, marginRight: 8 },
+  notificationBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  liveIndicator: { backgroundColor: C.success, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginRight: 8 },
+  liveIndicatorText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, marginHorizontal: 20, padding: 16, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 12, gap: 8 },
+  logoutBtnText: { fontSize: 15, fontWeight: '600', color: C.error },
+  versionText: { textAlign: 'center', color: C.textMuted, fontSize: 12, marginTop: 20 },
+  navBar: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 12, borderTopWidth: 1, borderTopColor: C.cardLight },
+  navItem: { alignItems: 'center' },
+  navItemIcon: { width: 44, height: 32, alignItems: 'center', justifyContent: 'center' },
+  navItemIconActive: { backgroundColor: 'rgba(212,175,55,0.15)', borderRadius: 16 },
+  navLabel: { fontSize: 10, color: C.textMuted, marginTop: 4 },
+  navLabelActive: { color: C.gold },
+  goldBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
+  goldBtnLg: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 },
+  goldBtnText: { fontSize: 12, fontWeight: '700', color: C.bg, letterSpacing: 0.5 },
+  goldBtnTextLg: { fontSize: 15 },
+  emptyContainer: { alignItems: 'center', paddingTop: 60 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginTop: 16 },
+  motaCardContainer: { paddingHorizontal: 20, marginBottom: 20 },
+  motaCard: { borderRadius: 20, padding: 24, height: 200, position: 'relative', overflow: 'hidden' },
+  motaCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  motaCardLogo: { fontSize: 24, fontWeight: '800', color: C.bg, letterSpacing: 2 },
+  motaCardType: { fontSize: 12, color: 'rgba(0,0,0,0.6)', fontWeight: '600' },
+  motaCardChip: { width: 44, height: 34, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' },
+  motaCardNumber: { fontSize: 18, fontWeight: '600', color: C.bg, letterSpacing: 3, marginTop: 30 },
+  motaCardFooter: { flexDirection: 'row', justifyContent: 'space-between', position: 'absolute', bottom: 24, left: 24, right: 24 },
+  motaCardLabel: { fontSize: 10, color: 'rgba(0,0,0,0.5)', marginBottom: 4 },
+  motaCardValue: { fontSize: 14, fontWeight: '700', color: C.bg },
+  motaCardPattern: { position: 'absolute', right: -30, top: -30, opacity: 0.5 },
+  portfolioContainer: { padding: 20 },
+  portfolioTitle: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 4 },
+  portfolioSubtitle: { fontSize: 14, color: C.textSec, marginBottom: 20 },
+  portfolioStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  portfolioStat: { flex: 1, backgroundColor: C.card, padding: 16, borderRadius: 12, marginHorizontal: 4, alignItems: 'center' },
+  portfolioStatLabel: { fontSize: 11, color: C.textMuted, marginBottom: 6 },
+  portfolioStatValue: { fontSize: 18, fontWeight: '700', color: C.text },
+  timelineTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 16 },
+  timeline: { marginBottom: 24 },
+  timelineItem: { flexDirection: 'row', marginBottom: 8 },
+  timelineDot: { alignItems: 'center', marginRight: 16 },
+  timelineDotInner: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
+  timelineDotCompleted: { backgroundColor: C.success },
+  timelineDotActive: { backgroundColor: C.gold },
+  timelineLine: { width: 2, flex: 1, backgroundColor: C.cardLight, marginTop: 4 },
+  timelineLineCompleted: { backgroundColor: C.success },
+  timelineContent: { flex: 1, paddingBottom: 24 },
+  timelinePhase: { fontSize: 12, color: C.gold, fontWeight: '600' },
+  timelineName: { fontSize: 15, fontWeight: '700', color: C.text, marginVertical: 2 },
+  timelineYears: { fontSize: 12, color: C.textMuted },
+  timelineAmount: { fontSize: 14, fontWeight: '600', color: C.success, marginTop: 4 },
+  timelineDate: { fontSize: 12, color: C.textSec },
+  timelineStatusBadge: { backgroundColor: 'rgba(74,222,128,0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 6, alignSelf: 'flex-start' },
+  timelineStatusText: { fontSize: 11, fontWeight: '600', color: C.success },
+  dividendsCard: { backgroundColor: C.card, borderRadius: 16, padding: 20, marginBottom: 20 },
+  dividendsHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  dividendsTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  dividendsNote: { fontSize: 13, color: C.textSec, lineHeight: 20, marginBottom: 16 },
+  dividendsExpected: { backgroundColor: C.cardLight, borderRadius: 12, padding: 16, alignItems: 'center' },
+  dividendsLabel: { fontSize: 12, color: C.textMuted, marginBottom: 4 },
+  dividendsAmount: { fontSize: 28, fontWeight: '700', color: C.success },
+  dividendsDate: { fontSize: 14, color: C.textSec, marginTop: 4 },
+  portfolioLinks: { backgroundColor: C.card, borderRadius: 16 },
+  portfolioLink: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  portfolioLinkIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
+  portfolioLinkContent: { flex: 1, marginLeft: 14 },
+  portfolioLinkTitle: { fontSize: 15, fontWeight: '600', color: C.text },
+  portfolioLinkSub: { fontSize: 12, color: C.textSec },
+  tierBenefitsCard: { backgroundColor: C.card, borderRadius: 16, overflow: 'hidden', marginBottom: 20 },
+  tierBenefitsHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  tierBenefitsTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: C.bg },
+  tierBenefitsInvestment: { fontSize: 14, fontWeight: '700', color: C.bg },
+  tierBenefitsList: { padding: 16 },
+  tierBenefitItem: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  tierBenefitText: { fontSize: 14, color: C.textSec, flex: 1 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { width: '100%', maxWidth: 400, backgroundColor: C.card, borderRadius: 20, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  modalClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
+  modalBody: { padding: 20 },
+  modalFooter: { flexDirection: 'row', padding: 20, gap: 12, borderTopWidth: 1, borderTopColor: C.cardLight },
+  modalLabel: { fontSize: 13, fontWeight: '600', color: C.textMuted, marginBottom: 8, marginTop: 16 },
+  modalInput: { backgroundColor: C.cardLight, borderRadius: 10, padding: 14, color: C.text, fontSize: 15 },
+  modalTextarea: { height: 100, textAlignVertical: 'top' },
+  modalCancelBtn: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: C.cardLight, alignItems: 'center' },
+  modalCancelText: { fontSize: 15, fontWeight: '600', color: C.textSec },
+  modalSubmitBtn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center' },
+  modalSubmitText: { fontSize: 15, fontWeight: '700', color: C.bg },
+  serviceOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  serviceOption: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, backgroundColor: C.cardLight, borderWidth: 1, borderColor: C.cardLight },
+  serviceOptionText: { fontSize: 13, color: C.text },
+  vipPromoHeader: { alignItems: 'center', padding: 30 },
+  vipPromoTitle: { fontSize: 24, fontWeight: '700', color: C.bg, marginTop: 12 },
+  vipPromoSubtitle: { fontSize: 13, color: 'rgba(0,0,0,0.6)' },
+  vipPromoText: { fontSize: 14, color: C.textSec, lineHeight: 22, marginBottom: 20 },
+  vipBenefitsTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 },
+  vipBenefitItem: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  vipBenefitText: { fontSize: 14, color: C.textSec },
+  vipTiersPreview: { marginTop: 20, padding: 16, backgroundColor: C.cardLight, borderRadius: 12 },
+  vipTiersTitle: { fontSize: 14, fontWeight: '700', color: C.text, marginBottom: 12 },
+  vipTierRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  vipTierBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+  vipTierName: { fontSize: 13, fontWeight: '700', color: C.bg },
+  vipTierAmount: { fontSize: 14, fontWeight: '600', color: C.textSec },
+});

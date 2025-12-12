@@ -111,20 +111,19 @@ export default function BottomSheet({ isVisible, onClose, children }: BottomShee
               transform: [{ translateY }],
             },
           ]}
+          {...panResponder.panHandlers}
         >
           <LinearGradient
             colors={['#152347', '#101C40', '#0A122A']}
-            style={styles.sheetGradient}
+            style={styles.sheetContent}
           >
-            {/* Drag Handle */}
-            <View {...panResponder.panHandlers} style={styles.handleArea}>
+            {/* Handle */}
+            <View style={styles.handleContainer}>
               <View style={styles.handle} />
             </View>
 
             {/* Content */}
-            <View style={styles.content}>
-              {children}
-            </View>
+            {children}
           </LinearGradient>
         </Animated.View>
       </View>
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   sheet: {
     height: SHEET_HEIGHT,
@@ -147,20 +146,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: 'hidden',
   },
-  sheetGradient: {
+  sheetContent: {
     flex: 1,
   },
-  handleArea: {
-    paddingVertical: 12,
+  handleContainer: {
     alignItems: 'center',
+    paddingVertical: 12,
   },
   handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  content: {
-    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });
