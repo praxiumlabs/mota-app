@@ -38,7 +38,7 @@ const AIUseCases = [
   { id: 1, title: 'Find Dining', desc: 'Discover perfect restaurants', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80', icon: 'restaurant' },
   { id: 2, title: 'Book Experiences', desc: 'Adventures tailored to you', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80', icon: 'compass' },
   { id: 3, title: 'Plan Your Stay', desc: 'Perfect accommodations', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80', icon: 'bed' },
-  { id: 4, title: 'Get Recommendations', desc: 'Personalized suggestions', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80', icon: 'sparkles' },
+  { id: 4, title: 'For You', desc: 'Personalized suggestions', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80', icon: 'sparkles' },
 ];
 
 // ============================================
@@ -854,13 +854,13 @@ function AppContent() {
         <View style={s.slideIndicators}>{slides.map((_, i) => <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />)}</View>
       </View>
       {isInvestor && user?.investorTier && <InvestmentBar investmentAmount={user.investmentAmount || 0} portfolioValue={user.portfolioValue || 0} tier={user.investorTier} />}
-      <View style={s.searchSection}>
+      <TouchableOpacity style={s.searchSection} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
         <View style={s.searchBar}>
           <Ionicons name="sparkles" size={20} color={C.gold} />
-          <TextInput style={s.searchInput} placeholder="Ask me anything..." placeholderTextColor={C.textMuted} />
+          <Text style={s.searchPlaceholder}>Ask me anything...</Text>
           <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
         </View>
-      </View>
+      </TouchableOpacity>
       <View style={s.quickCats}>
         {[{ icon: 'bed-outline', label: 'Lodging' }, { icon: 'restaurant-outline', label: 'Eateries' }, { icon: 'compass-outline', label: 'Experiences' }, { icon: 'wine-outline', label: 'Nightlife' }].map((cat, i) => (
           <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
@@ -959,7 +959,7 @@ function AppContent() {
       </TouchableOpacity>
       
       {/* Category Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' }}>
         {['All', 'Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
           <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
         ))}
@@ -1012,7 +1012,9 @@ function AppContent() {
             <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
             <View style={s.exploreCardContent}>
               <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
-              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type || ' '}</Text>
+              <Text style={s.exploreCardSub} numberOfLines={1}>{(item.cuisine || item.category || item.type) ? (
+  <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
+) : null}</Text>
               {item.rating ? (
                 <View style={s.exploreCardRating}>
                   <Ionicons name="star" size={12} color={C.gold} />
@@ -1365,11 +1367,11 @@ const s = StyleSheet.create({
   itemCardPrice: { fontSize: 14, fontWeight: '600', color: C.gold },
   itemCardRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   itemCardRatingText: { fontSize: 12, color: C.text, fontWeight: '600' },
-  filterRow: { marginBottom: 12, height: 44 },
-  filterChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.card, borderRadius: 22, marginRight: 10, borderWidth: 1.5, borderColor: C.cardLight, minWidth: 60, height: 40 },
+  filterRow: { marginBottom: 12, minHeight: 48 },
+  filterChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 10, backgroundColor: C.card, borderRadius: 20, marginRight: 10, borderWidth: 1.5, borderColor: C.cardLight, minHeight: 40 },
   filterChipActive: { backgroundColor: C.gold, borderColor: C.gold },
-  filterChipText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
-  filterChipTextActive: { color: C.bg, fontWeight: '500' },
+  filterChipText: { fontSize: 14, color: C.textSec, fontWeight: '600' },
+  filterChipTextActive: { color: C.bg, fontWeight: '600' },
   exploreCard: { width: (width - 48) / 2, height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16, backgroundColor: C.card },
   exploreCardImage: { width: '100%', height: '100%', position: 'absolute' },
   exploreCardOverlay: { ...StyleSheet.absoluteFillObject },
