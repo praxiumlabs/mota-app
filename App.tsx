@@ -1,14 +1,15 @@
 /**
  * MOTA - Macau of the Americas
- * Premium Casino Resort App v3.4
+ * Premium Casino Resort App v3.5
  * Complete with MOTA Card, VIP Concierge, Portfolio, Investment Timeline
+ * AI Assistant Preview, Smart Filters, Digital Wallet Integration
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, 
   Dimensions, StatusBar, ActivityIndicator, RefreshControl, FlatList, 
-  TextInput, Alert, Modal
+  TextInput, Alert, Modal, Animated
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +30,110 @@ import HelpScreen from './screens/HelpScreen';
 import api from './services/api';
 
 const { width } = Dimensions.get('window');
+
+// ============================================
+// AI ASSISTANT USE CASES
+// ============================================
+const AIUseCases = [
+  { id: 1, title: 'Find Dining', desc: 'Discover perfect restaurants', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80', icon: 'restaurant' },
+  { id: 2, title: 'Book Experiences', desc: 'Adventures tailored to you', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80', icon: 'compass' },
+  { id: 3, title: 'Plan Your Stay', desc: 'Perfect accommodations', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80', icon: 'bed' },
+  { id: 4, title: 'Get Recommendations', desc: 'Personalized suggestions', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80', icon: 'sparkles' },
+];
+
+// ============================================
+// CONCIERGE SERVICE DATA WITH IMAGES
+// ============================================
+const ConciergeServices = {
+  standard: [
+    { icon: 'restaurant-outline', title: 'Dining', desc: 'Reserve tables at any restaurant', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80', color: '#FF6B6B',
+      options: [
+        { name: 'Ocean Pearl', type: 'Fine Dining', cuisine: 'Seafood', price: '$$$$', rating: 4.9, image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80' },
+        { name: 'Jade Garden', type: 'Asian Fusion', cuisine: 'Pan-Asian', price: '$$$', rating: 4.7, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&q=80' },
+        { name: 'The Steakhouse', type: 'Steakhouse', cuisine: 'American', price: '$$$$', rating: 4.8, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80' },
+      ]
+    },
+    { icon: 'bed-outline', title: 'Lodging', desc: 'Book suites and villas', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80', color: '#4ECDC4',
+      options: [
+        { name: 'Royal Suite', type: 'Suite', beds: 'King', sqft: '1,200', price: '$899/night', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80' },
+        { name: 'Ocean Villa', type: 'Villa', beds: '2 King', sqft: '2,500', price: '$1,599/night', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80' },
+        { name: 'Penthouse', type: 'Penthouse', beds: '3 King', sqft: '4,000', price: '$2,999/night', image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=400&q=80' },
+      ]
+    },
+    { icon: 'calendar-outline', title: 'Events', desc: 'VIP event access', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80', color: '#9B59B6',
+      options: [
+        { name: 'Jazz Night', type: 'Music', date: 'Every Friday', price: '$50', image: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=400&q=80' },
+        { name: 'Wine Tasting', type: 'Food & Drink', date: 'Saturdays', price: '$120', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&q=80' },
+        { name: 'Pool Party', type: 'Entertainment', date: 'Sundays', price: '$75', image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=400&q=80' },
+      ]
+    },
+    { icon: 'gift-outline', title: 'Special', desc: 'Celebrations & requests', image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&q=80', color: '#E74C3C',
+      options: [
+        { name: 'Birthday Package', type: 'Celebration', includes: 'Cake, Decor, Dinner', price: '$500', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80' },
+        { name: 'Anniversary', type: 'Romance', includes: 'Suite, Dinner, Spa', price: '$1,200', image: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=400&q=80' },
+        { name: 'Proposal Setup', type: 'Romance', includes: 'Beach, Photographer', price: '$800', image: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=400&q=80' },
+      ]
+    },
+    { icon: 'map-outline', title: 'Private Tour', desc: 'Guided tours & experiences', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80', color: '#3498DB',
+      options: [
+        { name: 'Mayan Ruins', type: 'Cultural', duration: '6 hours', price: '$350', image: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=400&q=80' },
+        { name: 'Jungle Adventure', type: 'Adventure', duration: '4 hours', price: '$275', image: 'https://images.unsplash.com/photo-1440342359743-84fcb8c21f21?w=400&q=80' },
+        { name: 'Island Hopping', type: 'Water', duration: '8 hours', price: '$500', image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&q=80' },
+      ]
+    },
+    { icon: 'leaf-outline', title: 'Spa & Wellness', desc: 'Relaxation & treatments', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80', color: '#2ECC71',
+      options: [
+        { name: 'Couples Massage', type: 'Massage', duration: '90 min', price: '$350', image: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=400&q=80' },
+        { name: 'Full Day Retreat', type: 'Package', duration: '6 hours', price: '$650', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80' },
+        { name: 'Wellness Journey', type: 'Premium', duration: '3 days', price: '$2,500', image: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=400&q=80' },
+      ]
+    },
+  ],
+  vip: [
+    { icon: 'boat-outline', title: 'Yacht Charter', desc: 'Private yacht experiences', image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80', color: '#1ABC9C', tier: 'gold',
+      options: [
+        { name: 'Sunset Cruise', type: 'Cruise', duration: '3 hours', guests: 'Up to 8', price: '$2,500', image: 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=400&q=80' },
+        { name: 'Full Day Charter', type: 'Charter', duration: '8 hours', guests: 'Up to 12', price: '$6,500', image: 'https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=400&q=80' },
+        { name: 'Overnight Voyage', type: 'Voyage', duration: '24 hours', guests: 'Up to 6', price: '$12,000', image: 'https://images.unsplash.com/photo-1540946485063-a40da27545f8?w=400&q=80' },
+      ]
+    },
+    { icon: 'airplane-outline', title: 'Private Aviation', desc: 'Aircraft & helicopter', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80', color: '#E67E22', tier: 'platinum',
+      options: [
+        { name: 'Helicopter Tour', type: 'Tour', duration: '1 hour', price: '$1,800', image: 'https://images.unsplash.com/photo-1534321238895-da3ab632df3e?w=400&q=80' },
+        { name: 'Private Jet', type: 'Charter', destination: 'Caribbean', price: 'From $15,000', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80' },
+        { name: 'Seaplane Adventure', type: 'Experience', duration: '2 hours', price: '$3,500', image: 'https://images.unsplash.com/photo-1474302770737-173ee21bab63?w=400&q=80' },
+      ]
+    },
+    { icon: 'car-sport-outline', title: 'Exotic Fleet', desc: 'Luxury vehicle collection', image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80', color: '#9B59B6', tier: 'gold',
+      options: [
+        { name: 'Lamborghini Huracán', type: 'Sports', power: '630 HP', price: '$1,500/day', image: 'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=400&q=80' },
+        { name: 'Rolls-Royce Ghost', type: 'Luxury', seats: '4', price: '$2,000/day', image: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=400&q=80' },
+        { name: 'Ferrari 488', type: 'Sports', power: '660 HP', price: '$1,800/day', image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80' },
+      ]
+    },
+    { icon: 'home-outline', title: 'Private Estates', desc: 'Exclusive properties', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&q=80', color: '#34495E', tier: 'diamond',
+      options: [
+        { name: 'Oceanfront Estate', type: 'Estate', beds: '6', sqft: '12,000', price: '$15,000/night', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80' },
+        { name: 'Jungle Retreat', type: 'Villa', beds: '4', sqft: '8,000', price: '$8,500/night', image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80' },
+        { name: 'Private Island', type: 'Island', beds: '8', acres: '5', price: '$50,000/night', image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&q=80' },
+      ]
+    },
+    { icon: 'person-outline', title: 'Personal Butler', desc: '24/7 dedicated service', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80', color: '#C0392B', tier: 'platinum',
+      options: [
+        { name: 'Daily Butler', type: 'Service', hours: '12 hours', price: '$800/day', image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80' },
+        { name: '24/7 Butler', type: 'Premium', hours: '24 hours', price: '$1,500/day', image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80' },
+        { name: 'Butler Team', type: 'Elite', staff: '3 butlers', price: '$3,500/day', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80' },
+      ]
+    },
+    { icon: 'diamond-outline', title: 'Bespoke Experiences', desc: 'Fully customized', image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80', color: '#8E44AD', tier: 'diamond',
+      options: [
+        { name: 'Dream Wedding', type: 'Custom', guests: 'Up to 200', price: 'From $100,000', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&q=80' },
+        { name: 'Film Production', type: 'Media', crew: 'Full team', price: 'From $50,000', image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80' },
+        { name: 'Private Concert', type: 'Entertainment', artists: 'Your choice', price: 'From $250,000', image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80' },
+      ]
+    },
+  ],
+};
 
 // ============================================
 // HERO SLIDES
@@ -276,6 +381,247 @@ const PortfolioOverview = ({ user }: { user: any }) => (
 );
 
 // ============================================
+// AI ASSISTANT POPUP MODAL (Amazon Rufus Style)
+// ============================================
+const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
+  <Modal visible={visible} transparent animationType="fade">
+    <TouchableOpacity style={s.aiPopupOverlay} activeOpacity={1} onPress={onClose}>
+      <View style={s.aiPopupContent}>
+        <LinearGradient colors={['#0a1628', '#162544']} style={s.aiPopupGradient}>
+          <TouchableOpacity style={s.aiPopupClose} onPress={onClose}>
+            <Ionicons name="close" size={24} color={C.textSec} />
+          </TouchableOpacity>
+          
+          <View style={s.aiPopupHeader}>
+            <LinearGradient colors={G.gold} style={s.aiPopupIconWrap}>
+              <Ionicons name="sparkles" size={28} color={C.bg} />
+            </LinearGradient>
+            <Text style={s.aiPopupTitle}>MOTA AI Assistant</Text>
+            <Text style={s.aiPopupSubtitle}>Soon you'll be able to...</Text>
+          </View>
+          
+          <View style={s.aiUseCaseGrid}>
+            {AIUseCases.map((useCase) => (
+              <View key={useCase.id} style={s.aiUseCaseCard}>
+                <Image source={{ uri: useCase.image }} style={s.aiUseCaseImage} />
+                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.aiUseCaseOverlay}>
+                  <View style={s.aiUseCaseIconWrap}>
+                    <Ionicons name={useCase.icon as any} size={18} color={C.gold} />
+                  </View>
+                  <Text style={s.aiUseCaseTitle}>{useCase.title}</Text>
+                  <Text style={s.aiUseCaseDesc}>{useCase.desc}</Text>
+                </LinearGradient>
+              </View>
+            ))}
+          </View>
+          
+          <View style={s.aiComingSoon}>
+            <Ionicons name="time-outline" size={20} color={C.gold} />
+            <Text style={s.aiComingSoonText}>Coming Soon</Text>
+          </View>
+        </LinearGradient>
+      </View>
+    </TouchableOpacity>
+  </Modal>
+);
+
+// ============================================
+// PAYMENT METHODS MODAL
+// ============================================
+const PaymentMethodsModal = ({ visible, onClose, onAddToWallet }: any) => {
+  const [cards, setCards] = useState([
+    { id: 1, type: 'visa', last4: '4242', expiry: '12/26', isDefault: true },
+    { id: 2, type: 'mastercard', last4: '8888', expiry: '03/25', isDefault: false },
+  ]);
+  
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={s.modalOverlay}>
+        <View style={s.paymentModalContent}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>Payment Methods</Text>
+            <TouchableOpacity onPress={onClose} style={s.modalClose}>
+              <Ionicons name="close" size={24} color={C.text} />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+            <Text style={s.paymentSectionTitle}>Your Cards</Text>
+            {cards.map((card) => (
+              <View key={card.id} style={s.paymentCard}>
+                <View style={s.paymentCardIcon}>
+                  <Ionicons name="card" size={24} color={card.type === 'visa' ? '#1A1F71' : '#EB001B'} />
+                </View>
+                <View style={s.paymentCardInfo}>
+                  <Text style={s.paymentCardType}>{card.type.toUpperCase()} •••• {card.last4}</Text>
+                  <Text style={s.paymentCardExpiry}>Expires {card.expiry}</Text>
+                </View>
+                {card.isDefault && <View style={s.defaultBadge}><Text style={s.defaultBadgeText}>Default</Text></View>}
+                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+              </View>
+            ))}
+            
+            <TouchableOpacity style={s.addPaymentBtn}>
+              <Ionicons name="add-circle-outline" size={24} color={C.gold} />
+              <Text style={s.addPaymentText}>Add New Card</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={s.addPaymentBtn}>
+              <Ionicons name="business-outline" size={24} color={C.gold} />
+              <Text style={s.addPaymentText}>Link Bank Account</Text>
+            </TouchableOpacity>
+            
+            <View style={s.walletDivider} />
+            
+            <Text style={s.paymentSectionTitle}>MOTA Digital Card</Text>
+            <Text style={s.walletDesc}>Add your MOTA card to Apple Pay or Google Pay for seamless payments throughout the resort.</Text>
+            
+            <TouchableOpacity style={s.walletBtn} onPress={() => { onClose(); onAddToWallet('apple'); }}>
+              <Ionicons name="logo-apple" size={24} color="#fff" />
+              <Text style={s.walletBtnText}>Add to Apple Wallet</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={[s.walletBtn, s.googleWalletBtn]} onPress={() => { onClose(); onAddToWallet('google'); }}>
+              <Ionicons name="logo-google" size={24} color="#fff" />
+              <Text style={s.walletBtnText}>Add to Google Pay</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ============================================
+// DIGITAL WALLET MODAL
+// ============================================
+const DigitalWalletModal = ({ visible, onClose, walletType, user }: any) => (
+  <Modal visible={visible} transparent animationType="slide">
+    <View style={s.modalOverlay}>
+      <View style={s.walletModalContent}>
+        <LinearGradient colors={walletType === 'apple' ? ['#1a1a1a', '#2d2d2d'] : ['#4285F4', '#34A853']} style={s.walletModalGradient}>
+          <TouchableOpacity style={s.walletModalClose} onPress={onClose}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <View style={s.walletModalHeader}>
+            <Ionicons name={walletType === 'apple' ? 'logo-apple' : 'logo-google'} size={40} color="#fff" />
+            <Text style={s.walletModalTitle}>
+              {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}
+            </Text>
+          </View>
+          
+          <View style={s.motaDigitalCard}>
+            <LinearGradient colors={G.gold} style={s.motaDigitalCardGrad}>
+              <Text style={s.motaDigitalCardLogo}>MOTA</Text>
+              <Text style={s.motaDigitalCardName}>{user?.name || 'Member'}</Text>
+              <Text style={s.motaDigitalCardNumber}>•••• •••• •••• {Math.floor(1000 + Math.random() * 9000)}</Text>
+              <View style={s.motaDigitalCardFooter}>
+                <Text style={s.motaDigitalCardType}>{user?.investorTier?.toUpperCase() || 'MEMBER'} CARD</Text>
+                <Text style={s.motaDigitalCardValid}>VALID THRU 12/29</Text>
+              </View>
+            </LinearGradient>
+          </View>
+          
+          <Text style={s.walletModalDesc}>
+            Your MOTA card will be added to {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}. 
+            Use it for contactless payments at all MOTA venues.
+          </Text>
+          
+          <TouchableOpacity style={s.walletModalBtn} onPress={() => { Alert.alert('Success!', `MOTA Card added to ${walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}!`); onClose(); }}>
+            <Text style={s.walletModalBtnText}>Add Card</Text>
+          </TouchableOpacity>
+        </LinearGradient>
+      </View>
+    </View>
+  </Modal>
+);
+
+// ============================================
+// CONCIERGE SERVICE DETAIL MODAL
+// ============================================
+const ConciergeServiceDetailModal = ({ visible, service, onClose, onBook }: any) => {
+  if (!service) return null;
+  
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={s.modalOverlay}>
+        <View style={s.conciergeDetailModal}>
+          <Image source={{ uri: service.image }} style={s.conciergeDetailImage} />
+          <LinearGradient colors={['transparent', C.bg]} style={s.conciergeDetailOverlay} />
+          
+          <TouchableOpacity style={s.conciergeDetailClose} onPress={onClose}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <View style={s.conciergeDetailContent}>
+            <View style={[s.conciergeDetailIconWrap, { backgroundColor: service.color + '30' }]}>
+              <Ionicons name={service.icon} size={28} color={service.color} />
+            </View>
+            <Text style={s.conciergeDetailTitle}>{service.title}</Text>
+            <Text style={s.conciergeDetailDesc}>{service.desc}</Text>
+            
+            <Text style={s.conciergeDetailSectionTitle}>Available Options</Text>
+            <ScrollView style={s.conciergeDetailOptions} showsVerticalScrollIndicator={false}>
+              {service.options?.map((option: any, index: number) => (
+                <TouchableOpacity key={index} style={s.conciergeOptionCard} onPress={() => { onBook(option); onClose(); }}>
+                  <Image source={{ uri: option.image }} style={s.conciergeOptionImage} />
+                  <View style={s.conciergeOptionInfo}>
+                    <Text style={s.conciergeOptionName}>{option.name}</Text>
+                    <Text style={s.conciergeOptionType}>{option.type}</Text>
+                    <View style={s.conciergeOptionMeta}>
+                      {option.duration && <Text style={s.conciergeOptionMetaText}>{option.duration}</Text>}
+                      {option.guests && <Text style={s.conciergeOptionMetaText}>{option.guests}</Text>}
+                      {option.beds && <Text style={s.conciergeOptionMetaText}>{option.beds}</Text>}
+                    </View>
+                    <Text style={s.conciergeOptionPrice}>{option.price}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={C.gold} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ============================================
+// FILTER DROPDOWN COMPONENT
+// ============================================
+const FilterDropdown = ({ title, options, selected, onSelect, visible, onToggle, icon }: any) => (
+  <View style={s.filterDropdownContainer}>
+    <TouchableOpacity style={[s.filterDropdownBtn, visible && s.filterDropdownBtnActive]} onPress={onToggle}>
+      {icon && <Ionicons name={icon} size={16} color={visible ? C.bg : C.textSec} style={{ marginRight: 6 }} />}
+      <Text style={[s.filterDropdownBtnText, visible && s.filterDropdownBtnTextActive]}>{title}</Text>
+      <Ionicons name={visible ? 'chevron-up' : 'chevron-down'} size={16} color={visible ? C.bg : C.textSec} />
+      {selected.length > 0 && <View style={s.filterBadge}><Text style={s.filterBadgeText}>{selected.length}</Text></View>}
+    </TouchableOpacity>
+    {visible && (
+      <View style={s.filterDropdownMenu}>
+        {options.map((option: any) => (
+          <TouchableOpacity 
+            key={option.value} 
+            style={[s.filterDropdownItem, selected.includes(option.value) && s.filterDropdownItemActive]}
+            onPress={() => onSelect(option.value)}
+          >
+            <Ionicons 
+              name={selected.includes(option.value) ? 'checkbox' : 'square-outline'} 
+              size={20} 
+              color={selected.includes(option.value) ? C.gold : C.textMuted} 
+            />
+            <Text style={[s.filterDropdownItemText, selected.includes(option.value) && s.filterDropdownItemTextActive]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    )}
+  </View>
+);
+
+// ============================================
 // SERVICE REQUEST MODAL
 // ============================================
 const ServiceModal = ({ visible, service, onClose, onSubmit }: any) => {
@@ -393,6 +739,15 @@ function AppContent() {
   const [vipPromoVisible, setVipPromoVisible] = useState(false);
   const [conciergeTab, setConciergeTab] = useState<'standard' | 'vip'>('standard');
   const [luxuryExpanded, setLuxuryExpanded] = useState(false);
+  // New state variables for v3.5 features
+  const [aiPopupVisible, setAiPopupVisible] = useState(false);
+  const [filterDropdown, setFilterDropdown] = useState<string | null>(null);
+  const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [conciergeServiceDetail, setConciergeServiceDetail] = useState<any>(null);
+  const [walletModalVisible, setWalletModalVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -530,15 +885,78 @@ function AppContent() {
   // ============================================
   // EXPLORE TAB
   // ============================================
+  const toggleFilterSelection = (filter: string, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+  };
+
+  const priceOptions = [
+    { value: '$', label: '$ - Budget Friendly' },
+    { value: '$$', label: '$$ - Moderate' },
+    { value: '$$$', label: '$$$ - Upscale' },
+    { value: '$$$$', label: '$$$$ - Luxury' },
+  ];
+
+  const ratingOptions = [
+    { value: '4.5', label: '4.5+ Stars' },
+    { value: '4.0', label: '4.0+ Stars' },
+    { value: '3.5', label: '3.5+ Stars' },
+  ];
+
+  const amenityOptions = [
+    { value: 'Dog Friendly', label: '🐕 Dog Friendly' },
+    { value: 'Kids Friendly', label: '👨‍👩‍👧 Kids Friendly' },
+    { value: 'Ocean View', label: '🌊 Ocean View' },
+    { value: 'Beach View', label: '🏖️ Beach View' },
+    { value: 'Pool', label: '🏊 Pool' },
+    { value: 'Spa', label: '💆 Spa' },
+  ];
+
+  const getFilteredItemsNew = () => {
+    let items: any[] = [];
+    if (exploreCategory === 'All' || exploreCategory === 'Lodging') items = [...items, ...lodging.map(l => ({ ...l, _type: 'lodging' }))];
+    if (exploreCategory === 'All' || exploreCategory === 'Eateries') items = [...items, ...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
+    if (exploreCategory === 'All' || exploreCategory === 'Experiences') items = [...items, ...activities.map(a => ({ ...a, _type: 'activity' }))];
+    if (exploreCategory === 'All' || exploreCategory === 'Nightlife') items = [...items, ...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
+    
+    // Multi-select price filter
+    if (selectedPrices.length > 0) {
+      items = items.filter(item => selectedPrices.includes(item.priceRange || '$$'));
+    }
+    
+    // Multi-select rating filter
+    if (selectedRatings.length > 0) {
+      const minRating = Math.min(...selectedRatings.map(r => parseFloat(r)));
+      items = items.filter(item => item.rating && item.rating >= minRating);
+    }
+    
+    // Multi-select amenity filter
+    if (selectedAmenities.length > 0) {
+      items = items.filter(item => {
+        return selectedAmenities.some(amenity => {
+          if (amenity === 'Dog Friendly') return item.dogFriendly === true;
+          if (amenity === 'Kids Friendly') return item.kidsFriendly === true;
+          if (amenity === 'Ocean View') return item.view === 'ocean';
+          if (amenity === 'Beach View') return item.view === 'beach';
+          if (amenity === 'Pool') return item.hasPool === true;
+          if (amenity === 'Spa') return item.hasSpa === true;
+          return false;
+        });
+      });
+    }
+    
+    return items;
+  };
+
   const renderExploreTab = () => (
     <View style={{ flex: 1 }}>
-      <View style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]}>
+      {/* AI Search Bar - Opens Popup */}
+      <TouchableOpacity style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
         <View style={s.searchBar}>
           <Ionicons name="sparkles" size={20} color={C.gold} />
-          <TextInput style={s.searchInput} placeholder="Ask me anything..." placeholderTextColor={C.textMuted} />
+          <Text style={s.searchPlaceholder}>Tell Me What You're Looking For</Text>
           <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
         </View>
-      </View>
+      </TouchableOpacity>
       
       {/* Category Filter */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
@@ -547,39 +965,47 @@ function AppContent() {
         ))}
       </ScrollView>
       
-      {/* Price Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
-        {['All', '$', '$$', '$$$', '$$$$'].map((price) => (
-          <FilterChip key={price} label={price === 'All' ? 'Any Price' : price} active={priceFilter === price} onPress={() => setPriceFilter(price)} />
-        ))}
-      </ScrollView>
+      {/* Filter Dropdowns Row */}
+      <View style={s.filterDropdownRow}>
+        <Text style={s.filterByLabel}>Filter by:</Text>
+        <FilterDropdown 
+          title="Price" 
+          icon="cash-outline"
+          options={priceOptions} 
+          selected={selectedPrices} 
+          onSelect={(v: string) => toggleFilterSelection('price', v, setSelectedPrices)}
+          visible={filterDropdown === 'price'}
+          onToggle={() => setFilterDropdown(filterDropdown === 'price' ? null : 'price')}
+        />
+        <FilterDropdown 
+          title="Rating" 
+          icon="star-outline"
+          options={ratingOptions} 
+          selected={selectedRatings} 
+          onSelect={(v: string) => toggleFilterSelection('rating', v, setSelectedRatings)}
+          visible={filterDropdown === 'rating'}
+          onToggle={() => setFilterDropdown(filterDropdown === 'rating' ? null : 'rating')}
+        />
+        <FilterDropdown 
+          title="Amenities" 
+          icon="options-outline"
+          options={amenityOptions} 
+          selected={selectedAmenities} 
+          onSelect={(v: string) => toggleFilterSelection('amenity', v, setSelectedAmenities)}
+          visible={filterDropdown === 'amenity'}
+          onToggle={() => setFilterDropdown(filterDropdown === 'amenity' ? null : 'amenity')}
+        />
+      </View>
       
-      {/* Rating Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
-        {['All', '4.5', '4.0', '3.5'].map((rating) => (
-          <FilterChip 
-            key={rating} 
-            label={rating === 'All' ? 'Any Rating' : `${rating}+ ★`} 
-            active={ratingFilter === rating} 
-            onPress={() => setRatingFilter(rating)} 
-          />
-        ))}
-      </ScrollView>
+      {/* Clear filters button */}
+      {(selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0) && (
+        <TouchableOpacity style={s.clearFiltersBtn} onPress={() => { setSelectedPrices([]); setSelectedRatings([]); setSelectedAmenities([]); }}>
+          <Ionicons name="close-circle" size={16} color={C.gold} />
+          <Text style={s.clearFiltersText}>Clear all filters</Text>
+        </TouchableOpacity>
+      )}
       
-      {/* Amenity Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.filterRow, { marginBottom: 8 }]} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
-        {['All', 'Dog Friendly', 'Kids Friendly', 'Ocean View', 'Beach View'].map((amenity) => (
-          <FilterChip 
-            key={amenity} 
-            label={amenity === 'All' ? 'Any Amenity' : amenity} 
-            active={amenityFilter === amenity} 
-            onPress={() => setAmenityFilter(amenity)}
-            icon={amenity === 'Dog Friendly' ? 'paw' : amenity === 'Kids Friendly' ? 'people' : amenity.includes('View') ? 'eye' : undefined}
-          />
-        ))}
-      </ScrollView>
-      
-      <FlatList data={getFilteredItems()} numColumns={2} keyExtractor={(item, i) => item._id || `item-${i}`} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} columnWrapperStyle={{ justifyContent: 'space-between' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+      <FlatList data={getFilteredItemsNew()} numColumns={2} keyExtractor={(item, i) => item._id || `item-${i}`} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} columnWrapperStyle={{ justifyContent: 'space-between' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
         renderItem={({ item }) => (
           <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
             <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
@@ -633,10 +1059,30 @@ function AppContent() {
   );
 
   // ============================================
-  // CONCIERGE TAB
+  // CONCIERGE TAB - Redesigned with Images
   // ============================================
+  const handleConciergeServicePress = (service: any) => {
+    if (!user) { 
+      Alert.alert('Sign In Required', 'Please sign in to use concierge services.', [
+        { text: 'Cancel', style: 'cancel' }, 
+        { text: 'Sign In', onPress: () => setCurrentScreen('login') }
+      ]); 
+      return; 
+    }
+    setConciergeServiceDetail(service);
+  };
+
+  const handleBookOption = (option: any) => {
+    Alert.alert(
+      'Booking Request',
+      `Request for ${option.name} submitted!\n\nOur concierge team will contact you within 30 minutes to confirm your booking.`,
+      [{ text: 'OK' }]
+    );
+  };
+
   const renderConciergeTab = () => (
-    <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+    <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      {/* Tab Selector */}
       <View style={s.conciergeTabRow}>
         <TouchableOpacity style={[s.conciergeTabBtn, conciergeTab === 'standard' && s.conciergeTabBtnActive]} onPress={() => setConciergeTab('standard')}>
           <Ionicons name="person" size={18} color={conciergeTab === 'standard' ? C.bg : C.textSec} />
@@ -648,6 +1094,8 @@ function AppContent() {
           {!isInvestor && <Ionicons name="lock-closed" size={14} color={C.textMuted} style={{ marginLeft: 4 }} />}
         </TouchableOpacity>
       </View>
+      
+      {/* Header */}
       <View style={s.conciergeHeader}>
         <LinearGradient colors={conciergeTab === 'vip' && isInvestor ? getTierGradient() : G.gold} style={s.conciergeHeaderGrad}>
           <Ionicons name={conciergeTab === 'vip' ? 'diamond' : 'person'} size={28} color={C.bg} />
@@ -657,48 +1105,95 @@ function AppContent() {
           </View>
         </LinearGradient>
       </View>
-      <Text style={s.conciergeSectionTitle}>Available Services</Text>
-      <View style={s.servicesGrid}>
-        {[{ icon: 'restaurant-outline', title: 'Dining', desc: 'Reserve tables at any restaurant' }, { icon: 'bed-outline', title: 'Lodging', desc: 'Book suites and villas' }, { icon: 'calendar-outline', title: 'Events', desc: 'VIP event access' }, { icon: 'gift-outline', title: 'Special', desc: 'Celebrations & requests' }, { icon: 'map-outline', title: 'Private Tour', desc: 'Guided tours & experiences' }, { icon: 'leaf-outline', title: 'Spa & Wellness', desc: 'Relaxation & treatments' }].map((service, i) => (
-          <TouchableOpacity key={i} style={s.serviceCard} activeOpacity={0.8} onPress={() => handleServiceRequest(service)}>
-            <LinearGradient colors={G.card} style={s.serviceCardGrad}>
-              <View style={s.serviceIconWrap}><Ionicons name={service.icon as any} size={24} color={C.gold} /></View>
-              <Text style={s.serviceTitle}>{service.title}</Text>
-              <Text style={s.serviceDesc}>{service.desc}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <View style={s.luxurySection}>
-        <TouchableOpacity style={s.luxuryHeader} onPress={() => setLuxuryExpanded(!luxuryExpanded)}>
-          <LinearGradient colors={G.gold} style={s.luxuryHeaderGrad}>
-            <Ionicons name="sparkles" size={22} color={C.bg} />
-            <Text style={s.luxuryHeaderText}>Luxury Experiences</Text>
-            <Ionicons name={luxuryExpanded ? 'chevron-up' : 'chevron-down'} size={22} color={C.bg} />
-          </LinearGradient>
-        </TouchableOpacity>
-        {luxuryExpanded && (
-          <View style={s.luxuryContent}>
-            <TouchableOpacity style={s.luxuryItem} onPress={() => setCurrentScreen('fleet')}>
-              <Ionicons name="car-sport" size={22} color={C.gold} />
-              <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>PCH Exotic Fleet</Text><Text style={s.luxuryItemDesc}>Luxury car rentals</Text></View>
-              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-            </TouchableOpacity>
-            <TouchableOpacity style={s.luxuryItem} onPress={() => handleServiceRequest({ title: 'Yacht Charter' })}>
-              <Ionicons name="boat" size={22} color={C.gold} />
-              <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>Yacht Charter</Text><Text style={s.luxuryItemDesc}>Private yacht experiences</Text></View>
-              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-            </TouchableOpacity>
-            {isInvestor && (
-              <TouchableOpacity style={s.luxuryItem} onPress={() => handleServiceRequest({ title: 'Transport' })}>
-                <Ionicons name="airplane" size={22} color={C.gold} />
-                <View style={s.luxuryItemInfo}><Text style={s.luxuryItemTitle}>Private Aviation</Text><Text style={s.luxuryItemDesc}>Jet & helicopter transfers</Text></View>
-                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+
+      {conciergeTab === 'standard' ? (
+        <>
+          <Text style={s.conciergeSectionTitle}>Available Services</Text>
+          <View style={s.conciergeServicesGrid}>
+            {ConciergeServices.standard.map((service, i) => (
+              <TouchableOpacity key={i} style={s.conciergeServiceCard} activeOpacity={0.9} onPress={() => handleConciergeServicePress(service)}>
+                <Image source={{ uri: service.image }} style={s.conciergeServiceImage} />
+                <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.conciergeServiceOverlay}>
+                  <View style={[s.conciergeServiceIconWrap, { backgroundColor: service.color + '40' }]}>
+                    <Ionicons name={service.icon as any} size={20} color={service.color} />
+                  </View>
+                  <Text style={s.conciergeServiceTitle}>{service.title}</Text>
+                  <Text style={s.conciergeServiceDesc}>{service.desc}</Text>
+                </LinearGradient>
               </TouchableOpacity>
-            )}
+            ))}
           </View>
-        )}
-      </View>
+        </>
+      ) : (
+        <>
+          {/* VIP Tier Info */}
+          {isInvestor && user?.investorTier && (
+            <View style={s.vipTierBanner}>
+              <LinearGradient colors={getTierGradient()} style={s.vipTierBannerGrad}>
+                <Ionicons name="shield-checkmark" size={24} color={C.bg} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={s.vipTierBannerTitle}>{user.investorTier.charAt(0).toUpperCase() + user.investorTier.slice(1)} Member</Text>
+                  <Text style={s.vipTierBannerSub}>Priority access to all VIP services</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+
+          <Text style={s.conciergeSectionTitle}>Exclusive VIP Services</Text>
+          <View style={s.vipServicesContainer}>
+            {ConciergeServices.vip.map((service, i) => {
+              const tierOrder = { gold: 1, platinum: 2, diamond: 3 };
+              const userTierLevel = tierOrder[user?.investorTier as keyof typeof tierOrder] || 0;
+              const serviceTierLevel = tierOrder[service.tier as keyof typeof tierOrder] || 0;
+              const isLocked = userTierLevel < serviceTierLevel;
+
+              return (
+                <TouchableOpacity 
+                  key={i} 
+                  style={[s.vipServiceCard, isLocked && s.vipServiceCardLocked]} 
+                  activeOpacity={isLocked ? 1 : 0.9} 
+                  onPress={() => isLocked ? Alert.alert('Upgrade Required', `This service is available for ${service.tier?.charAt(0).toUpperCase()}${service.tier?.slice(1)} members and above.`) : handleConciergeServicePress(service)}
+                >
+                  <Image source={{ uri: service.image }} style={s.vipServiceImage} />
+                  {isLocked && <View style={s.vipServiceLockedOverlay}><Ionicons name="lock-closed" size={32} color="#fff" /></View>}
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.95)']} style={s.vipServiceOverlay}>
+                    <View style={s.vipServiceHeader}>
+                      <View style={[s.vipServiceIconWrap, { backgroundColor: service.color + '40' }]}>
+                        <Ionicons name={service.icon as any} size={22} color={service.color} />
+                      </View>
+                      {service.tier && (
+                        <View style={[s.vipServiceTierBadge, { backgroundColor: service.tier === 'diamond' ? '#B9F2FF30' : service.tier === 'platinum' ? '#E5E4E230' : '#D4AF3730' }]}>
+                          <Text style={[s.vipServiceTierText, { color: service.tier === 'diamond' ? '#B9F2FF' : service.tier === 'platinum' ? '#E5E4E2' : '#D4AF37' }]}>
+                            {service.tier.toUpperCase()}+
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={s.vipServiceTitle}>{service.title}</Text>
+                    <Text style={s.vipServiceDesc}>{service.desc}</Text>
+                    <View style={s.vipServiceFooter}>
+                      <Text style={s.vipServiceCta}>{isLocked ? 'Upgrade to Access' : 'View Options'}</Text>
+                      <Ionicons name="arrow-forward" size={16} color={C.gold} />
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Quick Contact */}
+          <View style={s.vipContactSection}>
+            <Text style={s.vipContactTitle}>Need Something Custom?</Text>
+            <Text style={s.vipContactDesc}>Your dedicated concierge team is available 24/7</Text>
+            <TouchableOpacity style={s.vipContactBtn}>
+              <LinearGradient colors={G.gold} style={s.vipContactBtnGrad}>
+                <Ionicons name="chatbubbles" size={20} color={C.bg} />
+                <Text style={s.vipContactBtnText}>Contact VIP Concierge</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 
@@ -730,8 +1225,16 @@ function AppContent() {
         {isInvestor && user.investorTier && <View style={{ paddingHorizontal: 20 }}><TierBenefitsCard tier={user.investorTier} /></View>}
         {isInvestor && user.investorTier && <PortfolioOverview user={user} />}
         <View style={s.profileMenu}>
-          {[{ icon: 'person-outline', label: 'Edit Profile', screen: 'editProfile' }, { icon: 'notifications-outline', label: 'Notifications', screen: 'notifications', badge: notificationCount }, { icon: 'bookmark-outline', label: 'My Reservations', screen: 'reservations' }, { icon: 'heart-outline', label: 'Favorites', screen: 'favorites' }, { icon: 'settings-outline', label: 'Settings', screen: 'settings' }, { icon: 'help-circle-outline', label: 'Help & Support', screen: 'help' }].map((item, i) => (
-            <TouchableOpacity key={i} style={s.profileMenuItem} onPress={() => setCurrentScreen(item.screen)}>
+          {[
+            { icon: 'person-outline', label: 'Edit Profile', screen: 'editProfile' }, 
+            { icon: 'notifications-outline', label: 'Notifications', screen: 'notifications', badge: notificationCount }, 
+            { icon: 'card-outline', label: 'Payment Methods', action: 'payment' },
+            { icon: 'bookmark-outline', label: 'My Reservations', screen: 'reservations' }, 
+            { icon: 'heart-outline', label: 'Favorites', screen: 'favorites' }, 
+            { icon: 'settings-outline', label: 'Settings', screen: 'settings' }, 
+            { icon: 'help-circle-outline', label: 'Help & Support', screen: 'help' }
+          ].map((item, i) => (
+            <TouchableOpacity key={i} style={s.profileMenuItem} onPress={() => item.action === 'payment' ? setPaymentModalVisible(true) : setCurrentScreen(item.screen!)}>
               <View style={s.profileMenuIcon}><Ionicons name={item.icon as any} size={22} color={C.gold} /></View>
               <Text style={s.profileMenuText}>{item.label}</Text>
               {item.badge && item.badge > 0 && <View style={s.notificationBadge}><Text style={s.notificationBadgeText}>{item.badge}</Text></View>}
@@ -750,7 +1253,7 @@ function AppContent() {
         <TouchableOpacity style={s.logoutBtn} onPress={() => Alert.alert('Logout', 'Are you sure?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Logout', style: 'destructive', onPress: logout }])}>
           <Ionicons name="log-out-outline" size={20} color={C.error} /><Text style={s.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
-        <Text style={s.versionText}>MOTA v3.4.0</Text>
+        <Text style={s.versionText}>MOTA v3.5.0</Text>
       </ScrollView>
     );
   };
@@ -788,6 +1291,24 @@ function AppContent() {
       </LinearGradient>
       <ServiceModal visible={!!serviceModal} service={serviceModal} onClose={() => setServiceModal(null)} onSubmit={() => Alert.alert('Request Submitted', 'Our concierge team will contact you shortly.')} />
       <VIPPromoModal visible={vipPromoVisible} onClose={() => setVipPromoVisible(false)} />
+      <AIAssistantPopup visible={aiPopupVisible} onClose={() => setAiPopupVisible(false)} />
+      <PaymentMethodsModal 
+        visible={paymentModalVisible} 
+        onClose={() => setPaymentModalVisible(false)} 
+        onAddToWallet={(type: string) => setWalletModalVisible(true)}
+      />
+      <DigitalWalletModal 
+        visible={walletModalVisible} 
+        onClose={() => setWalletModalVisible(false)} 
+        walletType="apple"
+        user={user}
+      />
+      <ConciergeServiceDetailModal 
+        visible={!!conciergeServiceDetail} 
+        service={conciergeServiceDetail} 
+        onClose={() => setConciergeServiceDetail(null)}
+        onBook={handleBookOption}
+      />
     </LinearGradient>
   );
 }
@@ -1017,4 +1538,135 @@ const s = StyleSheet.create({
   vipTierBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   vipTierName: { fontSize: 13, fontWeight: '700', color: C.bg },
   vipTierAmount: { fontSize: 14, fontWeight: '600', color: C.textSec },
+  
+  // AI Assistant Popup Styles
+  aiPopupOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  aiPopupContent: { width: '100%', maxWidth: 380, borderRadius: 24, overflow: 'hidden' },
+  aiPopupGradient: { padding: 24 },
+  aiPopupClose: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
+  aiPopupHeader: { alignItems: 'center', marginBottom: 24, marginTop: 20 },
+  aiPopupIconWrap: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  aiPopupTitle: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 8 },
+  aiPopupSubtitle: { fontSize: 15, color: C.textSec },
+  aiUseCaseGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  aiUseCaseCard: { width: '48%', aspectRatio: 1, borderRadius: 16, overflow: 'hidden' },
+  aiUseCaseImage: { width: '100%', height: '100%', position: 'absolute' },
+  aiUseCaseOverlay: { flex: 1, justifyContent: 'flex-end', padding: 12 },
+  aiUseCaseIconWrap: { width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  aiUseCaseTitle: { fontSize: 14, fontWeight: '700', color: C.text },
+  aiUseCaseDesc: { fontSize: 11, color: C.textSec },
+  aiComingSoon: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, gap: 8 },
+  aiComingSoonText: { fontSize: 14, fontWeight: '600', color: C.gold },
+  
+  // Search placeholder style
+  searchPlaceholder: { flex: 1, marginLeft: 12, fontSize: 15, color: C.textMuted },
+  
+  // Filter Dropdown Styles
+  filterDropdownRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, gap: 8, flexWrap: 'wrap' },
+  filterByLabel: { fontSize: 13, color: C.textMuted, marginRight: 4 },
+  filterDropdownContainer: { position: 'relative', zIndex: 100 },
+  filterDropdownBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.cardLight, gap: 4 },
+  filterDropdownBtnActive: { backgroundColor: C.gold, borderColor: C.gold },
+  filterDropdownBtnText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
+  filterDropdownBtnTextActive: { color: C.bg },
+  filterBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  filterBadgeText: { fontSize: 10, fontWeight: '700', color: C.bg },
+  filterDropdownMenu: { position: 'absolute', top: '100%', left: 0, marginTop: 4, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.cardLight, minWidth: 180, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, zIndex: 1000 },
+  filterDropdownItem: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 },
+  filterDropdownItemActive: { backgroundColor: C.cardLight },
+  filterDropdownItemText: { fontSize: 14, color: C.textSec },
+  filterDropdownItemTextActive: { color: C.text, fontWeight: '500' },
+  clearFiltersBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, gap: 6 },
+  clearFiltersText: { fontSize: 13, color: C.gold },
+  
+  // Payment Modal Styles
+  paymentModalContent: { width: '100%', maxWidth: 400, backgroundColor: C.card, borderRadius: 20, maxHeight: '85%' },
+  paymentSectionTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12, marginTop: 8 },
+  paymentCard: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: C.cardLight, borderRadius: 12, marginBottom: 10 },
+  paymentCardIcon: { width: 48, height: 32, backgroundColor: '#fff', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  paymentCardInfo: { flex: 1, marginLeft: 12 },
+  paymentCardType: { fontSize: 15, fontWeight: '600', color: C.text },
+  paymentCardExpiry: { fontSize: 12, color: C.textMuted },
+  defaultBadge: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: C.gold + '30', borderRadius: 4, marginRight: 8 },
+  defaultBadgeText: { fontSize: 10, fontWeight: '600', color: C.gold },
+  addPaymentBtn: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: C.cardLight, borderRadius: 12, marginTop: 8, gap: 12 },
+  addPaymentText: { fontSize: 15, fontWeight: '500', color: C.text },
+  walletDivider: { height: 1, backgroundColor: C.cardLight, marginVertical: 20 },
+  walletDesc: { fontSize: 13, color: C.textSec, lineHeight: 20, marginBottom: 16 },
+  walletBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: '#000', borderRadius: 12, gap: 10, marginBottom: 10 },
+  googleWalletBtn: { backgroundColor: '#4285F4' },
+  walletBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  
+  // Digital Wallet Modal Styles
+  walletModalContent: { width: '100%', maxWidth: 380, borderRadius: 24, overflow: 'hidden' },
+  walletModalGradient: { padding: 24, alignItems: 'center' },
+  walletModalClose: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
+  walletModalHeader: { alignItems: 'center', marginBottom: 24, marginTop: 20 },
+  walletModalTitle: { fontSize: 20, fontWeight: '700', color: '#fff', marginTop: 12 },
+  motaDigitalCard: { width: '100%', aspectRatio: 1.6, marginBottom: 24 },
+  motaDigitalCardGrad: { flex: 1, borderRadius: 16, padding: 20, justifyContent: 'space-between' },
+  motaDigitalCardLogo: { fontSize: 24, fontWeight: '800', color: C.bg, letterSpacing: 3 },
+  motaDigitalCardName: { fontSize: 16, fontWeight: '600', color: C.bg },
+  motaDigitalCardNumber: { fontSize: 18, fontWeight: '500', color: C.bg, letterSpacing: 2 },
+  motaDigitalCardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
+  motaDigitalCardType: { fontSize: 12, fontWeight: '700', color: C.bg },
+  motaDigitalCardValid: { fontSize: 12, color: C.bg },
+  walletModalDesc: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  walletModalBtn: { paddingVertical: 16, paddingHorizontal: 40, backgroundColor: '#fff', borderRadius: 12 },
+  walletModalBtnText: { fontSize: 16, fontWeight: '700', color: '#000' },
+  
+  // Concierge Service Detail Modal Styles
+  conciergeDetailModal: { width: '100%', maxWidth: 400, backgroundColor: C.card, borderRadius: 24, maxHeight: '90%', overflow: 'hidden' },
+  conciergeDetailImage: { width: '100%', height: 200 },
+  conciergeDetailOverlay: { position: 'absolute', top: 0, left: 0, right: 0, height: 200 },
+  conciergeDetailClose: { position: 'absolute', top: 16, right: 16, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  conciergeDetailContent: { padding: 20, marginTop: -40 },
+  conciergeDetailIconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  conciergeDetailTitle: { fontSize: 24, fontWeight: '700', color: C.text, marginBottom: 8 },
+  conciergeDetailDesc: { fontSize: 14, color: C.textSec, marginBottom: 20 },
+  conciergeDetailSectionTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 },
+  conciergeDetailOptions: { maxHeight: 300 },
+  conciergeOptionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardLight, borderRadius: 12, padding: 12, marginBottom: 10 },
+  conciergeOptionImage: { width: 70, height: 70, borderRadius: 10 },
+  conciergeOptionInfo: { flex: 1, marginLeft: 12 },
+  conciergeOptionName: { fontSize: 15, fontWeight: '600', color: C.text },
+  conciergeOptionType: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  conciergeOptionMeta: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  conciergeOptionMetaText: { fontSize: 11, color: C.textSec },
+  conciergeOptionPrice: { fontSize: 14, fontWeight: '700', color: C.gold, marginTop: 4 },
+  
+  // Concierge Services Grid (with images)
+  conciergeServicesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12, justifyContent: 'space-between' },
+  conciergeServiceCard: { width: '48%', aspectRatio: 0.9, borderRadius: 16, overflow: 'hidden', marginBottom: 4 },
+  conciergeServiceImage: { width: '100%', height: '100%', position: 'absolute' },
+  conciergeServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 14 },
+  conciergeServiceIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  conciergeServiceTitle: { fontSize: 16, fontWeight: '700', color: C.text },
+  conciergeServiceDesc: { fontSize: 11, color: C.textSec, marginTop: 2 },
+  
+  // VIP Concierge Styles
+  vipTierBanner: { marginHorizontal: 20, marginBottom: 16, borderRadius: 12, overflow: 'hidden' },
+  vipTierBannerGrad: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  vipTierBannerTitle: { fontSize: 16, fontWeight: '700', color: C.bg },
+  vipTierBannerSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
+  vipServicesContainer: { paddingHorizontal: 20 },
+  vipServiceCard: { width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
+  vipServiceCardLocked: { opacity: 0.7 },
+  vipServiceImage: { width: '100%', height: '100%', position: 'absolute' },
+  vipServiceLockedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  vipServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 16 },
+  vipServiceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  vipServiceIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  vipServiceTierBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  vipServiceTierText: { fontSize: 11, fontWeight: '700' },
+  vipServiceTitle: { fontSize: 20, fontWeight: '700', color: C.text },
+  vipServiceDesc: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  vipServiceFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 6 },
+  vipServiceCta: { fontSize: 13, fontWeight: '600', color: C.gold },
+  vipContactSection: { margin: 20, padding: 20, backgroundColor: C.card, borderRadius: 16, alignItems: 'center' },
+  vipContactTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 6 },
+  vipContactDesc: { fontSize: 13, color: C.textSec, marginBottom: 16 },
+  vipContactBtn: { width: '100%' },
+  vipContactBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, gap: 10 },
+  vipContactBtnText: { fontSize: 15, fontWeight: '700', color: C.bg },
 });
