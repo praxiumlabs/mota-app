@@ -33,18 +33,277 @@ const users = [
 ];
 
 const lodgings = [
-  { name: 'Ocean View Suite', type: 'Suite', description: 'Wake up to breathtaking panoramic views of the Caribbean Sea. This luxurious 800 sq ft retreat features floor-to-ceiling windows, a private balcony with infinity views, premium king bedding, and marble bathroom with soaking tub.', shortDescription: 'Panoramic Caribbean views with private balcony', images: [{ url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80', isPrimary: true }], price: 850, rating: 4.9, reviewCount: 127, bedrooms: 1, bathrooms: 1, maxGuests: 2, isFeatured: true },
-  { name: 'Beachfront Villa', type: 'Villa', description: 'Experience ultimate privacy in our exclusive Beachfront Villa. Step directly onto pristine white sand from your private terrace. This 3,500 sq ft sanctuary features an infinity pool overlooking the Caribbean and full gourmet kitchen.', shortDescription: 'Private villa with beach access & infinity pool', images: [{ url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80', isPrimary: true }], price: 2500, rating: 5.0, reviewCount: 89, dogFriendly: true, bedrooms: 3, bathrooms: 3, maxGuests: 6, isFeatured: true },
-  { name: 'Garden Bungalow', type: 'Bungalow', description: 'Nestled within our lush tropical gardens, the Garden Bungalow offers a serene escape surrounded by native palms and exotic flowers. Features a private patio, outdoor rain shower, and hammock.', shortDescription: 'Tropical retreat in lush gardens', images: [{ url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80', isPrimary: true }], price: 450, rating: 4.7, reviewCount: 203, dogFriendly: true, bedrooms: 1, bathrooms: 1, maxGuests: 2, isFeatured: true },
-  { name: 'Presidential Penthouse', type: 'Penthouse', description: 'The crown jewel of MOTA accommodations. This 5,000 sq ft penthouse occupies the entire top floor with 360-degree views. Features private rooftop terrace with jacuzzi, home theater, wine cellar, and 24-hour butler.', shortDescription: '360° views with rooftop jacuzzi', images: [{ url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80', isPrimary: true }], price: 5000, rating: 5.0, reviewCount: 45, bedrooms: 4, bathrooms: 4, maxGuests: 8, isFeatured: true },
+  { 
+    name: 'Ocean View Suite', 
+    type: 'Suite', 
+    description: 'Wake up to breathtaking panoramic views of the Caribbean Sea. This luxurious 800 sq ft retreat features floor-to-ceiling windows, a private balcony with infinity views, premium king bedding, and marble bathroom with soaking tub. Modern amenities blend seamlessly with Caribbean elegance.',
+    shortDescription: 'Panoramic Caribbean views with private balcony',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80', isPrimary: true, caption: 'Ocean View Bedroom' },
+      { url: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&q=80', caption: 'Private Balcony' },
+      { url: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80', caption: 'Marble Bathroom' },
+      { url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80', caption: 'Living Area' }
+    ],
+    price: 850,
+    rating: 4.9,
+    reviewCount: 127,
+    bedrooms: 1,
+    bathrooms: 1,
+    maxGuests: 2,
+    squareFeet: 800,
+    view: 'ocean',
+    amenities: ['King Bed', 'Private Balcony', 'Soaking Tub', 'Rain Shower', 'Mini Bar', 'Nespresso Machine', '55" Smart TV', 'High-Speed WiFi', 'In-Room Safe', '24-Hour Room Service'],
+    isFeatured: true
+  },
+  { 
+    name: 'Beachfront Villa', 
+    type: 'Villa', 
+    description: 'Experience ultimate privacy in our exclusive Beachfront Villa. Step directly onto pristine white sand from your private terrace. This 3,500 sq ft sanctuary features an infinity pool overlooking the Caribbean, full gourmet kitchen, and dedicated villa host for personalized service.',
+    shortDescription: 'Private villa with beach access & infinity pool',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80', isPrimary: true, caption: 'Villa Exterior' },
+      { url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80', caption: 'Infinity Pool' },
+      { url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80', caption: 'Master Bedroom' },
+      { url: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80', caption: 'Gourmet Kitchen' }
+    ],
+    price: 2500,
+    rating: 5.0,
+    reviewCount: 89,
+    dogFriendly: true,
+    bedrooms: 3,
+    bathrooms: 3,
+    maxGuests: 6,
+    squareFeet: 3500,
+    view: 'beach',
+    amenities: ['Private Beach Access', 'Infinity Pool', 'Gourmet Kitchen', 'Villa Host', 'Outdoor Shower', 'BBQ Grill', 'Kayaks', 'Bicycles', 'Daily Housekeeping', 'Airport Transfer'],
+    isFeatured: true
+  },
+  { 
+    name: 'Garden Bungalow', 
+    type: 'Bungalow', 
+    description: 'Nestled within our lush tropical gardens, the Garden Bungalow offers a serene escape surrounded by native palms and exotic flowers. Features a private patio with outdoor rain shower, hammock, and the sounds of nature as your backdrop.',
+    shortDescription: 'Tropical retreat in lush gardens',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80', isPrimary: true, caption: 'Bungalow Exterior' },
+      { url: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80', caption: 'Private Patio' },
+      { url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80', caption: 'Bedroom' }
+    ],
+    price: 450,
+    rating: 4.7,
+    reviewCount: 203,
+    dogFriendly: true,
+    kidsFriendly: true,
+    bedrooms: 1,
+    bathrooms: 1,
+    maxGuests: 2,
+    squareFeet: 600,
+    view: 'garden',
+    amenities: ['Outdoor Rain Shower', 'Private Patio', 'Hammock', 'King Bed', 'Mini Fridge', 'Coffee Maker', 'WiFi', 'Fan & AC'],
+    isFeatured: true
+  },
+  { 
+    name: 'Presidential Penthouse', 
+    type: 'Penthouse', 
+    description: 'The crown jewel of MOTA accommodations. This 5,000 sq ft penthouse occupies the entire top floor with 360-degree views of the Caribbean, mainland, and resort. Features private rooftop terrace with jacuzzi, home theater, wine cellar, and 24-hour butler service.',
+    shortDescription: '360° views with rooftop jacuzzi',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80', isPrimary: true, caption: 'Penthouse Living' },
+      { url: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=800&q=80', caption: 'Rooftop Terrace' },
+      { url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80', caption: 'Home Theater' },
+      { url: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80', caption: 'Wine Cellar' }
+    ],
+    price: 5000,
+    rating: 5.0,
+    reviewCount: 45,
+    bedrooms: 4,
+    bathrooms: 4,
+    maxGuests: 8,
+    squareFeet: 5000,
+    view: 'ocean',
+    amenities: ['360° Views', 'Private Rooftop', 'Jacuzzi', 'Home Theater', 'Wine Cellar', '24-Hour Butler', 'Private Chef Available', 'Helicopter Pad Access', 'Rolls-Royce Transfer', 'Spa Services'],
+    isFeatured: true
+  },
 ];
 
 const restaurants = [
-  { name: 'The Pearl', cuisine: 'Fine Dining', description: 'Our flagship restaurant has earned recognition as one of the Caribbean\'s premier dining destinations. Executive Chef Maria Santos crafts extraordinary tasting menus celebrating local Belizean ingredients with refined French techniques.', shortDescription: 'Award-winning Caribbean fine dining', images: [{ url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80', isPrimary: true }], priceRange: '$$$$', rating: 4.9, reviewCount: 312, dressCode: 'formal', reservationRequired: true, isFeatured: true },
-  { name: 'Jade Garden', cuisine: 'Asian Fusion', description: 'Experience the flavors of the Pacific Rim. Our culinary team artfully blends Japanese precision, Thai aromatics, and Chinese tradition. Watch master sushi chefs at work or dine on our serene garden terrace.', shortDescription: 'Contemporary Asian fusion', images: [{ url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80', isPrimary: true }], priceRange: '$$$', rating: 4.8, reviewCount: 245, kidsFriendly: true, dressCode: 'smart casual', isFeatured: true },
-  { name: 'The Steakhouse', cuisine: 'Steakhouse', description: 'A carnivore\'s paradise featuring the finest USDA Prime beef, dry-aged in-house for 45 days. Our wood-fired grill imparts the perfect char to hand-selected cuts. Extensive wine cellar with over 500 labels.', shortDescription: 'Prime dry-aged steaks & seafood', images: [{ url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', isPrimary: true }], priceRange: '$$$$', rating: 4.8, reviewCount: 198, kidsFriendly: true, dressCode: 'business casual', isFeatured: true },
-  { name: 'Coconut Grove', cuisine: 'Caribbean', description: 'Toes in the sand, cocktail in hand. Savor jerk chicken, fresh ceviche, and grilled lobster while local musicians play under the palms. Open-air seating on the beach with spectacular sunset views.', shortDescription: 'Beachside Caribbean cuisine', images: [{ url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', isPrimary: true }], priceRange: '$$', rating: 4.7, reviewCount: 423, dogFriendly: true, kidsFriendly: true, dressCode: 'casual', isFeatured: true },
-  { name: 'Bella Vista', cuisine: 'Italian', description: 'Authentic Italian cuisine crafted with passion. Every pasta is made fresh daily, pizzas emerge from our imported Neapolitan wood-fired oven. The terrace offers stunning views of the marina.', shortDescription: 'Authentic Italian with sunset views', images: [{ url: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80', isPrimary: true }], priceRange: '$$$', rating: 4.6, reviewCount: 287, kidsFriendly: true, dressCode: 'smart casual', isFeatured: true },
+  { 
+    name: 'The Pearl', 
+    cuisine: 'Fine Dining', 
+    description: 'Our flagship restaurant has earned recognition as one of the Caribbean\'s premier dining destinations. Executive Chef Maria Santos crafts extraordinary tasting menus celebrating local Belizean ingredients with refined French techniques. Every dish is a masterpiece that tells the story of Belize\'s rich culinary heritage.',
+    shortDescription: 'Award-winning Caribbean fine dining',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80', isPrimary: true, caption: 'Main Dining Room' },
+      { url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80', caption: 'Private Dining' },
+      { url: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&q=80', caption: 'Wine Cellar' },
+      { url: 'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=800&q=80', caption: 'Terrace Seating' }
+    ],
+    priceRange: '$$$$',
+    rating: 4.9,
+    reviewCount: 312,
+    dressCode: 'formal',
+    reservationRequired: true,
+    kidsFriendly: false,
+    hours: {
+      monday: { open: '6:00 PM', close: '11:00 PM' },
+      tuesday: { open: '6:00 PM', close: '11:00 PM' },
+      wednesday: { open: '6:00 PM', close: '11:00 PM' },
+      thursday: { open: '6:00 PM', close: '11:00 PM' },
+      friday: { open: '6:00 PM', close: '12:00 AM' },
+      saturday: { open: '6:00 PM', close: '12:00 AM' },
+      sunday: null
+    },
+    menuHighlights: [
+      { name: 'Lobster Thermidor', description: 'Caribbean spiny lobster with cognac cream sauce', price: 85 },
+      { name: 'Wagyu Beef Tenderloin', description: 'A5 Japanese wagyu, truffle jus, foie gras', price: 145 },
+      { name: 'Tasting Menu', description: '8-course chef\'s tasting with wine pairing', price: 250 }
+    ],
+    features: ['Wine Pairing Available', 'Private Dining Room', 'Ocean View', 'Sommelier Service', 'Valet Parking'],
+    phone: '+501-226-5555',
+    email: 'reservations@thepearl.mota.com',
+    location: { building: 'Main Resort', floor: 1 },
+    isFeatured: true
+  },
+  { 
+    name: 'Jade Garden', 
+    cuisine: 'Asian Fusion', 
+    description: 'Experience the flavors of the Pacific Rim in an elegant setting. Our culinary team artfully blends Japanese precision, Thai aromatics, and Chinese tradition. Watch master sushi chefs at work at our omakase counter or dine on our serene garden terrace surrounded by koi ponds and bamboo.',
+    shortDescription: 'Contemporary Asian fusion',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80', isPrimary: true, caption: 'Main Hall' },
+      { url: 'https://images.unsplash.com/photo-1579027989536-b7b1f875659b?w=800&q=80', caption: 'Sushi Bar' },
+      { url: 'https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=800&q=80', caption: 'Garden Terrace' }
+    ],
+    priceRange: '$$$',
+    rating: 4.8,
+    reviewCount: 245,
+    kidsFriendly: true,
+    dressCode: 'smart casual',
+    hours: {
+      monday: { open: '12:00 PM', close: '10:00 PM' },
+      tuesday: { open: '12:00 PM', close: '10:00 PM' },
+      wednesday: { open: '12:00 PM', close: '10:00 PM' },
+      thursday: { open: '12:00 PM', close: '10:00 PM' },
+      friday: { open: '12:00 PM', close: '11:00 PM' },
+      saturday: { open: '12:00 PM', close: '11:00 PM' },
+      sunday: { open: '12:00 PM', close: '10:00 PM' }
+    },
+    menuHighlights: [
+      { name: 'Omakase Experience', description: '12-piece chef\'s selection sushi', price: 120 },
+      { name: 'Peking Duck', description: 'Whole roasted duck, traditional accompaniments', price: 88 },
+      { name: 'Thai Red Curry', description: 'Prawns, Thai basil, coconut cream', price: 42 }
+    ],
+    features: ['Omakase Counter', 'Private Tatami Rooms', 'Garden Terrace', 'Sake Selection', 'Live Cooking'],
+    phone: '+501-226-5556',
+    email: 'jade@mota.com',
+    location: { building: 'East Wing', floor: 2 },
+    isFeatured: true
+  },
+  { 
+    name: 'The Steakhouse', 
+    cuisine: 'Steakhouse', 
+    description: 'A carnivore\'s paradise featuring the finest USDA Prime beef, dry-aged in-house for 45 days in our glass-enclosed aging room. Our wood-fired grill imparts the perfect char to hand-selected cuts. The extensive wine cellar houses over 500 labels from around the world.',
+    shortDescription: 'Prime dry-aged steaks & seafood',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80', isPrimary: true, caption: 'Signature Steak' },
+      { url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80', caption: 'Aging Room' },
+      { url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', caption: 'Bar Area' }
+    ],
+    priceRange: '$$$$',
+    rating: 4.8,
+    reviewCount: 198,
+    kidsFriendly: true,
+    dressCode: 'business casual',
+    hours: {
+      monday: { open: '5:30 PM', close: '10:30 PM' },
+      tuesday: { open: '5:30 PM', close: '10:30 PM' },
+      wednesday: { open: '5:30 PM', close: '10:30 PM' },
+      thursday: { open: '5:30 PM', close: '10:30 PM' },
+      friday: { open: '5:30 PM', close: '11:30 PM' },
+      saturday: { open: '5:30 PM', close: '11:30 PM' },
+      sunday: { open: '5:30 PM', close: '10:00 PM' }
+    },
+    menuHighlights: [
+      { name: 'Tomahawk Ribeye', description: '45-day dry-aged, 40oz bone-in ribeye', price: 165 },
+      { name: 'Filet Mignon', description: '10oz center-cut, butter-poached', price: 72 },
+      { name: 'Seafood Tower', description: 'Lobster, crab, oysters, shrimp', price: 185 }
+    ],
+    features: ['45-Day Dry Aging', '500+ Wine Labels', 'Tableside Preparation', 'Private Wine Room', 'Outdoor Patio'],
+    phone: '+501-226-5557',
+    email: 'steakhouse@mota.com',
+    location: { building: 'Main Resort', floor: 1 },
+    isFeatured: true
+  },
+  { 
+    name: 'Coconut Grove', 
+    cuisine: 'Caribbean', 
+    description: 'Toes in the sand, cocktail in hand. Savor authentic Caribbean cuisine while local musicians play reggae and soca under the palms. Our beachfront setting offers the most spectacular sunset views on the island. Try our signature jerk chicken, fresh ceviche, and locally-caught grilled lobster.',
+    shortDescription: 'Beachside Caribbean cuisine',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80', isPrimary: true, caption: 'Beach Setting' },
+      { url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80', caption: 'Jerk Station' },
+      { url: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=800&q=80', caption: 'Sunset View' }
+    ],
+    priceRange: '$$',
+    rating: 4.7,
+    reviewCount: 423,
+    dogFriendly: true,
+    kidsFriendly: true,
+    dressCode: 'casual',
+    hours: {
+      monday: { open: '11:00 AM', close: '10:00 PM' },
+      tuesday: { open: '11:00 AM', close: '10:00 PM' },
+      wednesday: { open: '11:00 AM', close: '10:00 PM' },
+      thursday: { open: '11:00 AM', close: '10:00 PM' },
+      friday: { open: '11:00 AM', close: '11:00 PM' },
+      saturday: { open: '11:00 AM', close: '11:00 PM' },
+      sunday: { open: '10:00 AM', close: '10:00 PM' }
+    },
+    menuHighlights: [
+      { name: 'Jerk Chicken', description: 'Traditional Jamaican spices, rice & peas', price: 28 },
+      { name: 'Lobster Ceviche', description: 'Lime-cured, habanero, coconut', price: 24 },
+      { name: 'Coconut Curry Prawns', description: 'Local prawns in creamy curry', price: 32 }
+    ],
+    features: ['Live Music Daily', 'Beachfront Seating', 'Dog Friendly Patio', 'Rum Bar', 'Sunset Happy Hour'],
+    phone: '+501-226-5558',
+    email: 'coconutgrove@mota.com',
+    location: { building: 'Beach', floor: 1 },
+    isFeatured: true
+  },
+  { 
+    name: 'Bella Vista', 
+    cuisine: 'Italian', 
+    description: 'Authentic Italian cuisine crafted with passion and the finest imported ingredients. Every pasta is made fresh daily in our open kitchen, and pizzas emerge bubbling from our imported Neapolitan wood-fired oven. The marina-facing terrace offers stunning sunset views over yachts and sailboats.',
+    shortDescription: 'Authentic Italian with sunset views',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80', isPrimary: true, caption: 'Marina View' },
+      { url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80', caption: 'Wood-Fired Pizza' },
+      { url: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&q=80', caption: 'Fresh Pasta' }
+    ],
+    priceRange: '$$$',
+    rating: 4.6,
+    reviewCount: 287,
+    kidsFriendly: true,
+    dressCode: 'smart casual',
+    hours: {
+      monday: { open: '12:00 PM', close: '10:00 PM' },
+      tuesday: { open: '12:00 PM', close: '10:00 PM' },
+      wednesday: { open: '12:00 PM', close: '10:00 PM' },
+      thursday: { open: '12:00 PM', close: '10:00 PM' },
+      friday: { open: '12:00 PM', close: '11:00 PM' },
+      saturday: { open: '12:00 PM', close: '11:00 PM' },
+      sunday: { open: '12:00 PM', close: '10:00 PM' }
+    },
+    menuHighlights: [
+      { name: 'Osso Buco', description: 'Braised veal shank, saffron risotto', price: 58 },
+      { name: 'Truffle Pasta', description: 'Fresh tagliatelle, black truffle cream', price: 48 },
+      { name: 'Margherita DOC', description: 'San Marzano, buffalo mozzarella, basil', price: 24 }
+    ],
+    features: ['Wood-Fired Oven', 'Fresh Pasta Daily', 'Marina View', 'Italian Wine List', 'Gelato Bar'],
+    phone: '+501-226-5559',
+    email: 'bellavista@mota.com',
+    location: { building: 'Marina', floor: 1 },
+    isFeatured: true
+  },
 ];
 
 const activities = [

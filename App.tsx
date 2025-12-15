@@ -1,6 +1,6 @@
 /**
  * MOTA - Macau of the Americas
- * Premium Casino Resort App v3.3
+ * Premium Casino Resort App v3.4
  * Complete with MOTA Card, VIP Concierge, Portfolio, Investment Timeline
  */
 
@@ -108,8 +108,9 @@ const GoldBtn = ({ title, icon, onPress, lg, style, disabled }: any) => (
   </TouchableOpacity>
 );
 
-const FilterChip = ({ label, active, onPress }: any) => (
+const FilterChip = ({ label, active, onPress, icon }: any) => (
   <TouchableOpacity onPress={onPress} style={[s.filterChip, active && s.filterChipActive]} activeOpacity={0.7}>
+    {icon && <Ionicons name={icon} size={14} color={active ? C.bg : C.textSec} style={{ marginRight: 4 }} />}
     <Text style={[s.filterChipText, active && s.filterChipTextActive]}>{label}</Text>
   </TouchableOpacity>
 );
@@ -122,17 +123,17 @@ const ItemCard = ({ item, onPress }: any) => {
       <Image source={{ uri: imageError ? PLACEHOLDER_IMAGE : imageUrl }} style={s.itemCardImage} onError={() => setImageError(true)} />
       <LinearGradient colors={G.overlay} style={s.itemCardOverlay} />
       <View style={s.itemCardContent}>
-        <Text style={s.itemCardName} numberOfLines={1}>{item.name}</Text>
-        {(item.cuisine || item.category) && <Text style={s.itemCardSub}>{item.cuisine || item.category}</Text>}
+        <Text style={s.itemCardName} numberOfLines={1}>{item.name || ''}</Text>
+        {(item.cuisine || item.category) ? <Text style={s.itemCardSub}>{item.cuisine || item.category}</Text> : null}
         <View style={s.itemCardFooter}>
-          {item.priceRange && <Text style={s.itemCardPrice}>{item.priceRange}</Text>}
-          {item.price && <Text style={s.itemCardPrice}>${item.price}</Text>}
-          {item.rating && (
+          {item.priceRange ? <Text style={s.itemCardPrice}>{item.priceRange}</Text> : null}
+          {item.price ? <Text style={s.itemCardPrice}>${item.price}</Text> : null}
+          {item.rating !== undefined && item.rating !== null && item.rating > 0 ? (
             <View style={s.itemCardRating}>
               <Ionicons name="star" size={12} color={C.gold} />
               <Text style={s.itemCardRatingText}>{item.rating}</Text>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>
@@ -378,11 +379,14 @@ function AppContent() {
   const [events, setEvents] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [lodging, setLodging] = useState<any[]>([]);
+  const [nightlife, setNightlife] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [exploreCategory, setExploreCategory] = useState('All');
   const [priceFilter, setPriceFilter] = useState('All');
+  const [ratingFilter, setRatingFilter] = useState('All');
+  const [amenityFilter, setAmenityFilter] = useState('All');
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideRef = useRef<FlatList>(null);
   const [serviceModal, setServiceModal] = useState<any>(null);
@@ -392,14 +396,15 @@ function AppContent() {
 
   const loadData = useCallback(async () => {
     try {
-      const [slidesData, restaurantsData, eventsData, activitiesData, lodgingData] = await Promise.all([
-        api.getSlideshow(), api.getRestaurants({ featured: true }), api.getEvents({ upcoming: true }), api.getActivities({ featured: true }), api.getLodging({ featured: true }),
+      const [slidesData, restaurantsData, eventsData, activitiesData, lodgingData, nightlifeData] = await Promise.all([
+        api.getSlideshow(), api.getRestaurants({ featured: true }), api.getEvents({ upcoming: true }), api.getActivities({ featured: true }), api.getLodging({ featured: true }), api.getNightlife(),
       ]);
       if (slidesData.length > 0) setSlides(slidesData);
       if (restaurantsData.length > 0) setRestaurants(restaurantsData);
       if (eventsData.length > 0) setEvents(eventsData);
       if (activitiesData.length > 0) setActivities(activitiesData);
       if (lodgingData.length > 0) setLodging(lodgingData);
+      if (nightlifeData.length > 0) setNightlife(nightlifeData);
       if (user) { try { const r = await api.get('/notifications/unread-count'); setNotificationCount(r.data.count || 0); } catch {} }
     } catch {} finally { setLoading(false); setRefreshing(false); }
   }, [user]);
@@ -420,7 +425,36 @@ function AppContent() {
     if (exploreCategory === 'All' || exploreCategory === 'Lodging') items = [...items, ...lodging.map(l => ({ ...l, _type: 'lodging' }))];
     if (exploreCategory === 'All' || exploreCategory === 'Eateries') items = [...items, ...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
     if (exploreCategory === 'All' || exploreCategory === 'Experiences') items = [...items, ...activities.map(a => ({ ...a, _type: 'activity' }))];
-    if (priceFilter !== 'All') items = items.filter(item => (priceFilter === '$' && item.priceRange === '$') || (priceFilter === '$$' && (item.priceRange === '$$' || item.price < 200)) || (priceFilter === '$$$' && (item.priceRange === '$$$' || (item.price >= 200 && item.price < 500))) || (priceFilter === '$$$$' && (item.priceRange === '$$$$' || item.price >= 500)));
+    if (exploreCategory === 'All' || exploreCategory === 'Nightlife') items = [...items, ...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
+    
+    // Price filter
+    if (priceFilter !== 'All') {
+      items = items.filter(item => {
+        if (priceFilter === '$' && item.priceRange === '$') return true;
+        if (priceFilter === '$$' && (item.priceRange === '$$' || (item.price && item.price < 200))) return true;
+        if (priceFilter === '$$$' && (item.priceRange === '$$$' || (item.price && item.price >= 200 && item.price < 500))) return true;
+        if (priceFilter === '$$$$' && (item.priceRange === '$$$$' || (item.price && item.price >= 500))) return true;
+        return false;
+      });
+    }
+    
+    // Rating filter
+    if (ratingFilter !== 'All') {
+      const minRating = parseFloat(ratingFilter);
+      items = items.filter(item => item.rating && item.rating >= minRating);
+    }
+    
+    // Amenity filter
+    if (amenityFilter !== 'All') {
+      items = items.filter(item => {
+        if (amenityFilter === 'Dog Friendly') return item.dogFriendly === true;
+        if (amenityFilter === 'Kids Friendly') return item.kidsFriendly === true;
+        if (amenityFilter === 'Ocean View') return item.view === 'ocean';
+        if (amenityFilter === 'Beach View') return item.view === 'beach';
+        return true;
+      });
+    }
+    
     return items;
   };
 
@@ -498,19 +532,53 @@ function AppContent() {
   // ============================================
   const renderExploreTab = () => (
     <View style={{ flex: 1 }}>
-      <View style={[s.searchSection, { paddingTop: 10 }]}>
+      <View style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]}>
         <View style={s.searchBar}>
           <Ionicons name="sparkles" size={20} color={C.gold} />
           <TextInput style={s.searchInput} placeholder="Ask me anything..." placeholderTextColor={C.textMuted} />
           <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
         </View>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {['All', 'Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />)}
+      
+      {/* Category Filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+        {['All', 'Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
+          <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
+        ))}
       </ScrollView>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.filterRow, { marginTop: 0 }]} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {['All', '$', '$$', '$$$', '$$$$'].map((price) => <FilterChip key={price} label={price === 'All' ? 'Any Price' : price} active={priceFilter === price} onPress={() => setPriceFilter(price)} />)}
+      
+      {/* Price Filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+        {['All', '$', '$$', '$$$', '$$$$'].map((price) => (
+          <FilterChip key={price} label={price === 'All' ? 'Any Price' : price} active={priceFilter === price} onPress={() => setPriceFilter(price)} />
+        ))}
       </ScrollView>
+      
+      {/* Rating Filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+        {['All', '4.5', '4.0', '3.5'].map((rating) => (
+          <FilterChip 
+            key={rating} 
+            label={rating === 'All' ? 'Any Rating' : `${rating}+ ★`} 
+            active={ratingFilter === rating} 
+            onPress={() => setRatingFilter(rating)} 
+          />
+        ))}
+      </ScrollView>
+      
+      {/* Amenity Filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.filterRow, { marginBottom: 8 }]} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+        {['All', 'Dog Friendly', 'Kids Friendly', 'Ocean View', 'Beach View'].map((amenity) => (
+          <FilterChip 
+            key={amenity} 
+            label={amenity === 'All' ? 'Any Amenity' : amenity} 
+            active={amenityFilter === amenity} 
+            onPress={() => setAmenityFilter(amenity)}
+            icon={amenity === 'Dog Friendly' ? 'paw' : amenity === 'Kids Friendly' ? 'people' : amenity.includes('View') ? 'eye' : undefined}
+          />
+        ))}
+      </ScrollView>
+      
       <FlatList data={getFilteredItems()} numColumns={2} keyExtractor={(item, i) => item._id || `item-${i}`} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} columnWrapperStyle={{ justifyContent: 'space-between' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
         renderItem={({ item }) => (
           <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
@@ -518,12 +586,23 @@ function AppContent() {
             <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
             <View style={s.exploreCardContent}>
               <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
-              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
-              {item.rating && <View style={s.exploreCardRating}><Ionicons name="star" size={12} color={C.gold} /><Text style={s.exploreCardRatingText}>{item.rating}</Text></View>}
+              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type || ' '}</Text>
+              {item.rating ? (
+                <View style={s.exploreCardRating}>
+                  <Ionicons name="star" size={12} color={C.gold} />
+                  <Text style={s.exploreCardRatingText}>{item.rating}</Text>
+                </View>
+              ) : null}
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<View style={s.emptyContainer}><Ionicons name="search-outline" size={48} color={C.textMuted} /><Text style={s.emptyTitle}>No Results</Text></View>}
+        ListEmptyComponent={
+          <View style={s.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color={C.textMuted} />
+            <Text style={s.emptyTitle}>No Results</Text>
+            <Text style={s.emptySubtitle}>Try adjusting your filters</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -671,7 +750,7 @@ function AppContent() {
         <TouchableOpacity style={s.logoutBtn} onPress={() => Alert.alert('Logout', 'Are you sure?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Logout', style: 'destructive', onPress: logout }])}>
           <Ionicons name="log-out-outline" size={20} color={C.error} /><Text style={s.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
-        <Text style={s.versionText}>MOTA v3.3.0</Text>
+        <Text style={s.versionText}>MOTA v3.4.0</Text>
       </ScrollView>
     );
   };
@@ -765,11 +844,11 @@ const s = StyleSheet.create({
   itemCardPrice: { fontSize: 14, fontWeight: '600', color: C.gold },
   itemCardRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   itemCardRatingText: { fontSize: 12, color: C.text, fontWeight: '600' },
-  filterRow: { marginBottom: 12 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, marginRight: 8, borderWidth: 1, borderColor: C.cardLight },
+  filterRow: { marginBottom: 12, height: 44 },
+  filterChip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.card, borderRadius: 22, marginRight: 10, borderWidth: 1.5, borderColor: C.cardLight, minWidth: 60, height: 40 },
   filterChipActive: { backgroundColor: C.gold, borderColor: C.gold },
-  filterChipText: { fontSize: 13, color: C.textSec, fontWeight: '600' },
-  filterChipTextActive: { color: C.bg },
+  filterChipText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
+  filterChipTextActive: { color: C.bg, fontWeight: '500' },
   exploreCard: { width: (width - 48) / 2, height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16, backgroundColor: C.card },
   exploreCardImage: { width: '100%', height: '100%', position: 'absolute' },
   exploreCardOverlay: { ...StyleSheet.absoluteFillObject },
@@ -851,6 +930,7 @@ const s = StyleSheet.create({
   goldBtnTextLg: { fontSize: 15 },
   emptyContainer: { alignItems: 'center', paddingTop: 60 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginTop: 16 },
+  emptySubtitle: { fontSize: 14, color: C.textSec, marginTop: 4 },
   motaCardContainer: { paddingHorizontal: 20, marginBottom: 20 },
   motaCard: { borderRadius: 20, padding: 24, height: 200, position: 'relative', overflow: 'hidden' },
   motaCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },

@@ -61,8 +61,13 @@ router.get('/', auth, async (req, res) => {
 // Create reservation
 router.post('/', auth, requireMember, async (req, res) => {
   try {
-    const { type, itemId, itemName, date, time, guests, specialRequests, dietaryRequirements, occasion } = req.body;
+    const { type, itemId, itemName, date, time, guests, specialRequests, dietaryRequirements, occasion, contactInfo } = req.body;
     
+    // Validate required fields
+    if (!type || !itemName || !date) {
+      return res.status(400).json({ error: 'Missing required fields: type, itemName, and date are required' });
+    }
+
     // Map type to model
     const modelMap = {
       lodging: 'Lodging',
@@ -70,23 +75,44 @@ router.post('/', auth, requireMember, async (req, res) => {
       activity: 'Activity',
       nightlife: 'Nightlife',
     };
+
+    if (!modelMap[type]) {
+      return res.status(400).json({ error: 'Invalid reservation type' });
+    }
+
+    // Parse date
+    const reservationDate = new Date(date);
+    if (isNaN(reservationDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
     
-    const reservation = new Reservation({
+    // Build reservation object
+    const reservationData = {
       user: req.user._id,
       type,
-      itemId,
-      itemModel: modelMap[type],
       itemName,
-      date: new Date(date),
-      time,
-      guests,
-      specialRequests,
-      dietaryRequirements,
-      occasion,
+      date: reservationDate,
+      time: time || 'TBD',
+      guests: parseInt(guests) || 2,
+      specialRequests: specialRequests || '',
+      dietaryRequirements: dietaryRequirements || '',
+      occasion: occasion || '',
       status: 'confirmed',
       confirmedAt: new Date(),
-    });
-    
+    };
+
+    // Only add itemId and itemModel if itemId is a valid ObjectId
+    const mongoose = require('mongoose');
+    if (itemId && mongoose.Types.ObjectId.isValid(itemId)) {
+      reservationData.itemId = itemId;
+      reservationData.itemModel = modelMap[type];
+    } else {
+      // Create a placeholder ObjectId if none provided
+      reservationData.itemId = new mongoose.Types.ObjectId();
+      reservationData.itemModel = modelMap[type];
+    }
+
+    const reservation = new Reservation(reservationData);
     await reservation.save();
     
     res.status(201).json({
@@ -95,8 +121,8 @@ router.post('/', auth, requireMember, async (req, res) => {
       message: `Your reservation at ${itemName} has been confirmed!`,
     });
   } catch (error) {
-    console.error('Reservation error:', error);
-    res.status(500).json({ error: 'Failed to create reservation' });
+    console.error('Reservation error:', error.message, error.stack);
+    res.status(500).json({ error: error.message || 'Failed to create reservation' });
   }
 });
 

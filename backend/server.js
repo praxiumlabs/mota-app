@@ -1,12 +1,14 @@
 /**
- * MOTA Backend Server
+ * MOTA Backend Server v3.4
  * Complete Resort & Investment Management System
+ * With Image Upload Support
  */
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const app = express();
 
@@ -14,8 +16,11 @@ const app = express();
 // MIDDLEWARE
 // ============================================
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logging
 app.use((req, res, next) => {
@@ -51,13 +56,18 @@ app.use('/api/deck-requests', require('./routes/deckRequests'));
 app.use('/api/newsletter', require('./routes/newsletter'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/content', require('./routes/content'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/fleet', require('./routes/exoticFleet'));
+app.use('/api/nightlife', require('./routes/nightlife'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '3.0.0'
+    version: '3.4.0'
   });
 });
 

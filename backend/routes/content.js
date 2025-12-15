@@ -8,49 +8,8 @@ const router = express.Router();
 const Content = require('../models/Content');
 const { auth, requireInvestor } = require('../middleware/auth');
 
-// Get all content
-router.get('/', async (req, res) => {
-  try {
-    const content = await Content.find();
-    res.json({ content });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get content by key
-router.get('/:key', async (req, res) => {
-  try {
-    const content = await Content.findOne({ key: req.params.key });
-    if (!content) {
-      return res.status(404).json({ error: 'Content not found' });
-    }
-    res.json(content);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create or update content by key
-router.put('/:key', auth, async (req, res) => {
-  try {
-    const { key } = req.params;
-    const updateData = { ...req.body, key, updatedBy: req.user._id };
-    
-    const content = await Content.findOneAndUpdate(
-      { key },
-      updateData,
-      { new: true, upsert: true, runValidators: true }
-    );
-    
-    res.json(content);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ============================================
-// SLIDESHOW MANAGEMENT
+// SLIDESHOW MANAGEMENT (MUST BE BEFORE /:key)
 // ============================================
 
 // Get homepage slideshow
@@ -176,6 +135,51 @@ router.put('/slideshow/homepage/reorder', auth, async (req, res) => {
     content.slides = reorderedSlides;
     content.updatedBy = req.user._id;
     await content.save();
+    
+    res.json(content);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// GENERIC CONTENT ROUTES (MUST BE AFTER SPECIFIC ROUTES)
+// ============================================
+
+// Get all content
+router.get('/', async (req, res) => {
+  try {
+    const content = await Content.find();
+    res.json({ content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get content by key
+router.get('/:key', async (req, res) => {
+  try {
+    const content = await Content.findOne({ key: req.params.key });
+    if (!content) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+    res.json(content);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create or update content by key
+router.put('/:key', auth, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const updateData = { ...req.body, key, updatedBy: req.user._id };
+    
+    const content = await Content.findOneAndUpdate(
+      { key },
+      updateData,
+      { new: true, upsert: true, runValidators: true }
+    );
     
     res.json(content);
   } catch (err) {

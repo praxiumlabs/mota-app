@@ -1,14 +1,41 @@
 /**
- * MOTA API Service
- * Connects to real backend with fallback to local data
+ * MOTA API Service v3.4
+ * Connects to real backend with graceful error handling
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API Configuration
-const API_BASE_URL = 'https://unpromotable-manda-sprayfully.ngrok-free.dev/api';
+// ============================================
+// 🔧 API CONFIGURATION - CHANGE MODE BELOW!
+// ============================================
+
+// Set to 'local', 'ngrok', or 'production'
+const MODE = 'ngrok';  // ← CHANGE THIS
+
+const URLS = {
+  local: 'http://192.168.1.100:3001/api',      // Same WiFi - replace with your computer's IP
+  ngrok: 'https://unpromotable-manda-sprayfully.ngrok-free.dev/api',  // ← PASTE YOUR NGROK URL
+  production: 'https://mota-backend.onrender.com/api',  // Deployed backend
+};
+
+const API_BASE_URL = URLS[MODE];
+
+// ============================================
 const TOKEN_KEY = 'mota_auth_token';
 const USER_KEY = 'mota_user';
+
+// Endpoints that should fail silently (non-critical)
+const SILENT_FAIL_ENDPOINTS = [
+  '/content/slideshow/homepage',
+  '/notifications/unread-count',
+  '/notifications/my',
+  '/fleet',
+  '/nightlife',
+  '/events',
+  '/activities',
+  '/restaurants',
+  '/lodging',
+];
 
 class ApiService {
   private token: string | null = null;
@@ -43,6 +70,10 @@ class ApiService {
     }
   }
 
+  private shouldSilentFail(endpoint: string): boolean {
+    return SILENT_FAIL_ENDPOINTS.some(e => endpoint.includes(e));
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     await this.ensureInitialized();
     
@@ -67,7 +98,10 @@ class ApiService {
       
       return data;
     } catch (error: any) {
-      console.error(`API Error [${endpoint}]:`, error.message);
+      // Only log errors for critical endpoints
+      if (!this.shouldSilentFail(endpoint)) {
+        console.error(`API Error [${endpoint}]:`, error.message);
+      }
       throw error;
     }
   }
@@ -475,8 +509,8 @@ class ApiService {
           if (value !== undefined) query.append(key, String(value));
         });
       }
-      // Note: nightlife routes would need to be added to backend
-      return [];
+      const data = await this.request<{ nightlife: any[] }>(`/nightlife?${query}`);
+      return data.nightlife || [];
     } catch (e) {
       return [];
     }
@@ -540,6 +574,67 @@ class ApiService {
       return await this.request<any>(`/content/${key}`);
     } catch (e) {
       return null;
+    }
+  }
+
+  // ============================================
+  // EXOTIC FLEET (PCH)
+  // ============================================
+  async getFleet(params?: { type?: string; featured?: boolean }) {
+    try {
+      const query = new URLSearchParams();
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) query.append(key, String(value));
+        });
+      }
+      const data = await this.request<{ fleet: any[] }>(`/fleet?${query}`);
+      return data.fleet || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getCars() {
+    try {
+      const data = await this.request<{ cars: any[] }>('/fleet/cars');
+      return data.cars || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getYachts() {
+    try {
+      const data = await this.request<{ yachts: any[] }>('/fleet/yachts');
+      return data.yachts || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ============================================
+  // FILE UPLOAD
+  // ============================================
+  async uploadProfileImage(base64Image: string) {
+    try {
+      return await this.request<{ success: boolean; imageUrl: string }>('/upload/base64/profile', {
+        method: 'POST',
+        body: JSON.stringify({ image: base64Image }),
+      });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async uploadImage(type: string, itemId: string, base64Image: string) {
+    try {
+      return await this.request<{ success: boolean; imageUrl: string }>(`/upload/base64/${type}`, {
+        method: 'POST',
+        body: JSON.stringify({ image: base64Image, itemId }),
+      });
+    } catch (e) {
+      throw e;
     }
   }
 }

@@ -221,7 +221,7 @@
       state.loading = true;
       render();
       try {
-        const [users, restaurants, events, lodging, activities, content, reservations, leads, nightlife] = await Promise.all([
+        const [users, restaurants, events, lodging, activities, content, reservations, leads, nightlife, notifications, fleet] = await Promise.all([
           api('/users').catch(() => ({ users: [] })),
           api('/restaurants').catch(() => ({ restaurants: [] })),
           api('/events').catch(() => ({ events: [] })),
@@ -230,7 +230,9 @@
           api('/content').catch(() => ({ content: [] })),
           api('/reservations').catch(() => ({ reservations: [] })),
           api('/leads').catch(() => ({ leads: [] })),
-          api('/nightlife').catch(() => ({ nightlife: [] }))
+          api('/nightlife').catch(() => ({ nightlife: [] })),
+          api('/notifications').catch(() => ({ notifications: [] })),
+          api('/fleet').catch(() => ({ fleet: [] }))
         ]);
         state.data = {
           users: users.users || [],
@@ -241,7 +243,9 @@
           content: content.content || [],
           reservations: reservations.reservations || reservations || [],
           leads: leads.leads || [],
-          nightlife: nightlife.nightlife || []
+          nightlife: nightlife.nightlife || [],
+          notifications: notifications.notifications || [],
+          fleet: fleet.fleet || []
         };
       } catch (err) {
         console.error('Load error:', err);
@@ -348,12 +352,14 @@
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'divider1' },
         { id: 'slideshow', icon: '🖼️', label: 'Homepage Slideshow' },
+        { id: 'notifications', icon: '🔔', label: 'Notifications' },
         { id: 'divider2' },
         { id: 'restaurants', icon: '🍽️', label: 'Restaurants' },
         { id: 'events', icon: '🎉', label: 'Events' },
         { id: 'lodging', icon: '🏠', label: 'Lodging' },
         { id: 'activities', icon: '🏄', label: 'Activities' },
         { id: 'nightlife', icon: '🌙', label: 'Nightlife' },
+        { id: 'fleet', icon: '🚗', label: 'PCH Exotic Fleet' },
         { id: 'divider3' },
         { id: 'users', icon: '👥', label: 'All Users' },
         { id: 'investors', icon: '💎', label: 'Investors' },
@@ -387,11 +393,13 @@
       const pages = {
         dashboard: renderDashboardPage,
         slideshow: renderSlideshowPage,
+        notifications: renderNotificationsPage,
         restaurants: () => renderCRUDPage('restaurants', 'Restaurant', ['name', 'cuisine', 'priceRange', 'rating', 'isFeatured']),
         events: () => renderCRUDPage('events', 'Event', ['name', 'date', 'venue', 'capacity', 'accessLevel']),
         lodging: () => renderCRUDPage('lodging', 'Property', ['name', 'type', 'price', 'bedrooms', 'isAvailable']),
         activities: () => renderCRUDPage('activities', 'Activity', ['name', 'category', 'price', 'duration', 'isFeatured']),
         nightlife: () => renderCRUDPage('nightlife', 'Venue', ['name', 'type', 'priceRange', 'hours', 'isFeatured']),
+        fleet: renderFleetPage,
         users: renderUsersPage,
         investors: renderInvestorsPage,
         reservations: renderReservationsPage,
@@ -460,10 +468,13 @@
           </div>
           <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="navigate('slideshow')">🖼️ Edit Slideshow</button>
+            <button class="btn btn-primary" onclick="openModal('sendNotification')">🔔 Send Notification</button>
             <button class="btn btn-secondary" onclick="openModal('addRestaurant')">🍽️ Add Restaurant</button>
             <button class="btn btn-secondary" onclick="openModal('addEvent')">🎉 Add Event</button>
             <button class="btn btn-secondary" onclick="openModal('addLodging')">🏠 Add Property</button>
             <button class="btn btn-secondary" onclick="openModal('addActivity')">🏄 Add Activity</button>
+            <button class="btn btn-secondary" onclick="openModal('addCar')">🚗 Add Car</button>
+            <button class="btn btn-secondary" onclick="openModal('addYacht')">🛥️ Add Yacht</button>
           </div>
         </div>
       `;
@@ -520,6 +531,210 @@
                 <p>No slides yet. Add your first slide to get started!</p>
               </div>
             `}
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // NOTIFICATIONS
+    // =============================================
+
+    function renderNotificationsPage() {
+      const items = state.data.notifications || [];
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-subtitle">Send and manage push notifications to users</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('sendNotification')">🔔 Send Notification</button>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Sent</div>
+            <div class="stat-value">${items.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">To All Users</div>
+            <div class="stat-value">${items.filter(n => n.targetAudience === 'all').length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">To Investors</div>
+            <div class="stat-value">${items.filter(n => n.targetAudience === 'investor').length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">System Alerts</div>
+            <div class="stat-value">${items.filter(n => n.type === 'system').length}</div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Notifications</h3>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Message</th>
+                  <th>Type</th>
+                  <th>Target</th>
+                  <th>Sent</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.length ? items.map(n => `
+                  <tr>
+                    <td><strong>${esc(n.title)}</strong></td>
+                    <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(n.message)}</td>
+                    <td><span class="badge badge-${n.type === 'success' ? 'success' : n.type === 'warning' ? 'warning' : n.type === 'upgrade' ? 'gold' : 'info'}">${n.type || 'info'}</span></td>
+                    <td><span class="badge badge-${n.targetAudience === 'investor' ? 'gold' : n.targetAudience === 'member' ? 'info' : 'success'}">${n.targetAudience || 'all'}</span></td>
+                    <td>${new Date(n.createdAt).toLocaleDateString()}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteItem('notifications', '${n._id}', '${esc(n.title)}')">Delete</button></td>
+                  </tr>
+                `).join('') : '<tr><td colspan="6" class="empty">No notifications sent yet</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quick Send</h3>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;">General</div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="quickNotification('promo')">📣 Promo to All</button>
+                <button class="btn btn-secondary" onclick="quickNotification('event')">🎉 Event Reminder</button>
+                <button class="btn btn-secondary" onclick="quickNotification('system')">⚙️ System Alert</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;">Investor Tiers</div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="quickNotification('investor')">💎 All Investors</button>
+                <button class="btn btn-secondary" style="border-color:var(--accent);color:var(--accent);" onclick="quickNotification('gold')">🥇 Gold Only</button>
+                <button class="btn btn-secondary" style="border-color:#c0c0d2;color:#c0c0d2;" onclick="quickNotification('platinum')">🥈 Platinum Only</button>
+                <button class="btn btn-secondary" style="border-color:#b9f2ff;color:#b9f2ff;" onclick="quickNotification('diamond')">💎 Diamond Only</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================================
+    // PCH EXOTIC FLEET
+    // =============================================
+
+    function renderFleetPage() {
+      const items = state.data.fleet || [];
+      const cars = items.filter(i => i.type === 'car');
+      const yachts = items.filter(i => i.type === 'yacht');
+      
+      return `
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">PCH Exotic Fleet</h1>
+            <p class="page-subtitle">Manage luxury cars and yacht rentals</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary" onclick="openModal('addCar')">🚗 Add Car</button>
+            <button class="btn btn-primary" onclick="openModal('addYacht')">🛥️ Add Yacht</button>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">🚗 Exotic Cars</div>
+            <div class="stat-value">${cars.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🛥️ Yachts</div>
+            <div class="stat-value">${yachts.length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Available Now</div>
+            <div class="stat-value">${items.filter(i => i.isAvailable).length}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Featured</div>
+            <div class="stat-value">${items.filter(i => i.isFeatured).length}</div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🚗 Exotic Cars (${cars.length})</h3>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr><th>Image</th><th>Vehicle</th><th>Specs</th><th>Daily Rate</th><th>Access</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                ${cars.length ? cars.map(c => `
+                  <tr>
+                    <td><img src="${c.images?.[0]?.url || ''}" class="table-img" onerror="this.src='https://via.placeholder.com/50/1a1a25/606070?text=🚗'"></td>
+                    <td>
+                      <strong>${esc(c.name)}</strong>
+                      <br><small style="color:var(--text-muted)">${c.year || ''} ${esc(c.make || '')} ${esc(c.model || '')}</small>
+                    </td>
+                    <td>
+                      <small>${c.specs?.horsepower || '-'}hp • ${c.specs?.acceleration || '-'} 0-60</small>
+                    </td>
+                    <td><strong>$${(c.pricePerDay || 0).toLocaleString()}</strong></td>
+                    <td><span class="badge badge-${c.investorTierRequired === 'diamond' ? 'diamond' : c.investorTierRequired === 'platinum' ? 'platinum' : 'gold'}">${c.investorTierRequired || 'member'}</span></td>
+                    <td><span class="badge ${c.isAvailable ? 'badge-success' : 'badge-danger'}">${c.isAvailable ? 'Available' : 'Booked'}</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm" onclick='openEditModal("fleet", "${c._id}")'>Edit</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteItem('fleet', '${c._id}', '${esc(c.name)}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('') : '<tr><td colspan="7" class="empty">No cars in fleet</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🛥️ Yachts (${yachts.length})</h3>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr><th>Image</th><th>Yacht</th><th>Specs</th><th>Daily Rate</th><th>Access</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                ${yachts.length ? yachts.map(y => `
+                  <tr>
+                    <td><img src="${y.images?.[0]?.url || ''}" class="table-img" onerror="this.src='https://via.placeholder.com/50/1a1a25/606070?text=🛥️'"></td>
+                    <td>
+                      <strong>${esc(y.name)}</strong>
+                      <br><small style="color:var(--text-muted)">${y.length || ''} • ${y.specs?.cabins || 0} cabins</small>
+                    </td>
+                    <td>
+                      <small>${y.capacity || '-'} guests • ${y.specs?.crew || '-'} crew</small>
+                    </td>
+                    <td><strong>$${(y.pricePerDay || 0).toLocaleString()}</strong></td>
+                    <td><span class="badge badge-${y.investorTierRequired === 'diamond' ? 'diamond' : y.investorTierRequired === 'platinum' ? 'platinum' : 'gold'}">${y.investorTierRequired || 'member'}</span></td>
+                    <td><span class="badge ${y.isAvailable ? 'badge-success' : 'badge-danger'}">${y.isAvailable ? 'Available' : 'Booked'}</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm" onclick='openEditModal("fleet", "${y._id}")'>Edit</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteItem('fleet', '${y._id}', '${esc(y.name)}')">Delete</button>
+                    </td>
+                  </tr>
+                `).join('') : '<tr><td colspan="7" class="empty">No yachts in fleet</td></tr>'}
+              </tbody>
+            </table>
           </div>
         </div>
       `;
@@ -885,9 +1100,202 @@
       else if (type === 'editUser') content = userForm(data);
       else if (type === 'addLead' || type === 'editLead') content = leadForm(data);
       else if (type === 'viewReservation') content = reservationView(data);
+      else if (type === 'sendNotification') content = notificationForm(data);
+      else if (type === 'addCar' || type === 'addYacht' || type === 'editFleet') content = fleetForm(data, type);
       else content = '<div class="modal-body">Unknown modal type</div>';
       
       return `<div class="modal-overlay" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">${content}</div></div>`;
+    }
+
+    // Notification Form
+    function notificationForm(d) {
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">🔔 Send Notification</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleNotificationSubmit(event)">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input type="text" name="title" class="form-input" required placeholder="Welcome to MOTA!">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message *</label>
+              <textarea name="message" class="form-textarea" required placeholder="Your message here..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                  <option value="info">ℹ️ Info</option>
+                  <option value="success">✅ Success</option>
+                  <option value="promo">📣 Promo</option>
+                  <option value="event">🎉 Event</option>
+                  <option value="upgrade">⬆️ Upgrade</option>
+                  <option value="system">⚙️ System</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Audience</label>
+                <select name="targetAudience" class="form-select">
+                  <option value="all">👥 All Users</option>
+                  <option value="member">🎫 Members Only</option>
+                  <option value="investor">💎 Investors Only</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Tier (Investors Only)</label>
+              <select name="targetTier" class="form-select">
+                <option value="">All Tiers</option>
+                <option value="gold">🥇 Gold ($2.5M+)</option>
+                <option value="platinum">🥈 Platinum ($15M+)</option>
+                <option value="diamond">💎 Diamond ($70M+)</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">🔔 Send Notification</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // Fleet Form (Car/Yacht)
+    function fleetForm(d, type) {
+      const isYacht = type === 'addYacht' || (d && d.type === 'yacht');
+      const isEdit = type === 'editFleet';
+      
+      return `
+        <div class="modal-header">
+          <h3 class="modal-title">${isEdit ? '✏️ Edit' : '➕ Add'} ${isYacht ? '🛥️ Yacht' : '🚗 Car'}</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form onsubmit="handleFleetSubmit(event, ${d ? `'${d._id}'` : 'null'}, '${isYacht ? 'yacht' : 'car'}')">
+          <div class="modal-body">
+            <input type="hidden" name="type" value="${isYacht ? 'yacht' : 'car'}">
+            
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" name="name" class="form-input" value="${esc(d?.name)}" required placeholder="${isYacht ? 'Serenity' : 'Lamborghini Huracán'}">
+            </div>
+            
+            ${isYacht ? `
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Length</label>
+                  <input type="text" name="length" class="form-input" value="${esc(d?.length)}" placeholder="120ft">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Capacity (Guests)</label>
+                  <input type="number" name="capacity" class="form-input" value="${d?.capacity || ''}" placeholder="40">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Cabins</label>
+                  <input type="number" name="cabins" class="form-input" value="${d?.specs?.cabins || ''}" placeholder="6">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Crew Size</label>
+                  <input type="number" name="crew" class="form-input" value="${d?.specs?.crew || ''}" placeholder="8">
+                </div>
+              </div>
+            ` : `
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Make</label>
+                  <input type="text" name="make" class="form-input" value="${esc(d?.make)}" placeholder="Lamborghini">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Model</label>
+                  <input type="text" name="model" class="form-input" value="${esc(d?.model)}" placeholder="Huracán EVO">
+                </div>
+              </div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label class="form-label">Year</label>
+                  <input type="number" name="year" class="form-input" value="${d?.year || 2024}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Horsepower</label>
+                  <input type="number" name="horsepower" class="form-input" value="${d?.specs?.horsepower || ''}" placeholder="640">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">0-60 mph</label>
+                  <input type="text" name="acceleration" class="form-input" value="${esc(d?.specs?.acceleration)}" placeholder="2.9s">
+                </div>
+              </div>
+            `}
+            
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <input type="text" name="shortDescription" class="form-input" value="${esc(d?.shortDescription)}" placeholder="Brief description for cards">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Full Description</label>
+              <textarea name="description" class="form-textarea">${esc(d?.description)}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Image URL</label>
+              <input type="url" name="imageUrl" class="form-input" value="${d?.images?.[0]?.url || ''}" placeholder="https://images.unsplash.com/...">
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Price Per Day ($) *</label>
+                <input type="number" name="pricePerDay" class="form-input" value="${d?.pricePerDay || ''}" required placeholder="1500">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Price Per Hour ($)</label>
+                <input type="number" name="pricePerHour" class="form-input" value="${d?.pricePerHour || ''}" placeholder="300">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Access Level</label>
+                <select name="accessLevel" class="form-select">
+                  <option value="member" ${d?.accessLevel === 'member' ? 'selected' : ''}>Members</option>
+                  <option value="investor" ${d?.accessLevel === 'investor' ? 'selected' : ''}>Investors Only</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Investor Tier Required</label>
+                <select name="investorTierRequired" class="form-select">
+                  <option value="" ${!d?.investorTierRequired ? 'selected' : ''}>None</option>
+                  <option value="gold" ${d?.investorTierRequired === 'gold' ? 'selected' : ''}>Gold</option>
+                  <option value="platinum" ${d?.investorTierRequired === 'platinum' ? 'selected' : ''}>Platinum</option>
+                  <option value="diamond" ${d?.investorTierRequired === 'diamond' ? 'selected' : ''}>Diamond</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <div class="toggle ${d?.isAvailable !== false ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isAvailable">
+                  <div class="toggle-switch"></div>
+                  <span class="toggle-label">Available for Booking</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="toggle ${d?.isFeatured ? 'active' : ''}" onclick="this.classList.toggle('active')" data-field="isFeatured">
+                  <div class="toggle-switch"></div>
+                  <span class="toggle-label">Featured</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Add'} ${isYacht ? 'Yacht' : 'Car'}</button>
+          </div>
+        </form>
+      `;
     }
 
     // Slide Form
@@ -1411,7 +1819,8 @@
         activities: 'editActivity',
         nightlife: 'editNightlife',
         users: 'editUser',
-        leads: 'editLead'
+        leads: 'editLead',
+        fleet: 'editFleet'
       };
       openModal(modalMap[type], item);
     };
@@ -1451,6 +1860,109 @@
       if (img) {
         img.src = url;
         img.style.display = url ? 'block' : 'none';
+      }
+    };
+
+    // Notification Handler
+    window.handleNotificationSubmit = async function(e) {
+      e.preventDefault();
+      const formData = getFormData(e.target);
+      
+      // Map form data to backend expected format
+      let targetType = formData.targetAudience || 'all';
+      
+      // If targeting investors and a specific tier is selected, use the tier as targetType
+      if (formData.targetAudience === 'investor' && formData.targetTier) {
+        targetType = formData.targetTier; // 'gold', 'platinum', or 'diamond'
+      } else if (formData.targetAudience === 'investor') {
+        targetType = 'investors'; // All investors
+      } else if (formData.targetAudience === 'member') {
+        targetType = 'members';
+      }
+      
+      const data = {
+        title: formData.title,
+        message: formData.message,
+        type: formData.type || 'info',
+        targetType: targetType
+      };
+      
+      try {
+        const result = await api('/notifications/send', { method: 'POST', body: JSON.stringify(data) });
+        showAlert(`Notification sent to ${result.targetCount || 'all'} users!`, 'success');
+        closeModal();
+        loadData();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    // Quick Notification Templates
+    window.quickNotification = function(type) {
+      const templates = {
+        promo: { title: '🎁 Special Offer!', message: 'Exclusive deals await you at MOTA Resort. Check out our latest promotions!', type: 'promo', targetAudience: 'all', targetTier: '' },
+        event: { title: '🎉 Event Reminder', message: 'Don\'t miss our upcoming event! RSVP now to secure your spot.', type: 'event', targetAudience: 'all', targetTier: '' },
+        investor: { title: '💎 Investor Update', message: 'Your quarterly portfolio report is now available. Log in to view your returns.', type: 'upgrade', targetAudience: 'investor', targetTier: '' },
+        system: { title: '⚙️ System Update', message: 'We\'ve made improvements to enhance your experience. Enjoy the new features!', type: 'system', targetAudience: 'all', targetTier: '' },
+        gold: { title: '🥇 Gold Member Exclusive', message: 'As a valued Gold investor, you have access to exclusive benefits.', type: 'upgrade', targetAudience: 'investor', targetTier: 'gold' },
+        platinum: { title: '🥈 Platinum Privileges', message: 'Your Platinum status unlocks premium experiences. View your benefits.', type: 'upgrade', targetAudience: 'investor', targetTier: 'platinum' },
+        diamond: { title: '💎 Diamond Elite Access', message: 'Welcome to the pinnacle of MOTA luxury. Your Diamond concierge awaits.', type: 'upgrade', targetAudience: 'investor', targetTier: 'diamond' }
+      };
+      
+      state.modal = { type: 'sendNotification', data: templates[type] };
+      render();
+      
+      // Pre-fill form after render
+      setTimeout(() => {
+        const t = templates[type];
+        const form = document.querySelector('form');
+        if (form) {
+          form.querySelector('[name="title"]').value = t.title;
+          form.querySelector('[name="message"]').value = t.message;
+          form.querySelector('[name="type"]').value = t.type;
+          form.querySelector('[name="targetAudience"]').value = t.targetAudience;
+          form.querySelector('[name="targetTier"]').value = t.targetTier || '';
+        }
+      }, 50);
+    };
+
+    // Fleet Handler
+    window.handleFleetSubmit = async function(e, id, fleetType) {
+      e.preventDefault();
+      const formData = getFormData(e.target);
+      
+      // Build specs object based on type
+      const specs = {};
+      if (fleetType === 'car') {
+        if (formData.horsepower) specs.horsepower = formData.horsepower;
+        if (formData.acceleration) specs.acceleration = formData.acceleration;
+        delete formData.horsepower;
+        delete formData.acceleration;
+      } else {
+        if (formData.cabins) specs.cabins = formData.cabins;
+        if (formData.crew) specs.crew = formData.crew;
+        delete formData.cabins;
+        delete formData.crew;
+      }
+      
+      if (Object.keys(specs).length > 0) {
+        formData.specs = specs;
+      }
+      
+      formData.type = fleetType;
+      
+      try {
+        if (id) {
+          await api(`/fleet/${id}`, { method: 'PUT', body: JSON.stringify(formData) });
+          showAlert('Fleet item updated!', 'success');
+        } else {
+          await api('/fleet', { method: 'POST', body: JSON.stringify(formData) });
+          showAlert('Fleet item added!', 'success');
+        }
+        closeModal();
+        loadData();
+      } catch (err) {
+        alert('Error: ' + err.message);
       }
     };
 
