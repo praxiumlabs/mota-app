@@ -18,7 +18,9 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
+app.use('/api/reservations', require('./routes/reservations'));
+app.use('/api/favorites', require('./routes/favorites'));
+app.use('/api/feedback', require('./routes/feedback'));
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

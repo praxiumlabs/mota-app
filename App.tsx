@@ -1,22 +1,20 @@
 /**
  * MOTA - Macau of the Americas
- * Premium Casino Resort App v3.5
- * Complete with MOTA Card, VIP Concierge, Portfolio, Investment Timeline
- * AI Assistant Preview, Smart Filters, Digital Wallet Integration
+ * Premium Casino Resort App v4.0
+ * Complete with all advanced features integrated
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, 
   Dimensions, StatusBar, ActivityIndicator, RefreshControl, FlatList, 
-  TextInput, Alert, Modal, Animated
+  TextInput, Alert, Modal, Animated, Linking, Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { C, G, PLACEHOLDER_IMAGE } from './constants/theme';
-import InvestmentBar from './components/InvestmentBar';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
@@ -29,6 +27,39 @@ import SettingsScreen from './screens/SettingsScreen';
 import HelpScreen from './screens/HelpScreen';
 import api from './services/api';
 import { TouchableWithoutFeedback } from 'react-native';
+
+// ============================================
+// NEW COMPONENT IMPORTS
+// ============================================
+import {
+  CalendarGrid,
+  TimeSlotSelector,
+  BookingDetailsEditor,
+  DietaryRestrictionsModal,
+  GuestCountSelector,
+  FixedEventBookingInfo,
+} from './components/BookingComponents';
+
+import { AdaptiveMediaGrid, ImageViewer } from './components/MediaGrid';
+
+import {
+  PaymentMethodSelector,
+  PaymentConfirmationModal,
+} from './components/PaymentSystem';
+
+import {
+  NetGainCard,
+  FavoritesSection,
+  ProfilePicture,
+  PermissionsModal,
+  AccountDeletionModal,
+} from './components/ProfileSettings';
+
+import {
+  RatingModal,
+  EngagementTracker,
+  useRatingPrompt,
+} from './components/RatingSystem';
 
 const { width } = Dimensions.get('window');
 
@@ -146,10 +177,9 @@ const DefaultSlides = [
     subtitle: 'WHERE PARADISE MEETS PERFECTION', 
     description: 'World-class accommodations with breathtaking Caribbean views', 
     imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80',
-    // Deep linking configuration
-    linkType: 'tab',        // 'tab' | 'screen' | 'external'
-    linkTarget: 'Lodging',  // Category name for Explore tab, or screen name, or URL
-    linkTab: 1,             // Tab index (0=Home, 1=Explore, 2=Events, 3=Concierge, 4=Profile)
+    linkType: 'tab',
+    linkTarget: 'Lodging',
+    linkTab: 1,
   },
   { 
     id: 2, 
@@ -188,11 +218,10 @@ const DefaultSlides = [
     description: 'Exclusive clubs, lounges, and entertainment venues', 
     imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&q=80',
     linkType: 'tab',
-    linkTarget: null,       // null means go directly to Events tab
-    linkTab: 2,             // Events tab
+    linkTarget: null,
+    linkTab: 2,
   },
 ];
-
 
 // ============================================
 // INVESTOR TIER BENEFITS
@@ -238,43 +267,6 @@ const TierBenefits: Record<string, any> = {
   }
 };
 
-
-// ============================================
-// ADD: Slide navigation handler function
-// ============================================
-const handleSlidePress = (slide: any) => {
-  // Handle different link types
-  if (!slide.linkType) return; // No link configured
-  
-  switch (slide.linkType) {
-    case 'tab':
-      // Navigate to specific tab
-      setActiveTab(slide.linkTab);
-      // If there's a category target, set it for Explore tab
-      if (slide.linkTarget && slide.linkTab === 1) {
-        setExploreCategory(slide.linkTarget);
-      }
-      break;
-      
-    case 'screen':
-      // Navigate to a specific screen
-      if (slide.linkTarget) {
-        setCurrentScreen(slide.linkTarget);
-      }
-      break;
-      
-    case 'external':
-      // Open external URL
-      if (slide.linkTarget) {
-        // Linking.openURL(slide.linkTarget);
-        Alert.alert('External Link', `Opening: ${slide.linkTarget}`);
-      }
-      break;
-      
-    default:
-      break;
-  }
-};
 // ============================================
 // INVESTMENT TIMELINE
 // ============================================
@@ -393,80 +385,117 @@ const TierBenefitsCard = ({ tier }: { tier: string }) => {
 };
 
 // ============================================
-// PORTFOLIO OVERVIEW COMPONENT
+// PORTFOLIO OVERVIEW COMPONENT (with Net Gain)
 // ============================================
-const PortfolioOverview = ({ user }: { user: any }) => (
-  <View style={s.portfolioContainer}>
-    <Text style={s.portfolioTitle}>Portfolio Overview</Text>
-    <Text style={s.portfolioSubtitle}>Your investment journey and returns</Text>
-    <View style={s.portfolioStats}>
-      <View style={s.portfolioStat}>
-        <Text style={s.portfolioStatLabel}>Total Invested</Text>
-        <Text style={s.portfolioStatValue}>${((user?.investmentAmount || 0) / 1000000).toFixed(1)}M</Text>
-      </View>
-      <View style={s.portfolioStat}>
-        <Text style={s.portfolioStatLabel}>Current Value</Text>
-        <Text style={[s.portfolioStatValue, { color: C.success }]}>${((user?.portfolioValue || 0) / 1000000).toFixed(1)}M</Text>
-      </View>
-      <View style={s.portfolioStat}>
-        <Text style={s.portfolioStatLabel}>ROI</Text>
-        <Text style={[s.portfolioStatValue, { color: C.success }]}>+{(((user?.portfolioValue || 0) - (user?.investmentAmount || 1)) / (user?.investmentAmount || 1) * 100).toFixed(1)}%</Text>
-      </View>
-    </View>
-    <Text style={s.timelineTitle}>Investment Timeline</Text>
-    <View style={s.timeline}>
-      {InvestmentTimeline.map((phase, index) => (
-        <View key={phase.phase} style={s.timelineItem}>
-          <View style={s.timelineDot}>
-            <View style={[s.timelineDotInner, phase.status === 'completed' && s.timelineDotCompleted, phase.status === 'active' && s.timelineDotActive]}>
-              {phase.status === 'completed' && <Ionicons name="checkmark" size={12} color="#fff" />}
-            </View>
-            {index < InvestmentTimeline.length - 1 && <View style={[s.timelineLine, phase.status === 'completed' && s.timelineLineCompleted]} />}
-          </View>
-          <View style={s.timelineContent}>
-            <Text style={s.timelinePhase}>Phase {phase.phase}</Text>
-            <Text style={s.timelineName}>{phase.name}</Text>
-            <Text style={s.timelineYears}>{phase.years}</Text>
-            {phase.amount && <Text style={s.timelineAmount}>{phase.amount}</Text>}
-            {phase.date && <Text style={s.timelineDate}>{phase.date}</Text>}
-            {phase.status === 'completed' && <View style={s.timelineStatusBadge}><Text style={s.timelineStatusText}>Completed</Text></View>}
-          </View>
+const PortfolioOverview = ({ user }: { user: any }) => {
+  // Calculate Net Gain instead of ROI
+  const investmentAmount = user?.investmentAmount || 0;
+  const portfolioValue = user?.portfolioValue || 0;
+  const totalDividends = user?.totalDividends || 0;
+  const netGain = (portfolioValue - investmentAmount) + totalDividends;
+  const netGainPercent = investmentAmount > 0 ? ((netGain / investmentAmount) * 100) : 0;
+
+  return (
+    <View style={s.portfolioContainer}>
+      <Text style={s.portfolioTitle}>Portfolio Overview</Text>
+      <Text style={s.portfolioSubtitle}>Your investment journey and returns</Text>
+      <View style={s.portfolioStats}>
+        <View style={s.portfolioStat}>
+          <Text style={s.portfolioStatLabel}>Total Invested</Text>
+          <Text style={s.portfolioStatValue}>${((investmentAmount) / 1000000).toFixed(1)}M</Text>
         </View>
-      ))}
-    </View>
-    <View style={s.dividendsCard}>
-      <View style={s.dividendsHeader}>
-        <Ionicons name="cash-outline" size={24} color={C.gold} />
-        <Text style={s.dividendsTitle}>Dividends</Text>
+        <View style={s.portfolioStat}>
+          <Text style={s.portfolioStatLabel}>Current Value</Text>
+          <Text style={[s.portfolioStatValue, { color: C.success }]}>${((portfolioValue) / 1000000).toFixed(1)}M</Text>
+        </View>
+        {/* NET GAIN instead of ROI */}
+        <View style={s.portfolioStat}>
+          <Text style={s.portfolioStatLabel}>Net Gain</Text>
+          <Text style={[s.portfolioStatValue, { color: netGain >= 0 ? C.success : C.error }]}>
+            {netGain >= 0 ? '+' : ''}{netGainPercent.toFixed(1)}%
+          </Text>
+        </View>
       </View>
-      <Text style={s.dividendsNote}>Dividends will be paid out quarterly following completion of Phase 3</Text>
-      <View style={s.dividendsExpected}>
-        <Text style={s.dividendsLabel}>Next Expected</Text>
-        <Text style={s.dividendsAmount}>$864,000</Text>
-        <Text style={s.dividendsDate}>Q1 2031</Text>
+      
+      {/* Net Gain Breakdown Card */}
+      <View style={s.netGainCard}>
+        <View style={s.netGainHeader}>
+          <Ionicons name="trending-up" size={24} color={netGain >= 0 ? C.success : C.error} />
+          <Text style={s.netGainTitle}>Net Gain Breakdown</Text>
+        </View>
+        <View style={s.netGainRow}>
+          <Text style={s.netGainLabel}>Change in Value</Text>
+          <Text style={[s.netGainValue, { color: (portfolioValue - investmentAmount) >= 0 ? C.success : C.error }]}>
+            {(portfolioValue - investmentAmount) >= 0 ? '+' : ''}${((portfolioValue - investmentAmount) / 1000).toFixed(0)}K
+          </Text>
+        </View>
+        <View style={s.netGainRow}>
+          <Text style={s.netGainLabel}>Dividends Received</Text>
+          <Text style={[s.netGainValue, { color: C.success }]}>+${(totalDividends / 1000).toFixed(0)}K</Text>
+        </View>
+        <View style={[s.netGainRow, s.netGainTotalRow]}>
+          <Text style={s.netGainTotalLabel}>Total Net Gain</Text>
+          <Text style={[s.netGainTotalValue, { color: netGain >= 0 ? C.success : C.error }]}>
+            {netGain >= 0 ? '+' : ''}${(netGain / 1000).toFixed(0)}K
+          </Text>
+        </View>
       </View>
-    </View>
-    <View style={s.portfolioLinks}>
-      {[
-        { icon: 'document-text-outline', title: 'Document Vault', sub: 'Access investment documents' },
-        { icon: 'trending-up-outline', title: 'Project Updates', sub: 'Latest development progress' },
-        { icon: 'clipboard-outline', title: 'Required Forms', sub: 'KYC and investor agreements' },
-      ].map((link, i) => (
-        <TouchableOpacity key={i} style={s.portfolioLink}>
-          <View style={s.portfolioLinkIcon}><Ionicons name={link.icon as any} size={22} color={C.gold} /></View>
-          <View style={s.portfolioLinkContent}>
-            <Text style={s.portfolioLinkTitle}>{link.title}</Text>
-            <Text style={s.portfolioLinkSub}>{link.sub}</Text>
+      
+      <Text style={s.timelineTitle}>Investment Timeline</Text>
+      <View style={s.timeline}>
+        {InvestmentTimeline.map((phase, index) => (
+          <View key={phase.phase} style={s.timelineItem}>
+            <View style={s.timelineDot}>
+              <View style={[s.timelineDotInner, phase.status === 'completed' && s.timelineDotCompleted, phase.status === 'active' && s.timelineDotActive]}>
+                {phase.status === 'completed' && <Ionicons name="checkmark" size={12} color="#fff" />}
+              </View>
+              {index < InvestmentTimeline.length - 1 && <View style={[s.timelineLine, phase.status === 'completed' && s.timelineLineCompleted]} />}
+            </View>
+            <View style={s.timelineContent}>
+              <Text style={s.timelinePhase}>Phase {phase.phase}</Text>
+              <Text style={s.timelineName}>{phase.name}</Text>
+              <Text style={s.timelineYears}>{phase.years}</Text>
+              {phase.amount && <Text style={s.timelineAmount}>{phase.amount}</Text>}
+              {phase.date && <Text style={s.timelineDate}>{phase.date}</Text>}
+              {phase.status === 'completed' && <View style={s.timelineStatusBadge}><Text style={s.timelineStatusText}>Completed</Text></View>}
+            </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-        </TouchableOpacity>
-      ))}
+        ))}
+      </View>
+      <View style={s.dividendsCard}>
+        <View style={s.dividendsHeader}>
+          <Ionicons name="cash-outline" size={24} color={C.gold} />
+          <Text style={s.dividendsTitle}>Dividends</Text>
+        </View>
+        <Text style={s.dividendsNote}>Dividends will be paid out quarterly following completion of Phase 3</Text>
+        <View style={s.dividendsExpected}>
+          <Text style={s.dividendsLabel}>Next Expected</Text>
+          <Text style={s.dividendsAmount}>$864,000</Text>
+          <Text style={s.dividendsDate}>Q1 2031</Text>
+        </View>
+      </View>
+      <View style={s.portfolioLinks}>
+        {[
+          { icon: 'document-text-outline', title: 'Document Vault', sub: 'Access investment documents' },
+          { icon: 'trending-up-outline', title: 'Project Updates', sub: 'Latest development progress' },
+          { icon: 'clipboard-outline', title: 'Required Forms', sub: 'KYC and investor agreements' },
+        ].map((link, i) => (
+          <TouchableOpacity key={i} style={s.portfolioLink}>
+            <View style={s.portfolioLinkIcon}><Ionicons name={link.icon as any} size={22} color={C.gold} /></View>
+            <View style={s.portfolioLinkContent}>
+              <Text style={s.portfolioLinkTitle}>{link.title}</Text>
+              <Text style={s.portfolioLinkSub}>{link.sub}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 // ============================================
-// AI ASSISTANT POPUP MODAL (Amazon Rufus Style)
+// AI ASSISTANT POPUP MODAL
 // ============================================
 const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
   <Modal visible={visible} transparent animationType="fade">
@@ -476,7 +505,6 @@ const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () 
           <TouchableOpacity style={s.aiPopupClose} onPress={onClose}>
             <Ionicons name="close" size={24} color={C.textSec} />
           </TouchableOpacity>
-          
           <View style={s.aiPopupHeader}>
             <LinearGradient colors={G.gold} style={s.aiPopupIconWrap}>
               <Ionicons name="sparkles" size={28} color={C.bg} />
@@ -484,7 +512,6 @@ const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () 
             <Text style={s.aiPopupTitle}>MOTA AI Assistant</Text>
             <Text style={s.aiPopupSubtitle}>Soon you'll be able to...</Text>
           </View>
-          
           <View style={s.aiUseCaseGrid}>
             {AIUseCases.map((useCase) => (
               <View key={useCase.id} style={s.aiUseCaseCard}>
@@ -499,7 +526,6 @@ const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () 
               </View>
             ))}
           </View>
-          
           <View style={s.aiComingSoon}>
             <Ionicons name="time-outline" size={20} color={C.gold} />
             <Text style={s.aiComingSoonText}>Coming Soon</Text>
@@ -509,181 +535,6 @@ const AIAssistantPopup = ({ visible, onClose }: { visible: boolean; onClose: () 
     </TouchableOpacity>
   </Modal>
 );
-
-// ============================================
-// PAYMENT METHODS MODAL
-// ============================================
-const PaymentMethodsModal = ({ visible, onClose, onAddToWallet }: any) => {
-  const [cards, setCards] = useState([
-    { id: 1, type: 'visa', last4: '4242', expiry: '12/26', isDefault: true },
-    { id: 2, type: 'mastercard', last4: '8888', expiry: '03/25', isDefault: false },
-  ]);
-  
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={s.modalOverlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={s.paymentModalContent}>
-              <View style={s.modalHeader}>
-                <Text style={s.modalTitle}>Payment Methods</Text>
-                <TouchableOpacity onPress={onClose} style={s.modalClose}>
-                  <Ionicons name="close" size={24} color={C.text} />
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
-                <Text style={s.paymentSectionTitle}>Your Cards</Text>
-                {cards.map((card) => (
-                  <View key={card.id} style={s.paymentCard}>
-                    <View style={s.paymentCardIcon}>
-                      <Ionicons name="card" size={24} color={card.type === 'visa' ? '#1A1F71' : '#EB001B'} />
-                    </View>
-                    <View style={s.paymentCardInfo}>
-                      <Text style={s.paymentCardType}>{card.type.toUpperCase()} •••• {card.last4}</Text>
-                      <Text style={s.paymentCardExpiry}>Expires {card.expiry}</Text>
-                    </View>
-                    {card.isDefault && <View style={s.defaultBadge}><Text style={s.defaultBadgeText}>Default</Text></View>}
-                    <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
-                  </View>
-                ))}
-                
-                <TouchableOpacity style={s.addPaymentBtn}>
-                  <Ionicons name="add-circle-outline" size={24} color={C.gold} />
-                  <Text style={s.addPaymentText}>Add New Card</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={s.addPaymentBtn}>
-                  <Ionicons name="business-outline" size={24} color={C.gold} />
-                  <Text style={s.addPaymentText}>Link Bank Account</Text>
-                </TouchableOpacity>
-                
-                <View style={s.walletDivider} />
-                
-                <Text style={s.paymentSectionTitle}>MOTA Digital Card</Text>
-                <Text style={s.walletDesc}>Add your MOTA card to Apple Pay or Google Pay for seamless payments throughout the resort.</Text>
-                
-                <TouchableOpacity style={s.walletBtn} onPress={() => { onClose(); onAddToWallet('apple'); }}>
-                  <Ionicons name="logo-apple" size={24} color="#fff" />
-                  <Text style={s.walletBtnText}>Add to Apple Wallet</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={[s.walletBtn, s.googleWalletBtn]} onPress={() => { onClose(); onAddToWallet('google'); }}>
-                  <Ionicons name="logo-google" size={24} color="#fff" />
-                  <Text style={s.walletBtnText}>Add to Google Pay</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-};
-
-
-// ============================================
-// DIGITAL WALLET MODAL
-// ============================================
-const DigitalWalletModal = ({ visible, onClose, walletType, user }: any) => (
-  <Modal visible={visible} transparent animationType="slide">
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View style={s.modalOverlay}>
-        <TouchableWithoutFeedback onPress={() => {}}>
-          <View style={s.walletModalContent}>
-            <LinearGradient colors={walletType === 'apple' ? ['#1a1a1a', '#2d2d2d'] : ['#4285F4', '#34A853']} style={s.walletModalGradient}>
-              <TouchableOpacity style={s.walletModalClose} onPress={onClose}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-              
-              <View style={s.walletModalHeader}>
-                <Ionicons name={walletType === 'apple' ? 'logo-apple' : 'logo-google'} size={40} color="#fff" />
-                <Text style={s.walletModalTitle}>
-                  {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}
-                </Text>
-              </View>
-              
-              <View style={s.motaDigitalCard}>
-                <LinearGradient colors={G.gold} style={s.motaDigitalCardGrad}>
-                  <Text style={s.motaDigitalCardLogo}>MOTA</Text>
-                  <Text style={s.motaDigitalCardName}>{user?.name || 'Member'}</Text>
-                  <Text style={s.motaDigitalCardNumber}>•••• •••• •••• {Math.floor(1000 + Math.random() * 9000)}</Text>
-                  <View style={s.motaDigitalCardFooter}>
-                    <Text style={s.motaDigitalCardType}>{user?.investorTier?.toUpperCase() || 'MEMBER'} CARD</Text>
-                    <Text style={s.motaDigitalCardValid}>VALID THRU 12/29</Text>
-                  </View>
-                </LinearGradient>
-              </View>
-              
-              <Text style={s.walletModalDesc}>
-                Your MOTA card will be added to {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}. 
-                Use it for contactless payments at all MOTA venues.
-              </Text>
-              
-              <TouchableOpacity style={s.walletModalBtn} onPress={() => { Alert.alert('Success!', `MOTA Card added to ${walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}!`); onClose(); }}>
-                <Text style={s.walletModalBtnText}>Add Card</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
-  </Modal>
-);
-
-// ============================================
-// CONCIERGE SERVICE DETAIL MODAL
-// ============================================
-const ConciergeServiceDetailModal = ({ visible, service, onClose, onBook }: any) => {
-  if (!service) return null;
-  
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={s.modalOverlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={s.conciergeDetailModal}>
-              <Image source={{ uri: service.image }} style={s.conciergeDetailImage} />
-              <LinearGradient colors={['transparent', C.bg]} style={s.conciergeDetailOverlay} />
-              
-              <TouchableOpacity style={s.conciergeDetailClose} onPress={onClose}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-              
-              <View style={s.conciergeDetailContent}>
-                <View style={[s.conciergeDetailIconWrap, { backgroundColor: service.color + '30' }]}>
-                  <Ionicons name={service.icon} size={28} color={service.color} />
-                </View>
-                <Text style={s.conciergeDetailTitle}>{service.title}</Text>
-                <Text style={s.conciergeDetailDesc}>{service.desc}</Text>
-                
-                <Text style={s.conciergeDetailSectionTitle}>Available Options</Text>
-                <ScrollView style={s.conciergeDetailOptions} showsVerticalScrollIndicator={false}>
-                  {service.options?.map((option: any, index: number) => (
-                    <TouchableOpacity key={index} style={s.conciergeOptionCard} onPress={() => { onBook(option); onClose(); }}>
-                      <Image source={{ uri: option.image }} style={s.conciergeOptionImage} />
-                      <View style={s.conciergeOptionInfo}>
-                        <Text style={s.conciergeOptionName}>{option.name}</Text>
-                        <Text style={s.conciergeOptionType}>{option.type}</Text>
-                        <View style={s.conciergeOptionMeta}>
-                          {option.duration && <Text style={s.conciergeOptionMetaText}>{option.duration}</Text>}
-                          {option.guests && <Text style={s.conciergeOptionMetaText}>{option.guests}</Text>}
-                          {option.beds && <Text style={s.conciergeOptionMetaText}>{option.beds}</Text>}
-                        </View>
-                        <Text style={s.conciergeOptionPrice}>{option.price}</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color={C.gold} />
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-};
 
 // ============================================
 // FILTER DROPDOWN COMPONENT
@@ -718,72 +569,6 @@ const FilterDropdown = ({ title, options, selected, onSelect, visible, onToggle,
     )}
   </View>
 );
-
-// ============================================
-// SERVICE REQUEST MODAL
-// ============================================
-const ServiceModal = ({ visible, service, onClose, onSubmit }: any) => {
-  const [notes, setNotes] = useState('');
-  const serviceOptions: Record<string, string[]> = {
-    'Dining': ['Fine Dining', 'Casual Dining', 'Private Chef', 'Room Service'],
-    'Lodging': ['Suite Upgrade', 'Villa Booking', 'Extended Stay', 'Special Arrangement'],
-    'Yacht Charter': ['Half Day Charter', 'Full Day Charter', 'Sunset Cruise', 'Fishing Trip'],
-    'Transport': ['Airport Transfer', 'Luxury Vehicle', 'Helicopter', 'Private Jet'],
-    'Events': ['VIP Access', 'Private Event', 'Group Booking', 'Special Seating'],
-    'Special': ['Anniversary', 'Birthday', 'Proposal', 'Custom Request'],
-    'Private Tour': ['Mayan Ruins', 'Jungle Adventure', 'Island Hopping', 'Cultural Experience'],
-    'Spa & Wellness': ['Couples Massage', 'Day Package', 'Private Suite', 'Wellness Retreat'],
-  };
-  const options = serviceOptions[service?.title] || [];
-  
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={s.modalOverlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={s.modalContent}>
-              <View style={s.modalHeader}>
-                <Text style={s.modalTitle}>{service?.title || 'Service'} Request</Text>
-                <TouchableOpacity onPress={onClose} style={s.modalClose}>
-                  <Ionicons name="close" size={24} color={C.text} />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
-                <Text style={s.modalLabel}>Select Service Type</Text>
-                <View style={s.serviceOptions}>
-                  {options.map((opt: string, i: number) => (
-                    <TouchableOpacity key={i} style={s.serviceOption}>
-                      <Text style={s.serviceOptionText}>{opt}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <Text style={s.modalLabel}>Preferred Date</Text>
-                <TextInput style={s.modalInput} placeholder="Select date" placeholderTextColor={C.textMuted} />
-                <Text style={s.modalLabel}>Preferred Time</Text>
-                <TextInput style={s.modalInput} placeholder="Select time" placeholderTextColor={C.textMuted} />
-                <Text style={s.modalLabel}>Number of Guests</Text>
-                <TextInput style={s.modalInput} placeholder="2" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
-                <Text style={s.modalLabel}>Special Requests</Text>
-                <TextInput style={[s.modalInput, s.modalTextarea]} placeholder="Any special requirements..." placeholderTextColor={C.textMuted} multiline value={notes} onChangeText={setNotes} />
-              </ScrollView>
-              <View style={s.modalFooter}>
-                <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}>
-                  <Text style={s.modalCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { onSubmit({ notes }); onClose(); }}>
-                  <LinearGradient colors={G.gold} style={s.modalSubmitBtn}>
-                    <Text style={s.modalSubmitText}>Submit Request</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-};
-
 
 // ============================================
 // VIP PROMO MODAL
@@ -838,6 +623,309 @@ const VIPPromoModal = ({ visible, onClose }: any) => (
 );
 
 // ============================================
+// CONCIERGE SERVICE DETAIL MODAL
+// ============================================
+const ConciergeServiceDetailModal = ({ visible, service, onClose, onBook }: any) => {
+  if (!service) return null;
+  
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={s.conciergeDetailModal}>
+              <Image source={{ uri: service.image }} style={s.conciergeDetailImage} />
+              <LinearGradient colors={['transparent', C.bg]} style={s.conciergeDetailOverlay} />
+              <TouchableOpacity style={s.conciergeDetailClose} onPress={onClose}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+              <View style={s.conciergeDetailContent}>
+                <View style={[s.conciergeDetailIconWrap, { backgroundColor: service.color + '30' }]}>
+                  <Ionicons name={service.icon} size={28} color={service.color} />
+                </View>
+                <Text style={s.conciergeDetailTitle}>{service.title}</Text>
+                <Text style={s.conciergeDetailDesc}>{service.desc}</Text>
+                <Text style={s.conciergeDetailSectionTitle}>Available Options</Text>
+                <ScrollView style={s.conciergeDetailOptions} showsVerticalScrollIndicator={false}>
+                  {service.options?.map((option: any, index: number) => (
+                    <TouchableOpacity key={index} style={s.conciergeOptionCard} onPress={() => { onBook(option); onClose(); }}>
+                      <Image source={{ uri: option.image }} style={s.conciergeOptionImage} />
+                      <View style={s.conciergeOptionInfo}>
+                        <Text style={s.conciergeOptionName}>{option.name}</Text>
+                        <Text style={s.conciergeOptionType}>{option.type}</Text>
+                        <View style={s.conciergeOptionMeta}>
+                          {option.duration && <Text style={s.conciergeOptionMetaText}>{option.duration}</Text>}
+                          {option.guests && <Text style={s.conciergeOptionMetaText}>{option.guests}</Text>}
+                          {option.beds && <Text style={s.conciergeOptionMetaText}>{option.beds}</Text>}
+                        </View>
+                        <Text style={s.conciergeOptionPrice}>{option.price}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={C.gold} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+};
+
+// ============================================
+// BOOKING MODAL (Universal for all bookings)
+// ============================================
+const BookingModal = ({ 
+  visible, 
+  item, 
+  itemType,
+  isFixedEvent = false,
+  onClose, 
+  onConfirm,
+  user,
+}: any) => {
+  const [step, setStep] = useState(1); // 1=DateTime, 2=Details, 3=Dietary, 4=Confirm
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [guestCount, setGuestCount] = useState(1);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    specialRequests: '',
+  });
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>(user?.dietaryRestrictions || []);
+  const [showDietaryModal, setShowDietaryModal] = useState(false);
+
+  // Load time slots when date changes
+  useEffect(() => {
+    if (selectedDate && !isFixedEvent) {
+      loadTimeSlots();
+    }
+  }, [selectedDate]);
+
+  const loadTimeSlots = async () => {
+    if (!item?._id) return;
+    setLoadingSlots(true);
+    try {
+      const dateStr = selectedDate?.toISOString().split('T')[0];
+      const response = await api.get(`/reservations/slots/${itemType}/${item._id}/${dateStr}`);
+      setAvailableSlots(response.data.slots || []);
+    } catch (error) {
+      // Generate default slots
+      setAvailableSlots([
+        { time: '6:00 PM', available: true, spotsLeft: 5 },
+        { time: '6:30 PM', available: true, spotsLeft: 3 },
+        { time: '7:00 PM', available: true, spotsLeft: 8 },
+        { time: '7:30 PM', available: true, spotsLeft: 2 },
+        { time: '8:00 PM', available: true, spotsLeft: 6 },
+        { time: '8:30 PM', available: false, spotsLeft: 0 },
+        { time: '9:00 PM', available: true, spotsLeft: 10 },
+      ]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!isFixedEvent && (!selectedDate || !selectedTime)) {
+        Alert.alert('Select Date & Time', 'Please select a date and time for your reservation.');
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      if (!bookingDetails.name || !bookingDetails.email || !bookingDetails.phone) {
+        Alert.alert('Required Fields', 'Please fill in your name, email, and phone number.');
+        return;
+      }
+      setShowDietaryModal(true);
+    } else if (step === 3) {
+      setStep(4);
+    }
+  };
+
+  const handleDietarySave = (restrictions: string[]) => {
+    setDietaryRestrictions(restrictions);
+    setShowDietaryModal(false);
+    setStep(4);
+  };
+
+  const handleDietarySkip = () => {
+    setShowDietaryModal(false);
+    setStep(4);
+  };
+
+  const handleConfirmBooking = () => {
+    onConfirm({
+      item,
+      itemType,
+      date: isFixedEvent ? item.date : selectedDate,
+      time: isFixedEvent ? item.startTime : selectedTime,
+      guestCount,
+      bookingDetails,
+      dietaryRestrictions,
+      isFixedEvent,
+    });
+    onClose();
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setStep(1);
+    setSelectedDate(null);
+    setSelectedTime('');
+    setGuestCount(1);
+    setAvailableSlots([]);
+  };
+
+  if (!visible || !item) return null;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={s.bookingModalContent}>
+              {/* Header */}
+              <View style={s.bookingModalHeader}>
+                <View>
+                  <Text style={s.bookingModalTitle}>{item.name}</Text>
+                  <Text style={s.bookingModalSubtitle}>
+                    {step === 1 ? 'Select Date & Time' : step === 2 ? 'Your Details' : step === 3 ? 'Dietary Restrictions' : 'Confirm Booking'}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={onClose} style={s.bookingModalClose}>
+                  <Ionicons name="close" size={24} color={C.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Progress */}
+              <View style={s.bookingProgress}>
+                {[1, 2, 3, 4].map((s) => (
+                  <View key={s} style={[s.bookingProgressDot, step >= s && s.bookingProgressDotActive]} />
+                ))}
+              </View>
+
+              <ScrollView style={s.bookingModalBody} showsVerticalScrollIndicator={false}>
+                {/* Step 1: Date & Time */}
+                {step === 1 && (
+                  <>
+                    {isFixedEvent ? (
+                      <FixedEventBookingInfo event={item} />
+                    ) : (
+                      <>
+                        <CalendarGrid
+                          selectedDate={selectedDate}
+                          onSelectDate={setSelectedDate}
+                        />
+                        {selectedDate && (
+                          <TimeSlotSelector
+                            selectedTime={selectedTime}
+                            onSelectTime={setSelectedTime}
+                            availableSlots={availableSlots}
+                            loading={loadingSlots}
+                          />
+                        )}
+                      </>
+                    )}
+                    <GuestCountSelector
+                      count={guestCount}
+                      onChangeCount={setGuestCount}
+                      maxGuests={item.maxGuests || 20}
+                    />
+                  </>
+                )}
+
+                {/* Step 2: Booking Details */}
+                {step === 2 && (
+                  <BookingDetailsEditor
+                    bookingDetails={bookingDetails}
+                    onUpdateDetails={setBookingDetails}
+                    editable={true}
+                  />
+                )}
+
+                {/* Step 4: Confirmation */}
+                {step === 4 && (
+                  <View style={s.bookingConfirmation}>
+                    <View style={s.confirmationIcon}>
+                      <Ionicons name="checkmark-circle" size={48} color={C.gold} />
+                    </View>
+                    <Text style={s.confirmationTitle}>Review Your Booking</Text>
+                    
+                    <View style={s.confirmationCard}>
+                      <View style={s.confirmationRow}>
+                        <Text style={s.confirmationLabel}>Date</Text>
+                        <Text style={s.confirmationValue}>
+                          {(isFixedEvent ? new Date(item.date) : selectedDate)?.toLocaleDateString('en-US', { 
+                            weekday: 'long', month: 'long', day: 'numeric' 
+                          })}
+                        </Text>
+                      </View>
+                      <View style={s.confirmationRow}>
+                        <Text style={s.confirmationLabel}>Time</Text>
+                        <Text style={s.confirmationValue}>{isFixedEvent ? item.startTime : selectedTime}</Text>
+                      </View>
+                      <View style={s.confirmationRow}>
+                        <Text style={s.confirmationLabel}>Guests</Text>
+                        <Text style={s.confirmationValue}>{guestCount}</Text>
+                      </View>
+                      <View style={s.confirmationRow}>
+                        <Text style={s.confirmationLabel}>Name</Text>
+                        <Text style={s.confirmationValue}>{bookingDetails.name}</Text>
+                      </View>
+                      {dietaryRestrictions.length > 0 && (
+                        <View style={s.confirmationRow}>
+                          <Text style={s.confirmationLabel}>Dietary</Text>
+                          <Text style={s.confirmationValue}>{dietaryRestrictions.join(', ')}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Footer */}
+              <View style={s.bookingModalFooter}>
+                {step > 1 && (
+                  <TouchableOpacity style={s.bookingBackBtn} onPress={() => setStep(step - 1)}>
+                    <Text style={s.bookingBackText}>Back</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity 
+                  style={s.bookingNextBtn} 
+                  onPress={step === 4 ? handleConfirmBooking : handleNext}
+                >
+                  <LinearGradient colors={G.gold} style={s.bookingNextBtnGrad}>
+                    <Text style={s.bookingNextText}>
+                      {step === 4 ? 'Confirm Booking' : 'Continue'}
+                    </Text>
+                    <Ionicons name={step === 4 ? 'checkmark' : 'arrow-forward'} size={18} color={C.bg} />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
+              {/* Dietary Modal */}
+              <DietaryRestrictionsModal
+                visible={showDietaryModal}
+                onClose={() => setShowDietaryModal(false)}
+                currentRestrictions={dietaryRestrictions}
+                onSave={handleDietarySave}
+                onSkip={handleDietarySkip}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+};
+
+// ============================================
 // MAIN APP CONTENT
 // ============================================
 function AppContent() {
@@ -857,24 +945,42 @@ function AppContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [exploreCategory, setExploreCategory] = useState('Lodging');
-  const [priceFilter, setPriceFilter] = useState('All');
-  const [ratingFilter, setRatingFilter] = useState('All');
-  const [amenityFilter, setAmenityFilter] = useState('All');
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideRef = useRef<FlatList>(null);
-  const [serviceModal, setServiceModal] = useState<any>(null);
   const [vipPromoVisible, setVipPromoVisible] = useState(false);
   const [conciergeTab, setConciergeTab] = useState<'standard' | 'vip'>('standard');
-  const [luxuryExpanded, setLuxuryExpanded] = useState(false);
-  // New state variables for v3.5 features
+  
+  // New state for v4.0 features
   const [aiPopupVisible, setAiPopupVisible] = useState(false);
   const [filterDropdown, setFilterDropdown] = useState<string | null>(null);
   const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [conciergeServiceDetail, setConciergeServiceDetail] = useState<any>(null);
-  const [walletModalVisible, setWalletModalVisible] = useState(false);
+  
+  // NEW: Booking modal state
+  const [bookingModalVisible, setBookingModalVisible] = useState(false);
+  const [bookingItem, setBookingItem] = useState<any>(null);
+  const [bookingItemType, setBookingItemType] = useState<string>('');
+  const [isFixedEventBooking, setIsFixedEventBooking] = useState(false);
+  
+  // NEW: Permissions modal state
+  const [permissionsModalVisible, setPermissionsModalVisible] = useState(false);
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  
+  // NEW: Rating modal state
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  
+  // NEW: Account deletion modal state
+  const [accountDeletionVisible, setAccountDeletionVisible] = useState(false);
+  
+  // NEW: Favorites state
+  const [favorites, setFavorites] = useState<any[]>([]);
+
+  // NEW: Engagement tracking
+  const trackEngagement = (action: string) => {
+    EngagementTracker.trackAction(action);
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -887,62 +993,293 @@ function AppContent() {
       if (activitiesData.length > 0) setActivities(activitiesData);
       if (lodgingData.length > 0) setLodging(lodgingData);
       if (nightlifeData.length > 0) setNightlife(nightlifeData);
-      if (user) { try { const r = await api.get('/notifications/unread-count'); setNotificationCount(r.data.count || 0); } catch {} }
+      if (user) { 
+        try { 
+          const r = await api.get('/notifications/unread-count'); 
+          setNotificationCount(r.data.count || 0); 
+        } catch {} 
+        // Load favorites
+        try {
+          const favResponse = await api.get('/favorites');
+          setFavorites(favResponse.data.favorites || []);
+        } catch {}
+      }
     } catch {} finally { setLoading(false); setRefreshing(false); }
   }, [user]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { 
+    loadData(); 
+    trackEngagement('session_start');
+  }, [loadData]);
+  
+  // Check permissions on mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      // In production, check actual permission status
+      // For now, show modal if not granted
+      if (user && !permissionsGranted) {
+        setTimeout(() => setPermissionsModalVisible(true), 1000);
+      }
+    };
+    checkPermissions();
+  }, [user]);
+
+  // Check if should show rating prompt
+  useEffect(() => {
+    const checkRatingPrompt = async () => {
+      if (user) {
+        const shouldShow = await EngagementTracker.shouldShowRatingPrompt();
+        if (shouldShow) {
+          setTimeout(() => setRatingModalVisible(true), 3000);
+        }
+      }
+    };
+    checkRatingPrompt();
+  }, [user]);
+
   useEffect(() => {
     if (activeTab !== 0) return;
-    const timer = setInterval(() => { setCurrentSlide(p => { const n = (p + 1) % slides.length; slideRef.current?.scrollToIndex({ index: n, animated: true }); return n; }); }, 5000);
+    const timer = setInterval(() => { 
+      setCurrentSlide(p => { 
+        const n = (p + 1) % slides.length; 
+        slideRef.current?.scrollToIndex({ index: n, animated: true }); 
+        return n; 
+      }); 
+    }, 5000);
     return () => clearInterval(timer);
   }, [slides.length, activeTab]);
 
   const onRefresh = () => { setRefreshing(true); loadData(); };
-  const openDetail = (item: any, type: string) => { setSelectedItem(item); setSelectedItemType(type); setCurrentScreen('detail'); };
+  
+  const openDetail = (item: any, type: string) => { 
+    setSelectedItem(item); 
+    setSelectedItemType(type); 
+    setCurrentScreen('detail'); 
+    trackEngagement('screen_view');
+  };
+  
   const getTierGradient = () => user?.investorTier === 'diamond' ? G.diamond : user?.investorTier === 'platinum' ? G.platinum : G.gold;
+
+  // Handle slide press (deep linking)
+  const handleSlidePress = (slide: any) => {
+    if (!slide.linkType) return;
+    
+    switch (slide.linkType) {
+      case 'tab':
+        setActiveTab(slide.linkTab);
+        if (slide.linkTarget && slide.linkTab === 1) {
+          setExploreCategory(slide.linkTarget);
+        }
+        break;
+      case 'screen':
+        if (slide.linkTarget) {
+          setCurrentScreen(slide.linkTarget);
+        }
+        break;
+      case 'external':
+        if (slide.linkTarget) {
+          Linking.openURL(slide.linkTarget);
+        }
+        break;
+    }
+  };
+
+  // Open booking modal
+  const openBookingModal = (item: any, type: string, isFixed = false) => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to make a reservation.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign In', onPress: () => setCurrentScreen('login') }
+      ]);
+      return;
+    }
+    setBookingItem(item);
+    setBookingItemType(type);
+    setIsFixedEventBooking(isFixed);
+    setBookingModalVisible(true);
+  };
+
+  // Handle booking confirmation
+  const handleBookingConfirm = async (bookingData: any) => {
+    try {
+      const response = await api.post('/reservations', {
+        itemType: bookingData.itemType,
+        itemId: bookingData.item._id,
+        itemName: bookingData.item.name,
+        date: bookingData.date,
+        time: bookingData.time,
+        guestCount: bookingData.guestCount,
+        bookingDetails: bookingData.bookingDetails,
+        dietaryRestrictions: bookingData.dietaryRestrictions,
+        isFixedEvent: bookingData.isFixedEvent,
+      });
+      
+      Alert.alert(
+        'Booking Confirmed! 🎉',
+        `Your reservation at ${bookingData.item.name} has been submitted.\n\nConfirmation: ${response.data.confirmationNumber}`,
+        [{ text: 'OK' }]
+      );
+      
+      trackEngagement('booking_complete');
+    } catch (error: any) {
+      Alert.alert('Booking Error', error.message || 'Failed to create reservation. Please try again.');
+    }
+  };
+
+  // Toggle favorite
+  const toggleFavorite = async (item: any, type: string) => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to save favorites.');
+      return;
+    }
+    try {
+      const response = await api.post('/favorites/toggle', {
+        itemType: type,
+        itemId: item._id,
+        itemName: item.name,
+        itemImage: item.images?.[0]?.url || item.image,
+        itemRating: item.rating,
+      });
+      
+      if (response.data.isFavorited) {
+        setFavorites([...favorites, response.data.favorite]);
+        trackEngagement('favorite_added');
+      } else {
+        setFavorites(favorites.filter(f => f.itemId !== item._id));
+      }
+    } catch (error) {
+      console.error('Toggle favorite error:', error);
+    }
+  };
+
+  // Check if item is favorited
+  const isFavorited = (itemId: string) => {
+    return favorites.some(f => f.itemId === itemId);
+  };
+
+  // Handle permissions granted
+  const handlePermissionsGranted = () => {
+    setPermissionsGranted(true);
+    setPermissionsModalVisible(false);
+  };
+
+  // Handle rating submit
+  const handleRatingSubmit = async (rating: number, feedback: string) => {
+    try {
+      await api.post('/feedback', {
+        rating,
+        feedback,
+        type: rating <= 3 ? 'improvement' : 'positive',
+      });
+      
+      if (rating >= 4) {
+        // Redirect to app store
+        const storeUrl = Platform.OS === 'ios' 
+          ? 'https://apps.apple.com/app/id123456789' // Replace with actual app ID
+          : 'https://play.google.com/store/apps/details?id=com.mota.app';
+        
+        Alert.alert(
+          'Thank You! 🌟',
+          'Would you like to share your experience on the App Store?',
+          [
+            { text: 'Not Now', style: 'cancel' },
+            { text: 'Rate Us', onPress: () => Linking.openURL(storeUrl) }
+          ]
+        );
+      } else {
+        Alert.alert('Thank You', 'Your feedback helps us improve MOTA.');
+      }
+      
+      setRatingModalVisible(false);
+      await EngagementTracker.markRatingComplete();
+    } catch (error) {
+      console.error('Submit feedback error:', error);
+    }
+  };
+
+  // Handle account deletion
+  const handleAccountDeletion = async (type: 'deactivate' | 'delete') => {
+    try {
+      if (type === 'deactivate') {
+        await api.post('/users/deactivate');
+        Alert.alert('Account Deactivated', 'Your account has been deactivated. You can reactivate it anytime by logging in.');
+      } else {
+        await api.delete('/users/delete-account', { data: { confirmation: 'DELETE' } });
+        Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+      }
+      logout();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to process request.');
+    }
+  };
+
+  const priceOptions = [
+    { value: '$', label: '$' },
+    { value: '$$', label: '$$' },
+    { value: '$$$', label: '$$$' },
+    { value: '$$$$', label: '$$$$' },
+  ];
+
+  const ratingOptions = [
+    { value: '4', label: '4+ Stars' },
+    { value: '3', label: '3+ Stars' },
+    { value: 'sort', label: 'Highest to Lowest' },
+  ];
+
+  const amenityOptions = [
+    { value: 'Dog Friendly', label: '🐕 Dog Friendly' },
+    { value: 'Kids Friendly', label: '👨‍👩‍👧 Kids Friendly' },
+    { value: 'Ocean View', label: '🌊 Ocean View' },
+    { value: 'Beach View', label: '🏖️ Beach View' },
+    { value: 'Pool', label: '🏊 Pool' },
+    { value: 'Spa', label: '💆 Spa' },
+  ];
+
+  const toggleFilterSelection = (filter: string, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+  };
 
   const getFilteredItems = () => {
     let items: any[] = [];
+    
     if (exploreCategory === 'Lodging') items = [...lodging.map(l => ({ ...l, _type: 'lodging' }))];
     if (exploreCategory === 'Eateries') items = [...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
     if (exploreCategory === 'Experiences') items = [...activities.map(a => ({ ...a, _type: 'activity' }))];
     if (exploreCategory === 'Nightlife') items = [...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
     
-    // Price filter
-    if (priceFilter !== 'All') {
-      items = items.filter(item => {
-        if (priceFilter === '$' && item.priceRange === '$') return true;
-        if (priceFilter === '$$' && (item.priceRange === '$$' || (item.price && item.price < 200))) return true;
-        if (priceFilter === '$$$' && (item.priceRange === '$$$' || (item.price && item.price >= 200 && item.price < 500))) return true;
-        if (priceFilter === '$$$$' && (item.priceRange === '$$$$' || (item.price && item.price >= 500))) return true;
-        return false;
-      });
+    if (selectedPrices.length > 0) {
+      items = items.filter(item => selectedPrices.includes(item.priceRange || '$$'));
     }
     
-    // Rating filter
-    if (ratingFilter !== 'All') {
-      const minRating = parseFloat(ratingFilter);
-      items = items.filter(item => item.rating && item.rating >= minRating);
+    if (selectedRatings.length > 0) {
+      const hasSort = selectedRatings.includes('sort');
+      const ratingValues = selectedRatings.filter(r => r !== 'sort').map(r => parseInt(r));
+      
+      if (ratingValues.length > 0) {
+        const minRating = Math.min(...ratingValues);
+        items = items.filter(item => item.rating && item.rating >= minRating);
+      }
+      
+      if (hasSort) {
+        items = items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      }
     }
     
-    // Amenity filter
-    if (amenityFilter !== 'All') {
+    if (selectedAmenities.length > 0) {
       items = items.filter(item => {
-        if (amenityFilter === 'Dog Friendly') return item.dogFriendly === true;
-        if (amenityFilter === 'Kids Friendly') return item.kidsFriendly === true;
-        if (amenityFilter === 'Ocean View') return item.view === 'ocean';
-        if (amenityFilter === 'Beach View') return item.view === 'beach';
-        return true;
+        return selectedAmenities.some(amenity => {
+          if (amenity === 'Dog Friendly') return item.dogFriendly === true;
+          if (amenity === 'Kids Friendly') return item.kidsFriendly === true;
+          if (amenity === 'Ocean View') return item.view === 'ocean';
+          if (amenity === 'Beach View') return item.view === 'beach';
+          if (amenity === 'Pool') return item.hasPool === true;
+          if (amenity === 'Spa') return item.hasSpa === true;
+          return false;
+        });
       });
     }
     
     return items;
-  };
-
-  const handleServiceRequest = (service: any) => {
-    if (!user) { Alert.alert('Sign In Required', 'Please sign in to request concierge services.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign In', onPress: () => setCurrentScreen('login') }]); return; }
-    setServiceModal(service);
   };
 
   // Screen routing
@@ -955,309 +1292,254 @@ function AppContent() {
   if (currentScreen === 'favorites') return <FavoritesScreen onBack={() => setCurrentScreen('main')} onOpenDetail={(item, type) => { setSelectedItem(item); setSelectedItemType(type); setCurrentScreen('detail'); }} />;
   if (currentScreen === 'settings') return <SettingsScreen onBack={() => setCurrentScreen('main')} />;
   if (currentScreen === 'help') return <HelpScreen onBack={() => setCurrentScreen('main')} />;
-  if (currentScreen === 'detail' && selectedItem) return <DetailScreen item={selectedItem} type={selectedItemType as any} onBack={() => { setCurrentScreen('main'); setSelectedItem(null); }} />;
+  if (currentScreen === 'detail' && selectedItem) return <DetailScreen item={selectedItem} type={selectedItemType as any} onBack={() => { setCurrentScreen('main'); setSelectedItem(null); }} onBook={(item: any, type: string, isFixed: boolean) => openBookingModal(item, type, isFixed)} />;
 
   // ============================================
-  // HOME TAB
+  // HOME TAB (NO INVESTMENT BAR)
   // ============================================
-const renderHomeTab = () => (
-  <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
-    <View style={s.heroContainer}>
+  const renderHomeTab = () => (
+    <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
+      <View style={s.heroContainer}>
+        <FlatList 
+          ref={slideRef} 
+          data={slides} 
+          horizontal 
+          pagingEnabled 
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
+          keyExtractor={(_, i) => `slide-${i}`}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={s.heroSlide} 
+              activeOpacity={0.9}
+              onPress={() => handleSlidePress(item)}
+            >
+              <Image source={{ uri: item.imageUrl || item.image }} style={s.heroImage} />
+              <LinearGradient colors={G.overlay} style={s.heroOverlay} />
+              <View style={s.heroContent}>
+                <Text style={s.heroSubtitle}>{item.subtitle}</Text>
+                <Text style={s.heroTitle}>{item.title}</Text>
+                <Text style={s.heroDesc}>{item.description}</Text>
+                {item.linkType && (
+                  <View style={s.heroExploreBtn}>
+                    <Text style={s.heroExploreBtnText}>Explore</Text>
+                    <Ionicons name="arrow-forward" size={14} color={C.gold} />
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+        <View style={s.slideIndicators}>
+          {slides.map((_, i) => (
+            <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />
+          ))}
+        </View>
+      </View>
+      
+      {/* NO InvestmentBar - Removed as per requirement #1 */}
+      
+      <TouchableOpacity style={s.searchSection} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
+        <View style={s.searchBar}>
+          <Ionicons name="sparkles" size={20} color={C.gold} />
+          <Text style={s.searchPlaceholder}>Ask me anything...</Text>
+          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
+        </View>
+      </TouchableOpacity>
+      
+      <View style={s.quickCats}>
+        {[
+          { icon: 'bed-outline', label: 'Lodging' }, 
+          { icon: 'restaurant-outline', label: 'Eateries' }, 
+          { icon: 'compass-outline', label: 'Experiences' }, 
+          { icon: 'wine-outline', label: 'Nightlife' }
+        ].map((cat, i) => (
+          <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
+            <LinearGradient colors={G.card} style={s.quickCatIcon}>
+              <Ionicons name={cat.icon as any} size={24} color={C.gold} />
+            </LinearGradient>
+            <Text style={s.quickCatLabel}>{cat.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      
+      {[
+        { title: 'Featured Destinations', data: lodging, type: 'lodging', filter: 'Lodging' }, 
+        { title: 'Featured Dining', data: restaurants, type: 'restaurant', filter: 'Eateries' }, 
+        { title: 'Upcoming Events', data: events, type: 'event' }, 
+        { title: 'Experiences', data: activities, type: 'activity', filter: 'Experiences' }
+      ].map((section, si) => (
+        <View key={si} style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>{section.title}</Text>
+            <TouchableOpacity onPress={() => { if (section.filter) setExploreCategory(section.filter); setActiveTab(section.type === 'event' ? 2 : 1); }}>
+              <Text style={s.sectionMore}>View all</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList 
+            data={section.data.slice(0, 5)} 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={{ paddingHorizontal: 20 }} 
+            keyExtractor={(item) => item._id || item.id} 
+            renderItem={({ item }) => <ItemCard item={item} onPress={() => openDetail(item, section.type)} />} 
+          />
+        </View>
+      ))}
+      
+      <View style={{ height: 100 }} />
+    </ScrollView>
+  );
+
+  // ============================================
+  // EXPLORE TAB
+  // ============================================
+  const renderExploreTab = () => (
+    <View style={{ flex: 1 }}>
+      <TouchableOpacity style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
+        <View style={s.searchBar}>
+          <Ionicons name="sparkles" size={20} color={C.gold} />
+          <Text style={s.searchPlaceholder}>Tell Me What You're Looking For</Text>
+          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
+        </View>
+      </TouchableOpacity>
+      
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' }}>
+        {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
+          <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
+        ))}
+      </ScrollView>
+      
+      <View style={s.filterDropdownSection}>
+        <Text style={s.filterByHeader}>Filter by</Text>
+        <View style={s.filterDropdownRow}>
+          <FilterDropdown 
+            title="Price" 
+            icon="cash-outline"
+            options={priceOptions} 
+            selected={selectedPrices} 
+            onSelect={(v: string) => toggleFilterSelection('price', v, setSelectedPrices)}
+            visible={filterDropdown === 'price'}
+            onToggle={() => setFilterDropdown(filterDropdown === 'price' ? null : 'price')}
+          />
+          <FilterDropdown 
+            title="Rating" 
+            icon="star-outline"
+            options={ratingOptions} 
+            selected={selectedRatings} 
+            onSelect={(v: string) => toggleFilterSelection('rating', v, setSelectedRatings)}
+            visible={filterDropdown === 'rating'}
+            onToggle={() => setFilterDropdown(filterDropdown === 'rating' ? null : 'rating')}
+          />
+          <FilterDropdown 
+            title="Amenities" 
+            icon="options-outline"
+            options={amenityOptions} 
+            selected={selectedAmenities} 
+            onSelect={(v: string) => toggleFilterSelection('amenity', v, setSelectedAmenities)}
+            visible={filterDropdown === 'amenity'}
+            onToggle={() => setFilterDropdown(filterDropdown === 'amenity' ? null : 'amenity')}
+          />
+        </View>
+      </View>
+      
+      {(selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0) && (
+        <TouchableOpacity style={s.clearFiltersBtn} onPress={() => { setSelectedPrices([]); setSelectedRatings([]); setSelectedAmenities([]); }}>
+          <Ionicons name="close-circle" size={16} color={C.gold} />
+          <Text style={s.clearFiltersText}>Clear all filters</Text>
+        </TouchableOpacity>
+      )}
+      
       <FlatList 
-        ref={slideRef} 
-        data={slides} 
-        horizontal 
-        pagingEnabled 
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
-        keyExtractor={(_, i) => `slide-${i}`}
+        data={getFilteredItems()} 
+        numColumns={2} 
+        keyExtractor={(item, i) => item._id || `item-${i}`} 
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }} 
+        columnWrapperStyle={{ justifyContent: 'space-between' }} 
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
         renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={s.heroSlide} 
-            activeOpacity={0.9}
-            onPress={() => handleSlidePress(item)}
-          >
-            <Image source={{ uri: item.imageUrl || item.image }} style={s.heroImage} />
-            <LinearGradient colors={G.overlay} style={s.heroOverlay} />
-            <View style={s.heroContent}>
-              <Text style={s.heroSubtitle}>{item.subtitle}</Text>
-              <Text style={s.heroTitle}>{item.title}</Text>
-              <Text style={s.heroDesc}>{item.description}</Text>
-              {/* Optional: Show a "Explore" button indicator */}
-              {item.linkType && (
-                <View style={s.heroExploreBtn}>
-                  <Text style={s.heroExploreBtnText}>Explore</Text>
-                  <Ionicons name="arrow-forward" size={14} color={C.gold} />
+          <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
+            <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
+            {/* Favorite button */}
+            <TouchableOpacity 
+              style={s.favoriteBtn} 
+              onPress={() => toggleFavorite(item, item._type)}
+            >
+              <Ionicons 
+                name={isFavorited(item._id) ? 'heart' : 'heart-outline'} 
+                size={20} 
+                color={isFavorited(item._id) ? C.error : '#fff'} 
+              />
+            </TouchableOpacity>
+            <View style={s.exploreCardContent}>
+              <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
+              {(item.cuisine || item.category || item.type) && (
+                <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
+              )}
+              {item.rating && (
+                <View style={s.exploreCardRating}>
+                  <Ionicons name="star" size={12} color={C.gold} />
+                  <Text style={s.exploreCardRatingText}>{item.rating}</Text>
                 </View>
               )}
             </View>
           </TouchableOpacity>
         )}
-      />
-      <View style={s.slideIndicators}>
-        {slides.map((_, i) => (
-          <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />
-        ))}
-      </View>
-    </View>
-    
-    {/* REST OF HOME TAB - WITHOUT INVESTMENT BAR */}
-    {/* See Fix 3 below - InvestmentBar is removed */}
-    
-    <TouchableOpacity style={s.searchSection} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
-      <View style={s.searchBar}>
-        <Ionicons name="sparkles" size={20} color={C.gold} />
-        <Text style={s.searchPlaceholder}>Ask me anything...</Text>
-        <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
-      </View>
-    </TouchableOpacity>
-    
-    {/* Quick Categories */}
-    <View style={s.quickCats}>
-      {[
-        { icon: 'bed-outline', label: 'Lodging' }, 
-        { icon: 'restaurant-outline', label: 'Eateries' }, 
-        { icon: 'compass-outline', label: 'Experiences' }, 
-        { icon: 'wine-outline', label: 'Nightlife' }
-      ].map((cat, i) => (
-        <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
-          <LinearGradient colors={G.card} style={s.quickCatIcon}>
-            <Ionicons name={cat.icon as any} size={24} color={C.gold} />
-          </LinearGradient>
-          <Text style={s.quickCatLabel}>{cat.label}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-    
-    {/* Featured Sections */}
-    {[
-      { title: 'Featured Destinations', data: lodging, type: 'lodging', filter: 'Lodging' }, 
-      { title: 'Featured Dining', data: restaurants, type: 'restaurant', filter: 'Eateries' }, 
-      { title: 'Upcoming Events', data: events, type: 'event' }, 
-      { title: 'Experiences', data: activities, type: 'activity', filter: 'Experiences' }
-    ].map((section, si) => (
-      <View key={si} style={s.section}>
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>{section.title}</Text>
-          <TouchableOpacity onPress={() => { if (section.filter) setExploreCategory(section.filter); setActiveTab(section.type === 'event' ? 2 : 1); }}>
-            <Text style={s.sectionMore}>View all</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList 
-          data={section.data.slice(0, 5)} 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingHorizontal: 20 }} 
-          keyExtractor={(item) => item._id || item.id} 
-          renderItem={({ item }) => <ItemCard item={item} onPress={() => openDetail(item, section.type)} />} 
-        />
-      </View>
-    ))}
-    
-    <View style={{ height: 100 }} />
-  </ScrollView>
-);
-
-  // ============================================
-  // EXPLORE TAB
-  // ============================================
-  const toggleFilterSelection = (filter: string, value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
-  };
-
- const priceOptions = [
-  { value: '$', label: '$' },
-  { value: '$$', label: '$$' },
-  { value: '$$$', label: '$$$' },
-  { value: '$$$$', label: '$$$$' },
-];
-
-const ratingOptions = [
-  { value: '4', label: '4+ Stars' },
-  { value: '3', label: '3+ Stars' },
-  { value: 'sort', label: 'Highest to Lowest' },
-];
-
-
-  const amenityOptions = [
-    { value: 'Dog Friendly', label: '🐕 Dog Friendly' },
-    { value: 'Kids Friendly', label: '👨‍👩‍👧 Kids Friendly' },
-    { value: 'Ocean View', label: '🌊 Ocean View' },
-    { value: 'Beach View', label: '🏖️ Beach View' },
-    { value: 'Pool', label: '🏊 Pool' },
-    { value: 'Spa', label: '💆 Spa' },
-  ];
-
-const getFilteredItemsNew = () => {
-  let items: any[] = [];
-  
-  // No more 'All' option - items based on selected category only
-  if (exploreCategory === 'Lodging') items = [...lodging.map(l => ({ ...l, _type: 'lodging' }))];
-  if (exploreCategory === 'Eateries') items = [...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
-  if (exploreCategory === 'Experiences') items = [...activities.map(a => ({ ...a, _type: 'activity' }))];
-  if (exploreCategory === 'Nightlife') items = [...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
-  
-  // Multi-select price filter
-  if (selectedPrices.length > 0) {
-    items = items.filter(item => selectedPrices.includes(item.priceRange || '$$'));
-  }
-  
-  // Rating filter - integer values with sort option
-  if (selectedRatings.length > 0) {
-    const hasSort = selectedRatings.includes('sort');
-    const ratingValues = selectedRatings.filter(r => r !== 'sort').map(r => parseInt(r));
-    
-    if (ratingValues.length > 0) {
-      const minRating = Math.min(...ratingValues);
-      items = items.filter(item => item.rating && item.rating >= minRating);
-    }
-    
-    if (hasSort) {
-      items = items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    }
-  }
-  
-  // Multi-select amenity filter
-  if (selectedAmenities.length > 0) {
-    items = items.filter(item => {
-      return selectedAmenities.some(amenity => {
-        if (amenity === 'Dog Friendly') return item.dogFriendly === true;
-        if (amenity === 'Kids Friendly') return item.kidsFriendly === true;
-        if (amenity === 'Ocean View') return item.view === 'ocean';
-        if (amenity === 'Beach View') return item.view === 'beach';
-        if (amenity === 'Pool') return item.hasPool === true;
-        if (amenity === 'Spa') return item.hasSpa === true;
-        return false;
-      });
-    });
-  }
-  
-  return items;
-};
-
-const renderExploreTab = () => (
-  <View style={{ flex: 1 }}>
-    {/* AI Search Bar */}
-    <TouchableOpacity style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
-      <View style={s.searchBar}>
-        <Ionicons name="sparkles" size={20} color={C.gold} />
-        <Text style={s.searchPlaceholder}>Tell Me What You're Looking For</Text>
-        <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
-      </View>
-    </TouchableOpacity>
-    
-    {/* Category Filter - NO "All" option */}
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' }}>
-      {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
-        <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
-      ))}
-    </ScrollView>
-    
-    {/* Filter by Header + Dropdowns in Horizontal Row */}
-    <View style={s.filterDropdownSection}>
-      <Text style={s.filterByHeader}>Filter by</Text>
-      <View style={s.filterDropdownRow}>
-        <FilterDropdown 
-          title="Price" 
-          icon="cash-outline"
-          options={priceOptions} 
-          selected={selectedPrices} 
-          onSelect={(v: string) => toggleFilterSelection('price', v, setSelectedPrices)}
-          visible={filterDropdown === 'price'}
-          onToggle={() => setFilterDropdown(filterDropdown === 'price' ? null : 'price')}
-        />
-        <FilterDropdown 
-          title="Rating" 
-          icon="star-outline"
-          options={ratingOptions} 
-          selected={selectedRatings} 
-          onSelect={(v: string) => toggleFilterSelection('rating', v, setSelectedRatings)}
-          visible={filterDropdown === 'rating'}
-          onToggle={() => setFilterDropdown(filterDropdown === 'rating' ? null : 'rating')}
-        />
-        <FilterDropdown 
-          title="Amenities" 
-          icon="options-outline"
-          options={amenityOptions} 
-          selected={selectedAmenities} 
-          onSelect={(v: string) => toggleFilterSelection('amenity', v, setSelectedAmenities)}
-          visible={filterDropdown === 'amenity'}
-          onToggle={() => setFilterDropdown(filterDropdown === 'amenity' ? null : 'amenity')}
-        />
-      </View>
-    </View>
-    
-    {/* Clear filters button */}
-    {(selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0) && (
-      <TouchableOpacity style={s.clearFiltersBtn} onPress={() => { setSelectedPrices([]); setSelectedRatings([]); setSelectedAmenities([]); }}>
-        <Ionicons name="close-circle" size={16} color={C.gold} />
-        <Text style={s.clearFiltersText}>Clear all filters</Text>
-      </TouchableOpacity>
-    )}
-    
-    <FlatList 
-      data={getFilteredItemsNew()} 
-      numColumns={2} 
-      keyExtractor={(item, i) => item._id || `item-${i}`} 
-      contentContainerStyle={{ padding: 16, paddingBottom: 100 }} 
-      columnWrapperStyle={{ justifyContent: 'space-between' }} 
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
-      renderItem={({ item }) => (
-        <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
-          <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
-          <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
-          <View style={s.exploreCardContent}>
-            <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
-            {(item.cuisine || item.category || item.type) && (
-              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
-            )}
-            {item.rating && (
-              <View style={s.exploreCardRating}>
-                <Ionicons name="star" size={12} color={C.gold} />
-                <Text style={s.exploreCardRatingText}>{item.rating}</Text>
-              </View>
-            )}
+        ListEmptyComponent={
+          <View style={s.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color={C.textMuted} />
+            <Text style={s.emptyTitle}>No Results</Text>
+            <Text style={s.emptySubtitle}>Try adjusting your filters</Text>
           </View>
-        </TouchableOpacity>
-      )}
-      ListEmptyComponent={
-        <View style={s.emptyContainer}>
-          <Ionicons name="search-outline" size={48} color={C.textMuted} />
-          <Text style={s.emptyTitle}>No Results</Text>
-          <Text style={s.emptySubtitle}>Try adjusting your filters</Text>
-        </View>
-      }
-    />
-  </View>
-);
+        }
+      />
+    </View>
+  );
 
   // ============================================
   // EVENTS TAB
   // ============================================
   const renderEventsTab = () => (
-    <FlatList data={events} keyExtractor={(item) => item._id || item.id} contentContainerStyle={{ padding: 20, paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
-      renderItem={({ item }) => (
-        <TouchableOpacity style={s.eventListCard} onPress={() => openDetail(item, 'event')}>
-          <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.eventListImage} />
-          <View style={s.eventListContent}>
-            <View style={s.eventListDate}><Text style={s.eventListDay}>{new Date(item.date).getDate()}</Text><Text style={s.eventListMonth}>{new Date(item.date).toLocaleString('en', { month: 'short' })}</Text></View>
-            <View style={s.eventListInfo}>
-              <Text style={s.eventListName} numberOfLines={2}>{item.name}</Text>
-              <Text style={s.eventListVenue}>{item.venue}</Text>
-              <View style={s.eventListFooter}>
-                {item.price ? <Text style={s.eventListPrice}>${item.price}</Text> : <Text style={s.eventListFree}>FREE</Text>}
-                <GoldBtn title="RSVP" onPress={() => openDetail(item, 'event')} />
+    <FlatList 
+      data={events} 
+      keyExtractor={(item) => item._id || item.id} 
+      contentContainerStyle={{ padding: 20, paddingBottom: 100 }} 
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+      renderItem={({ item }) => {
+        const isFixedEvent = item.isFixedEvent || item.name?.toLowerCase().includes('summit') || item.name?.toLowerCase().includes('gala');
+        return (
+          <TouchableOpacity style={s.eventListCard} onPress={() => openDetail(item, 'event')}>
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.eventListImage} />
+            <View style={s.eventListContent}>
+              <View style={s.eventListDate}>
+                <Text style={s.eventListDay}>{new Date(item.date).getDate()}</Text>
+                <Text style={s.eventListMonth}>{new Date(item.date).toLocaleString('en', { month: 'short' })}</Text>
+              </View>
+              <View style={s.eventListInfo}>
+                <Text style={s.eventListName} numberOfLines={2}>{item.name}</Text>
+                <Text style={s.eventListVenue}>{item.venue}</Text>
+                {isFixedEvent && (
+                  <View style={s.fixedEventBadge}>
+                    <Ionicons name="lock-closed" size={10} color={C.textMuted} />
+                    <Text style={s.fixedEventText}>Fixed Schedule</Text>
+                  </View>
+                )}
+                <View style={s.eventListFooter}>
+                  {item.price ? <Text style={s.eventListPrice}>${item.price}</Text> : <Text style={s.eventListFree}>FREE</Text>}
+                  <GoldBtn title="RSVP" onPress={() => openBookingModal(item, 'event', isFixedEvent)} />
+                </View>
               </View>
             </View>
-          </View>
-        </TouchableOpacity>
-      )}
+          </TouchableOpacity>
+        );
+      }}
       ListEmptyComponent={<View style={s.emptyContainer}><Ionicons name="calendar-outline" size={48} color={C.textMuted} /><Text style={s.emptyTitle}>No Events</Text></View>}
     />
   );
 
   // ============================================
-  // CONCIERGE TAB - Redesigned with Images
+  // CONCIERGE TAB
   // ============================================
   const handleConciergeServicePress = (service: any) => {
     if (!user) { 
@@ -1280,7 +1562,6 @@ const renderExploreTab = () => (
 
   const renderConciergeTab = () => (
     <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-      {/* Tab Selector */}
       <View style={s.conciergeTabRow}>
         <TouchableOpacity style={[s.conciergeTabBtn, conciergeTab === 'standard' && s.conciergeTabBtnActive]} onPress={() => setConciergeTab('standard')}>
           <Ionicons name="person" size={18} color={conciergeTab === 'standard' ? C.bg : C.textSec} />
@@ -1293,7 +1574,6 @@ const renderExploreTab = () => (
         </TouchableOpacity>
       </View>
       
-      {/* Header */}
       <View style={s.conciergeHeader}>
         <LinearGradient colors={conciergeTab === 'vip' && isInvestor ? getTierGradient() : G.gold} style={s.conciergeHeaderGrad}>
           <Ionicons name={conciergeTab === 'vip' ? 'diamond' : 'person'} size={28} color={C.bg} />
@@ -1324,7 +1604,6 @@ const renderExploreTab = () => (
         </>
       ) : (
         <>
-          {/* VIP Tier Info */}
           {isInvestor && user?.investorTier && (
             <View style={s.vipTierBanner}>
               <LinearGradient colors={getTierGradient()} style={s.vipTierBannerGrad}>
@@ -1379,7 +1658,6 @@ const renderExploreTab = () => (
             })}
           </View>
 
-          {/* Quick Contact */}
           <View style={s.vipContactSection}>
             <Text style={s.vipContactTitle}>Need Something Custom?</Text>
             <Text style={s.vipContactDesc}>Your dedicated concierge team is available 24/7</Text>
@@ -1411,28 +1689,54 @@ const renderExploreTab = () => (
       );
     }
     const tierInfo = TierBenefits[user.investorTier as string];
+    const isMember = user.accessLevel === 'member';
+    const canDeleteAccount = isMember && !isInvestor;
+    
     return (
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.profileHeader}>
-          <LinearGradient colors={getTierGradient()} style={s.profileAvatar}><Text style={s.profileAvatarText}>{user.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}</Text></LinearGradient>
+          {/* Profile Picture with upload restrictions */}
+          <ProfilePicture 
+            user={user} 
+            canUpload={user.accessLevel !== 'guest'}
+            onUpload={async (imageUri) => {
+              // Handle upload
+              try {
+                const response = await api.post('/upload/base64/profile', { image: imageUri });
+                // Update user profile
+              } catch (error) {
+                Alert.alert('Upload Failed', 'Could not upload profile picture.');
+              }
+            }}
+          />
           <Text style={s.profileName}>{user.name}</Text>
           <Text style={s.profileEmail}>{user.email}</Text>
           {user.investorTier && <View style={[s.tierBadge, { backgroundColor: tierInfo?.color + '30' }]}><Ionicons name="diamond" size={14} color={tierInfo?.color || C.gold} /><Text style={[s.tierBadgeText, { color: tierInfo?.color || C.gold }]}>{tierInfo?.name} Investor</Text></View>}
         </View>
+        
         {isInvestor && user.investorTier && <MOTACard tier={user.investorTier} user={user} />}
         {isInvestor && user.investorTier && <View style={{ paddingHorizontal: 20 }}><TierBenefitsCard tier={user.investorTier} /></View>}
         {isInvestor && user.investorTier && <PortfolioOverview user={user} />}
+        
+        {/* Favorites Section */}
+        {favorites.length > 0 && (
+          <FavoritesSection 
+            favorites={favorites} 
+            onViewAll={() => setCurrentScreen('favorites')}
+            onItemPress={(item, type) => openDetail(item, type)}
+          />
+        )}
+        
         <View style={s.profileMenu}>
           {[
             { icon: 'person-outline', label: 'Edit Profile', screen: 'editProfile' }, 
             { icon: 'notifications-outline', label: 'Notifications', screen: 'notifications', badge: notificationCount }, 
-            { icon: 'card-outline', label: 'Payment Methods', action: 'payment' },
             { icon: 'bookmark-outline', label: 'My Reservations', screen: 'reservations' }, 
             { icon: 'heart-outline', label: 'Favorites', screen: 'favorites' }, 
             { icon: 'settings-outline', label: 'Settings', screen: 'settings' }, 
             { icon: 'help-circle-outline', label: 'Help & Support', screen: 'help' }
           ].map((item, i) => (
-            <TouchableOpacity key={i} style={s.profileMenuItem} onPress={() => item.action === 'payment' ? setPaymentModalVisible(true) : setCurrentScreen(item.screen!)}>
+            <TouchableOpacity key={i} style={s.profileMenuItem} onPress={() => setCurrentScreen(item.screen!)}>
               <View style={s.profileMenuIcon}><Ionicons name={item.icon as any} size={22} color={C.gold} /></View>
               <Text style={s.profileMenuText}>{item.label}</Text>
               {item.badge && item.badge > 0 && <View style={s.notificationBadge}><Text style={s.notificationBadgeText}>{item.badge}</Text></View>}
@@ -1447,11 +1751,23 @@ const renderExploreTab = () => (
               <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
             </TouchableOpacity>
           )}
+          
+          {/* Account deletion - only for members, not guests or investors */}
+          {canDeleteAccount && (
+            <TouchableOpacity style={s.profileMenuItem} onPress={() => setAccountDeletionVisible(true)}>
+              <View style={[s.profileMenuIcon, { backgroundColor: 'rgba(248,113,113,0.1)' }]}>
+                <Ionicons name="trash-outline" size={22} color={C.error} />
+              </View>
+              <Text style={[s.profileMenuText, { color: C.error }]}>Delete Account</Text>
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
+        
         <TouchableOpacity style={s.logoutBtn} onPress={() => Alert.alert('Logout', 'Are you sure?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Logout', style: 'destructive', onPress: logout }])}>
           <Ionicons name="log-out-outline" size={20} color={C.error} /><Text style={s.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
-        <Text style={s.versionText}>MOTA v3.5.0</Text>
+        <Text style={s.versionText}>MOTA v4.0.0</Text>
       </ScrollView>
     );
   };
@@ -1472,6 +1788,7 @@ const renderExploreTab = () => (
           </TouchableOpacity>
         </View>
       </View>
+      
       <View style={{ flex: 1 }}>
         {activeTab === 0 && renderHomeTab()}
         {activeTab === 1 && renderExploreTab()}
@@ -1479,6 +1796,7 @@ const renderExploreTab = () => (
         {activeTab === 3 && renderConciergeTab()}
         {activeTab === 4 && renderProfileTab()}
       </View>
+      
       <LinearGradient colors={[C.bg, C.card]} style={[s.navBar, { paddingBottom: insets.bottom + 8 }]}>
         {tabs.map((tab, i) => (
           <TouchableOpacity key={i} style={s.navItem} onPress={() => setActiveTab(i)}>
@@ -1487,25 +1805,51 @@ const renderExploreTab = () => (
           </TouchableOpacity>
         ))}
       </LinearGradient>
-      <ServiceModal visible={!!serviceModal} service={serviceModal} onClose={() => setServiceModal(null)} onSubmit={() => Alert.alert('Request Submitted', 'Our concierge team will contact you shortly.')} />
+      
+      {/* Modals */}
       <VIPPromoModal visible={vipPromoVisible} onClose={() => setVipPromoVisible(false)} />
       <AIAssistantPopup visible={aiPopupVisible} onClose={() => setAiPopupVisible(false)} />
-      <PaymentMethodsModal 
-        visible={paymentModalVisible} 
-        onClose={() => setPaymentModalVisible(false)} 
-        onAddToWallet={(type: string) => setWalletModalVisible(true)}
-      />
-      <DigitalWalletModal 
-        visible={walletModalVisible} 
-        onClose={() => setWalletModalVisible(false)} 
-        walletType="apple"
-        user={user}
-      />
       <ConciergeServiceDetailModal 
         visible={!!conciergeServiceDetail} 
         service={conciergeServiceDetail} 
         onClose={() => setConciergeServiceDetail(null)}
         onBook={handleBookOption}
+      />
+      
+      {/* NEW: Booking Modal */}
+      <BookingModal
+        visible={bookingModalVisible}
+        item={bookingItem}
+        itemType={bookingItemType}
+        isFixedEvent={isFixedEventBooking}
+        onClose={() => {
+          setBookingModalVisible(false);
+          setBookingItem(null);
+        }}
+        onConfirm={handleBookingConfirm}
+        user={user}
+      />
+      
+      {/* NEW: Permissions Modal */}
+      <PermissionsModal
+        visible={permissionsModalVisible}
+        onGranted={handlePermissionsGranted}
+        onClose={() => {}} // Can't close without granting
+      />
+      
+      {/* NEW: Rating Modal */}
+      <RatingModal
+        visible={ratingModalVisible}
+        onClose={() => setRatingModalVisible(false)}
+        onSubmit={handleRatingSubmit}
+      />
+      
+      {/* NEW: Account Deletion Modal */}
+      <AccountDeletionModal
+        visible={accountDeletionVisible}
+        onClose={() => setAccountDeletionVisible(false)}
+        onDeactivate={() => handleAccountDeletion('deactivate')}
+        onDelete={() => handleAccountDeletion('delete')}
       />
     </LinearGradient>
   );
@@ -1537,12 +1881,14 @@ const s = StyleSheet.create({
   heroSubtitle: { fontSize: 11, color: C.gold, letterSpacing: 2, fontWeight: '600', marginBottom: 6 },
   heroTitle: { fontSize: 28, fontWeight: '800', color: C.text, marginBottom: 6 },
   heroDesc: { fontSize: 14, color: C.textSec, lineHeight: 20 },
+  heroExploreBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: 'rgba(212, 175, 55, 0.2)', borderRadius: 20, alignSelf: 'flex-start', gap: 6 },
+  heroExploreBtnText: { fontSize: 13, fontWeight: '600', color: C.gold },
   slideIndicators: { position: 'absolute', bottom: 20, alignSelf: 'center', flexDirection: 'row', gap: 8 },
   slideIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
   slideIndicatorActive: { backgroundColor: C.gold, width: 24 },
   searchSection: { paddingHorizontal: 20, paddingVertical: 16 },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 16, height: 50, borderWidth: 1, borderColor: C.cardLight },
-  searchInput: { flex: 1, fontSize: 15, color: C.text, marginLeft: 12 },
+  searchPlaceholder: { flex: 1, marginLeft: 12, fontSize: 15, color: C.textMuted },
   aiTag: { backgroundColor: C.gold, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   aiTagText: { fontSize: 10, fontWeight: '700', color: C.bg },
   quickCats: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 10, marginBottom: 20 },
@@ -1568,6 +1914,23 @@ const s = StyleSheet.create({
   filterChipActive: { backgroundColor: C.gold, borderColor: C.gold },
   filterChipText: { fontSize: 14, color: C.textSec, fontWeight: '600' },
   filterChipTextActive: { color: C.bg, fontWeight: '600' },
+  filterDropdownSection: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  filterByHeader: { fontSize: 13, fontWeight: '600', color: C.textSec, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  filterDropdownRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  filterDropdownContainer: { position: 'relative', zIndex: 100 },
+  filterDropdownBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.cardLight, gap: 4 },
+  filterDropdownBtnActive: { backgroundColor: C.gold, borderColor: C.gold },
+  filterDropdownBtnText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
+  filterDropdownBtnTextActive: { color: C.bg },
+  filterBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  filterBadgeText: { fontSize: 10, fontWeight: '700', color: C.bg },
+  filterDropdownMenu: { position: 'absolute', top: '100%', left: 0, marginTop: 4, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.cardLight, minWidth: 180, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, zIndex: 1000 },
+  filterDropdownItem: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 },
+  filterDropdownItemActive: { backgroundColor: C.cardLight },
+  filterDropdownItemText: { fontSize: 14, color: C.textSec },
+  filterDropdownItemTextActive: { color: C.text, fontWeight: '500' },
+  clearFiltersBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, gap: 6 },
+  clearFiltersText: { fontSize: 13, color: C.gold },
   exploreCard: { width: (width - 48) / 2, height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16, backgroundColor: C.card },
   exploreCardImage: { width: '100%', height: '100%', position: 'absolute' },
   exploreCardOverlay: { ...StyleSheet.absoluteFillObject },
@@ -1576,6 +1939,7 @@ const s = StyleSheet.create({
   exploreCardSub: { fontSize: 11, color: C.textSec },
   exploreCardRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   exploreCardRatingText: { fontSize: 11, color: C.text },
+  favoriteBtn: { position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
   eventListCard: { backgroundColor: C.card, borderRadius: 16, marginBottom: 16, overflow: 'hidden', flexDirection: 'row' },
   eventListImage: { width: 100, height: 120 },
   eventListContent: { flex: 1, padding: 14, flexDirection: 'row' },
@@ -1584,10 +1948,12 @@ const s = StyleSheet.create({
   eventListMonth: { fontSize: 12, color: C.textSec, textTransform: 'uppercase' },
   eventListInfo: { flex: 1 },
   eventListName: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
-  eventListVenue: { fontSize: 12, color: C.textSec, marginBottom: 8 },
-  eventListFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  eventListVenue: { fontSize: 12, color: C.textSec, marginBottom: 4 },
+  eventListFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
   eventListPrice: { fontSize: 16, fontWeight: '700', color: C.gold },
   eventListFree: { fontSize: 14, fontWeight: '600', color: C.success },
+  fixedEventBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+  fixedEventText: { fontSize: 10, color: C.textMuted },
   conciergeTabRow: { flexDirection: 'row', padding: 16, gap: 12 },
   conciergeTabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10, backgroundColor: C.card, gap: 8 },
   conciergeTabBtnActive: { backgroundColor: C.gold },
@@ -1599,29 +1965,43 @@ const s = StyleSheet.create({
   conciergeHeaderTitle: { fontSize: 18, fontWeight: '700', color: C.bg },
   conciergeHeaderSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
   conciergeSectionTitle: { fontSize: 18, fontWeight: '700', color: C.text, paddingHorizontal: 20, marginTop: 24, marginBottom: 16 },
-  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, justifyContent: 'space-between' },
-  serviceCard: { width: (width - 48) / 2, marginBottom: 16, marginHorizontal: 4 },
-  serviceCardGrad: { padding: 16, borderRadius: 16, alignItems: 'center' },
-  serviceIconWrap: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  serviceTitle: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
-  serviceDesc: { fontSize: 11, color: C.textSec, textAlign: 'center' },
-  luxurySection: { paddingHorizontal: 16, marginTop: 16 },
-  luxuryHeader: { borderRadius: 12, overflow: 'hidden' },
-  luxuryHeaderGrad: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
-  luxuryHeaderText: { flex: 1, fontSize: 16, fontWeight: '700', color: C.bg },
-  luxuryContent: { backgroundColor: C.card, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, marginTop: -8, paddingTop: 8 },
-  luxuryItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: C.cardLight },
-  luxuryItemInfo: { flex: 1, marginLeft: 14 },
-  luxuryItemTitle: { fontSize: 15, fontWeight: '600', color: C.text },
-  luxuryItemDesc: { fontSize: 12, color: C.textSec },
+  conciergeServicesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12, justifyContent: 'space-between' },
+  conciergeServiceCard: { width: '48%', aspectRatio: 0.9, borderRadius: 16, overflow: 'hidden', marginBottom: 4 },
+  conciergeServiceImage: { width: '100%', height: '100%', position: 'absolute' },
+  conciergeServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 14 },
+  conciergeServiceIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  conciergeServiceTitle: { fontSize: 16, fontWeight: '700', color: C.text },
+  conciergeServiceDesc: { fontSize: 11, color: C.textSec, marginTop: 2 },
+  vipTierBanner: { marginHorizontal: 20, marginBottom: 16, borderRadius: 12, overflow: 'hidden' },
+  vipTierBannerGrad: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  vipTierBannerTitle: { fontSize: 16, fontWeight: '700', color: C.bg },
+  vipTierBannerSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
+  vipServicesContainer: { paddingHorizontal: 20 },
+  vipServiceCard: { width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
+  vipServiceCardLocked: { opacity: 0.7 },
+  vipServiceImage: { width: '100%', height: '100%', position: 'absolute' },
+  vipServiceLockedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  vipServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 16 },
+  vipServiceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  vipServiceIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  vipServiceTierBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  vipServiceTierText: { fontSize: 11, fontWeight: '700' },
+  vipServiceTitle: { fontSize: 20, fontWeight: '700', color: C.text },
+  vipServiceDesc: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  vipServiceFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 6 },
+  vipServiceCta: { fontSize: 13, fontWeight: '600', color: C.gold },
+  vipContactSection: { margin: 20, padding: 20, backgroundColor: C.card, borderRadius: 16, alignItems: 'center' },
+  vipContactTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 6 },
+  vipContactDesc: { fontSize: 13, color: C.textSec, marginBottom: 16 },
+  vipContactBtn: { width: '100%' },
+  vipContactBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, gap: 10 },
+  vipContactBtnText: { fontSize: 15, fontWeight: '700', color: C.bg },
   profileGuest: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   profileGuestIcon: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   profileGuestTitle: { fontSize: 24, fontWeight: '700', color: C.text, marginBottom: 8 },
   profileGuestSub: { fontSize: 14, color: C.textSec, textAlign: 'center', lineHeight: 22 },
   profileGuestLink: { fontSize: 14, color: C.textSec },
   profileHeader: { alignItems: 'center', paddingVertical: 30 },
-  profileAvatar: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  profileAvatarText: { fontSize: 32, fontWeight: '700', color: C.bg },
   profileName: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 4 },
   profileEmail: { fontSize: 14, color: C.textSec },
   tierBadge: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, gap: 6 },
@@ -1668,6 +2048,15 @@ const s = StyleSheet.create({
   portfolioStat: { flex: 1, backgroundColor: C.card, padding: 16, borderRadius: 12, marginHorizontal: 4, alignItems: 'center' },
   portfolioStatLabel: { fontSize: 11, color: C.textMuted, marginBottom: 6 },
   portfolioStatValue: { fontSize: 18, fontWeight: '700', color: C.text },
+  netGainCard: { backgroundColor: C.card, borderRadius: 16, padding: 20, marginBottom: 24 },
+  netGainHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  netGainTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  netGainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  netGainLabel: { fontSize: 14, color: C.textSec },
+  netGainValue: { fontSize: 16, fontWeight: '600' },
+  netGainTotalRow: { borderTopWidth: 1, borderTopColor: C.cardLight, marginTop: 8, paddingTop: 16 },
+  netGainTotalLabel: { fontSize: 15, fontWeight: '700', color: C.text },
+  netGainTotalValue: { fontSize: 20, fontWeight: '700' },
   timelineTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 16 },
   timeline: { marginBottom: 24 },
   timelineItem: { flexDirection: 'row', marginBottom: 8 },
@@ -1713,16 +2102,10 @@ const s = StyleSheet.create({
   modalClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
   modalBody: { padding: 20 },
   modalFooter: { flexDirection: 'row', padding: 20, gap: 12, borderTopWidth: 1, borderTopColor: C.cardLight },
-  modalLabel: { fontSize: 13, fontWeight: '600', color: C.textMuted, marginBottom: 8, marginTop: 16 },
-  modalInput: { backgroundColor: C.cardLight, borderRadius: 10, padding: 14, color: C.text, fontSize: 15 },
-  modalTextarea: { height: 100, textAlignVertical: 'top' },
   modalCancelBtn: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: C.cardLight, alignItems: 'center' },
   modalCancelText: { fontSize: 15, fontWeight: '600', color: C.textSec },
   modalSubmitBtn: { flex: 1, padding: 14, borderRadius: 10, alignItems: 'center' },
   modalSubmitText: { fontSize: 15, fontWeight: '700', color: C.bg },
-  serviceOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  serviceOption: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, backgroundColor: C.cardLight, borderWidth: 1, borderColor: C.cardLight },
-  serviceOptionText: { fontSize: 13, color: C.text },
   vipPromoHeader: { alignItems: 'center', padding: 30 },
   vipPromoTitle: { fontSize: 24, fontWeight: '700', color: C.bg, marginTop: 12 },
   vipPromoSubtitle: { fontSize: 13, color: 'rgba(0,0,0,0.6)' },
@@ -1736,82 +2119,6 @@ const s = StyleSheet.create({
   vipTierBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   vipTierName: { fontSize: 13, fontWeight: '700', color: C.bg },
   vipTierAmount: { fontSize: 14, fontWeight: '600', color: C.textSec },
-  
-  // AI Assistant Popup Styles
-  aiPopupOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  aiPopupContent: { width: '100%', maxWidth: 380, borderRadius: 24, overflow: 'hidden' },
-  aiPopupGradient: { padding: 24 },
-  aiPopupClose: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
-  aiPopupHeader: { alignItems: 'center', marginBottom: 24, marginTop: 20 },
-  aiPopupIconWrap: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  aiPopupTitle: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 8 },
-  aiPopupSubtitle: { fontSize: 15, color: C.textSec },
-  aiUseCaseGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  aiUseCaseCard: { width: '48%', aspectRatio: 1, borderRadius: 16, overflow: 'hidden' },
-  aiUseCaseImage: { width: '100%', height: '100%', position: 'absolute' },
-  aiUseCaseOverlay: { flex: 1, justifyContent: 'flex-end', padding: 12 },
-  aiUseCaseIconWrap: { width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  aiUseCaseTitle: { fontSize: 14, fontWeight: '700', color: C.text },
-  aiUseCaseDesc: { fontSize: 11, color: C.textSec },
-  aiComingSoon: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, gap: 8 },
-  aiComingSoonText: { fontSize: 14, fontWeight: '600', color: C.gold },
-  
-  // Search placeholder style
-  searchPlaceholder: { flex: 1, marginLeft: 12, fontSize: 15, color: C.textMuted },
-  
-  // Filter Dropdown Styles
-  filterDropdownContainer: { position: 'relative', zIndex: 100 },
-  filterDropdownBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.cardLight, gap: 4 },
-  filterDropdownBtnActive: { backgroundColor: C.gold, borderColor: C.gold },
-  filterDropdownBtnText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
-  filterDropdownBtnTextActive: { color: C.bg },
-  filterBadge: { minWidth: 18, height: 18, borderRadius: 9, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
-  filterBadgeText: { fontSize: 10, fontWeight: '700', color: C.bg },
-  filterDropdownMenu: { position: 'absolute', top: '100%', left: 0, marginTop: 4, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.cardLight, minWidth: 180, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, zIndex: 1000 },
-  filterDropdownItem: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 },
-  filterDropdownItemActive: { backgroundColor: C.cardLight },
-  filterDropdownItemText: { fontSize: 14, color: C.textSec },
-  filterDropdownItemTextActive: { color: C.text, fontWeight: '500' },
-  clearFiltersBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, gap: 6 },
-  clearFiltersText: { fontSize: 13, color: C.gold },
-  
-  // Payment Modal Styles
-  paymentModalContent: { width: '100%', maxWidth: 400, backgroundColor: C.card, borderRadius: 20, maxHeight: '85%' },
-  paymentSectionTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12, marginTop: 8 },
-  paymentCard: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: C.cardLight, borderRadius: 12, marginBottom: 10 },
-  paymentCardIcon: { width: 48, height: 32, backgroundColor: '#fff', borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  paymentCardInfo: { flex: 1, marginLeft: 12 },
-  paymentCardType: { fontSize: 15, fontWeight: '600', color: C.text },
-  paymentCardExpiry: { fontSize: 12, color: C.textMuted },
-  defaultBadge: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: C.gold + '30', borderRadius: 4, marginRight: 8 },
-  defaultBadgeText: { fontSize: 10, fontWeight: '600', color: C.gold },
-  addPaymentBtn: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: C.cardLight, borderRadius: 12, marginTop: 8, gap: 12 },
-  addPaymentText: { fontSize: 15, fontWeight: '500', color: C.text },
-  walletDivider: { height: 1, backgroundColor: C.cardLight, marginVertical: 20 },
-  walletDesc: { fontSize: 13, color: C.textSec, lineHeight: 20, marginBottom: 16 },
-  walletBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: '#000', borderRadius: 12, gap: 10, marginBottom: 10 },
-  googleWalletBtn: { backgroundColor: '#4285F4' },
-  walletBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  
-  // Digital Wallet Modal Styles
-  walletModalContent: { width: '100%', maxWidth: 380, borderRadius: 24, overflow: 'hidden' },
-  walletModalGradient: { padding: 24, alignItems: 'center' },
-  walletModalClose: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
-  walletModalHeader: { alignItems: 'center', marginBottom: 24, marginTop: 20 },
-  walletModalTitle: { fontSize: 20, fontWeight: '700', color: '#fff', marginTop: 12 },
-  motaDigitalCard: { width: '100%', aspectRatio: 1.6, marginBottom: 24 },
-  motaDigitalCardGrad: { flex: 1, borderRadius: 16, padding: 20, justifyContent: 'space-between' },
-  motaDigitalCardLogo: { fontSize: 24, fontWeight: '800', color: C.bg, letterSpacing: 3 },
-  motaDigitalCardName: { fontSize: 16, fontWeight: '600', color: C.bg },
-  motaDigitalCardNumber: { fontSize: 18, fontWeight: '500', color: C.bg, letterSpacing: 2 },
-  motaDigitalCardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
-  motaDigitalCardType: { fontSize: 12, fontWeight: '700', color: C.bg },
-  motaDigitalCardValid: { fontSize: 12, color: C.bg },
-  walletModalDesc: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  walletModalBtn: { paddingVertical: 16, paddingHorizontal: 40, backgroundColor: '#fff', borderRadius: 12 },
-  walletModalBtnText: { fontSize: 16, fontWeight: '700', color: '#000' },
-  
-  // Concierge Service Detail Modal Styles
   conciergeDetailModal: { width: '100%', maxWidth: 400, backgroundColor: C.card, borderRadius: 24, maxHeight: '90%', overflow: 'hidden' },
   conciergeDetailImage: { width: '100%', height: 200 },
   conciergeDetailOverlay: { position: 'absolute', top: 0, left: 0, right: 0, height: 200 },
@@ -1830,84 +2137,45 @@ const s = StyleSheet.create({
   conciergeOptionMeta: { flexDirection: 'row', gap: 8, marginTop: 4 },
   conciergeOptionMetaText: { fontSize: 11, color: C.textSec },
   conciergeOptionPrice: { fontSize: 14, fontWeight: '700', color: C.gold, marginTop: 4 },
+  aiPopupOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  aiPopupContent: { width: '100%', maxWidth: 380, borderRadius: 24, overflow: 'hidden' },
+  aiPopupGradient: { padding: 24 },
+  aiPopupClose: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
+  aiPopupHeader: { alignItems: 'center', marginBottom: 24, marginTop: 20 },
+  aiPopupIconWrap: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  aiPopupTitle: { fontSize: 22, fontWeight: '700', color: C.text, marginBottom: 8 },
+  aiPopupSubtitle: { fontSize: 15, color: C.textSec },
+  aiUseCaseGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  aiUseCaseCard: { width: '48%', aspectRatio: 1, borderRadius: 16, overflow: 'hidden' },
+  aiUseCaseImage: { width: '100%', height: '100%', position: 'absolute' },
+  aiUseCaseOverlay: { flex: 1, justifyContent: 'flex-end', padding: 12 },
+  aiUseCaseIconWrap: { width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  aiUseCaseTitle: { fontSize: 14, fontWeight: '700', color: C.text },
+  aiUseCaseDesc: { fontSize: 11, color: C.textSec },
+  aiComingSoon: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, gap: 8 },
+  aiComingSoonText: { fontSize: 14, fontWeight: '600', color: C.gold },
   
-  // Concierge Services Grid (with images)
-  conciergeServicesGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12, justifyContent: 'space-between' },
-  conciergeServiceCard: { width: '48%', aspectRatio: 0.9, borderRadius: 16, overflow: 'hidden', marginBottom: 4 },
-  conciergeServiceImage: { width: '100%', height: '100%', position: 'absolute' },
-  conciergeServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 14 },
-  conciergeServiceIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  conciergeServiceTitle: { fontSize: 16, fontWeight: '700', color: C.text },
-  conciergeServiceDesc: { fontSize: 11, color: C.textSec, marginTop: 2 },
-  
-  // VIP Concierge Styles
-  vipTierBanner: { marginHorizontal: 20, marginBottom: 16, borderRadius: 12, overflow: 'hidden' },
-  vipTierBannerGrad: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  vipTierBannerTitle: { fontSize: 16, fontWeight: '700', color: C.bg },
-  vipTierBannerSub: { fontSize: 12, color: 'rgba(0,0,0,0.6)' },
-  vipServicesContainer: { paddingHorizontal: 20 },
-  vipServiceCard: { width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
-  vipServiceCardLocked: { opacity: 0.7 },
-  vipServiceImage: { width: '100%', height: '100%', position: 'absolute' },
-  vipServiceLockedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  vipServiceOverlay: { flex: 1, justifyContent: 'flex-end', padding: 16 },
-  vipServiceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  vipServiceIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  vipServiceTierBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  vipServiceTierText: { fontSize: 11, fontWeight: '700' },
-  vipServiceTitle: { fontSize: 20, fontWeight: '700', color: C.text },
-  vipServiceDesc: { fontSize: 13, color: C.textSec, marginTop: 2 },
-  vipServiceFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 6 },
-  vipServiceCta: { fontSize: 13, fontWeight: '600', color: C.gold },
-  vipContactSection: { margin: 20, padding: 20, backgroundColor: C.card, borderRadius: 16, alignItems: 'center' },
-  vipContactTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 6 },
-  vipContactDesc: { fontSize: 13, color: C.textSec, marginBottom: 16 },
-  vipContactBtn: { width: '100%' },
-  vipContactBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, gap: 10 },
-  vipContactBtnText: { fontSize: 15, fontWeight: '700', color: C.bg },
-
-
-  //filter section
-  filterDropdownSection: {
-  paddingHorizontal: 16,
-  paddingTop: 8,
-  paddingBottom: 4,
-},
-
-// ADD this new style for "Filter by" header:
-filterByHeader: {
-  fontSize: 13,
-  fontWeight: '600',
-  color: C.textSec,
-  marginBottom: 10,
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-},
-
-// UPDATE the filterDropdownRow style (remove filterByLabel):
-filterDropdownRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 8,
-},
-
-
-// styles for explore button
-  heroExploreBtn: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
-    borderRadius: 20,
-    alignSelf: 'flex-start' as const,
-    gap: 6,
-  },
-  heroExploreBtnText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#D4AF37', // C.gold
-  },
-
+  // Booking Modal Styles
+  bookingModalContent: { width: '100%', maxWidth: 420, backgroundColor: C.bg, borderRadius: 24, maxHeight: '95%', overflow: 'hidden' },
+  bookingModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 20, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  bookingModalTitle: { fontSize: 20, fontWeight: '700', color: C.text },
+  bookingModalSubtitle: { fontSize: 13, color: C.textMuted, marginTop: 4 },
+  bookingModalClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.cardLight, alignItems: 'center', justifyContent: 'center' },
+  bookingProgress: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 16 },
+  bookingProgressDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.cardLight },
+  bookingProgressDotActive: { backgroundColor: C.gold, width: 24 },
+  bookingModalBody: { padding: 20, maxHeight: 400 },
+  bookingModalFooter: { flexDirection: 'row', padding: 20, gap: 12, borderTopWidth: 1, borderTopColor: C.cardLight },
+  bookingBackBtn: { flex: 0.4, padding: 16, borderRadius: 12, backgroundColor: C.cardLight, alignItems: 'center' },
+  bookingBackText: { fontSize: 15, fontWeight: '600', color: C.textSec },
+  bookingNextBtn: { flex: 0.6 },
+  bookingNextBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, gap: 8 },
+  bookingNextText: { fontSize: 15, fontWeight: '700', color: C.bg },
+  bookingConfirmation: { alignItems: 'center' },
+  confirmationIcon: { marginBottom: 16 },
+  confirmationTitle: { fontSize: 20, fontWeight: '700', color: C.text, marginBottom: 20 },
+  confirmationCard: { width: '100%', backgroundColor: C.card, borderRadius: 16, padding: 16 },
+  confirmationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  confirmationLabel: { fontSize: 14, color: C.textMuted },
+  confirmationValue: { fontSize: 14, fontWeight: '600', color: C.text, textAlign: 'right', flex: 1, marginLeft: 20 },
 });

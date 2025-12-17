@@ -1,240 +1,274 @@
 /**
  * Reservation Routes
+ * Full booking flow with time slots and dietary restrictions
+ * NO auto-reserve - all bookings require confirmation
  */
 
 const express = require('express');
 const router = express.Router();
 const Reservation = require('../models/Reservation');
-const { auth, requireMember } = require('../middleware/auth');
+const TimeSlot = require('../models/TimeSlot');
+const User = require('../models/User');
+const { auth } = require('../middleware/auth');
 
-// Get user's reservations
-router.get('/my', auth, async (req, res) => {
-  try {
-    const { status, type } = req.query;
-    
-    const query = { user: req.user._id };
-    if (status) query.status = status;
-    if (type) query.type = type;
-    
-    const reservations = await Reservation.find(query)
-      .sort({ date: -1 });
-    
-    res.json(reservations);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reservations' });
+// Generate default time slots based on item type
+function generateDefaultSlots(itemType) {
+  switch (itemType) {
+    case 'restaurant':
+      return [
+        '11:30 AM', '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
+        '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM',
+      ];
+    case 'activity':
+      return [
+        '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+        '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
+      ];
+    case 'fleet':
+      return [
+        '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+        '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
+      ];
+    default:
+      return ['10:00 AM', '2:00 PM', '6:00 PM'];
   }
-});
+}
 
-// Get all reservations (admin)
-router.get('/', auth, async (req, res) => {
+// Get available time slots for a specific date
+router.get('/slots/:itemType/:itemId/:date', async (req, res) => {
   try {
-    const { status, type, date, page = 1, limit = 20 } = req.query;
+    const { itemType, itemId, date } = req.params;
+    const dateObj = new Date(date);
+    dateObj.setHours(0, 0, 0, 0);
     
-    const query = {};
-    if (status) query.status = status;
-    if (type) query.type = type;
-    if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      query.date = { $gte: startOfDay, $lte: endOfDay };
+    let slots = await TimeSlot.find({
+      itemType,
+      itemId,
+      date: dateObj,
+    }).sort({ time: 1 });
+    
+    if (slots.length === 0) {
+      const defaultSlots = generateDefaultSlots(itemType);
+      slots = defaultSlots.map(time => ({
+        time,
+        totalCapacity: 10,
+        bookedCount: 0,
+        isAvailable: true,
+        spotsLeft: 10,
+      }));
+    } else {
+      slots = slots.map(s => ({
+        time: s.time,
+        available: s.isSlotAvailable(),
+        spotsLeft: s.spotsLeft,
+        totalCapacity: s.totalCapacity,
+      }));
     }
     
-    const reservations = await Reservation.find(query)
-      .populate('user', 'name email phone')
-      .sort({ date: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    
-    const total = await Reservation.countDocuments(query);
-    
-    res.json({
-      reservations,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) },
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reservations' });
+    res.json({ slots });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 // Create reservation
-router.post('/', auth, requireMember, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
-    const { type, itemId, itemName, date, time, guests, specialRequests, dietaryRequirements, occasion, contactInfo } = req.body;
-    
-    // Validate required fields
-    if (!type || !itemName || !date) {
-      return res.status(400).json({ error: 'Missing required fields: type, itemName, and date are required' });
+    const {
+      itemType, itemId, itemName, date, time, guestCount,
+      occasion, bookingDetails, dietaryRestrictions,
+      isFixedEvent, amount, paymentMethod,
+    } = req.body;
+
+    if (!itemType || !itemId || !date || !time) {
+      return res.status(400).json({ error: 'Missing required booking information' });
     }
 
-    // Map type to model
-    const modelMap = {
-      lodging: 'Lodging',
-      restaurant: 'Restaurant',
-      activity: 'Activity',
-      nightlife: 'Nightlife',
-    };
-
-    if (!modelMap[type]) {
-      return res.status(400).json({ error: 'Invalid reservation type' });
+    if (!bookingDetails?.name || !bookingDetails?.email || !bookingDetails?.phone) {
+      return res.status(400).json({ error: 'Missing booking contact details' });
     }
 
-    // Parse date
-    const reservationDate = new Date(date);
-    if (isNaN(reservationDate.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format' });
+    // Check slot availability (skip for fixed events)
+    if (!isFixedEvent) {
+      const dateObj = new Date(date);
+      dateObj.setHours(0, 0, 0, 0);
+      
+      let slot = await TimeSlot.findOne({ itemType, itemId, date: dateObj, time });
+
+      if (slot && !slot.isSlotAvailable()) {
+        return res.status(400).json({ error: 'This time slot is no longer available' });
+      }
+
+      if (!slot) {
+        slot = new TimeSlot({
+          itemType, itemId, date: dateObj, time,
+          totalCapacity: 10, bookedCount: 1,
+        });
+      } else {
+        slot.bookedCount += 1;
+      }
+      await slot.save();
     }
-    
-    // Build reservation object
-    const reservationData = {
+
+    const reservation = new Reservation({
       user: req.user._id,
-      type,
-      itemName,
-      date: reservationDate,
-      time: time || 'TBD',
-      guests: parseInt(guests) || 2,
-      specialRequests: specialRequests || '',
-      dietaryRequirements: dietaryRequirements || '',
-      occasion: occasion || '',
-      status: 'confirmed',
-      confirmedAt: new Date(),
-    };
+      itemType, itemId, itemName,
+      date: new Date(date), time,
+      guestCount: guestCount || 1,
+      occasion, bookingDetails,
+      dietaryRestrictions: dietaryRestrictions || [],
+      isFixedEvent: isFixedEvent || false,
+      amount, paymentMethod,
+      status: 'pending',
+    });
 
-    // Only add itemId and itemModel if itemId is a valid ObjectId
-    const mongoose = require('mongoose');
-    if (itemId && mongoose.Types.ObjectId.isValid(itemId)) {
-      reservationData.itemId = itemId;
-      reservationData.itemModel = modelMap[type];
-    } else {
-      // Create a placeholder ObjectId if none provided
-      reservationData.itemId = new mongoose.Types.ObjectId();
-      reservationData.itemModel = modelMap[type];
+    await reservation.save();
+
+    // Update user's dietary restrictions if provided
+    if (dietaryRestrictions && dietaryRestrictions.length > 0) {
+      await User.findByIdAndUpdate(req.user._id, { dietaryRestrictions });
     }
 
-    const reservation = new Reservation(reservationData);
-    await reservation.save();
-    
     res.status(201).json({
       success: true,
       reservation,
-      message: `Your reservation at ${itemName} has been confirmed!`,
+      confirmationNumber: reservation.confirmationNumber,
     });
-  } catch (error) {
-    console.error('Reservation error:', error.message, error.stack);
-    res.status(500).json({ error: error.message || 'Failed to create reservation' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Get reservation by ID
+// Get user's reservations
+router.get('/my', auth, async (req, res) => {
+  try {
+    const { status, upcoming } = req.query;
+    const query = { user: req.user._id };
+    
+    if (status) query.status = status;
+    if (upcoming === 'true') {
+      query.date = { $gte: new Date() };
+      query.status = { $in: ['pending', 'confirmed'] };
+    }
+
+    const reservations = await Reservation.find(query)
+      .sort({ date: upcoming === 'true' ? 1 : -1 })
+      .populate('itemId');
+
+    res.json({ reservations });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single reservation
 router.get('/:id', auth, async (req, res) => {
   try {
-    const reservation = await Reservation.findById(req.params.id)
-      .populate('user', 'name email phone');
-    
-    if (!reservation) {
-      return res.status(404).json({ error: 'Reservation not found' });
-    }
-    
-    // Check ownership
-    if (reservation.user._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    
-    res.json(reservation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reservation' });
-  }
-});
+    const reservation = await Reservation.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    }).populate('itemId');
 
-// Get by confirmation number
-router.get('/confirm/:confirmationNumber', async (req, res) => {
-  try {
-    const reservation = await Reservation.findOne({ 
-      confirmationNumber: req.params.confirmationNumber 
-    });
-    
     if (!reservation) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
-    
-    res.json({
-      confirmationNumber: reservation.confirmationNumber,
-      itemName: reservation.itemName,
-      type: reservation.type,
-      date: reservation.date,
-      time: reservation.time,
-      guests: reservation.guests,
-      status: reservation.status,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reservation' });
-  }
-});
-
-// Update reservation
-router.put('/:id', auth, async (req, res) => {
-  try {
-    const reservation = await Reservation.findById(req.params.id);
-    
-    if (!reservation) {
-      return res.status(404).json({ error: 'Reservation not found' });
-    }
-    
-    const updates = ['date', 'time', 'guests', 'specialRequests'];
-    updates.forEach(field => {
-      if (req.body[field] !== undefined) {
-        reservation[field] = req.body[field];
-      }
-    });
-    
-    await reservation.save();
-    
-    res.json(reservation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update reservation' });
+    res.json({ reservation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 // Cancel reservation
-router.put('/:id/cancel', auth, async (req, res) => {
+router.post('/:id/cancel', auth, async (req, res) => {
   try {
-    const reservation = await Reservation.findById(req.params.id);
+    const { reason } = req.body;
     
+    const reservation = await Reservation.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+      status: { $in: ['pending', 'confirmed'] },
+    });
+
     if (!reservation) {
-      return res.status(404).json({ error: 'Reservation not found' });
+      return res.status(404).json({ error: 'Reservation not found or cannot be cancelled' });
     }
-    
+
     reservation.status = 'cancelled';
     reservation.cancelledAt = new Date();
-    reservation.cancellationReason = req.body.reason;
-    
+    reservation.cancellationReason = reason;
     await reservation.save();
-    
-    res.json({ success: true, message: 'Reservation cancelled' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to cancel reservation' });
+
+    // Free up the time slot
+    if (!reservation.isFixedEvent) {
+      await TimeSlot.findOneAndUpdate(
+        { itemType: reservation.itemType, itemId: reservation.itemId, date: reservation.date, time: reservation.time },
+        { $inc: { bookedCount: -1 } }
+      );
+    }
+
+    res.json({ success: true, reservation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Update status (admin)
-router.put('/:id/status', auth, async (req, res) => {
+// ============================================
+// ADMIN ROUTES
+// ============================================
+
+router.get('/admin/all', auth, async (req, res) => {
   try {
-    const { status, adminNotes } = req.body;
+    const { status, itemType, date, page = 1, limit = 50 } = req.query;
+    const query = {};
     
-    const reservation = await Reservation.findByIdAndUpdate(
-      req.params.id,
-      { status, adminNotes },
-      { new: true }
-    );
+    if (status) query.status = status;
+    if (itemType) query.itemType = itemType;
+    if (date) {
+      const dateObj = new Date(date);
+      query.date = {
+        $gte: new Date(dateObj.setHours(0, 0, 0, 0)),
+        $lte: new Date(dateObj.setHours(23, 59, 59, 999)),
+      };
+    }
+
+    const reservations = await Reservation.find(query)
+      .sort({ date: -1, time: 1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate('user', 'name email phone accessLevel investorTier')
+      .populate('itemId');
+
+    const total = await Reservation.countDocuments(query);
+
+    res.json({
+      reservations,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/admin/:id/status', auth, async (req, res) => {
+  try {
+    const { status, venueNotes } = req.body;
+    const updateData = { status, venueNotes };
     
+    if (status === 'confirmed') {
+      updateData.confirmedAt = new Date();
+      updateData.confirmedBy = req.user._id;
+    }
+    
+    const reservation = await Reservation.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .populate('user', 'name email');
+
     if (!reservation) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
-    
-    res.json(reservation);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update status' });
+
+    res.json({ success: true, reservation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

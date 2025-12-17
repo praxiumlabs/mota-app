@@ -1,6 +1,6 @@
 /**
  * Reservation Model
- * Handles all booking types: lodging, dining, activities
+ * Full booking flow with dietary restrictions
  */
 
 const mongoose = require('mongoose');
@@ -11,13 +11,13 @@ const ReservationSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  // Reservation type
-  type: {
+  
+  // Item being booked
+  itemType: {
     type: String,
-    enum: ['lodging', 'restaurant', 'activity', 'nightlife'],
+    enum: ['restaurant', 'lodging', 'activity', 'event', 'fleet'],
     required: true,
   },
-  // Reference to the booked item
   itemId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -25,67 +25,115 @@ const ReservationSchema = new mongoose.Schema({
   },
   itemModel: {
     type: String,
-    enum: ['Lodging', 'Restaurant', 'Activity', 'Nightlife'],
-    required: true,
+    enum: ['Restaurant', 'Lodging', 'Activity', 'Event', 'ExoticFleet'],
   },
-  itemName: {
-    type: String,
-    required: true,
+  itemName: String,
+  
+  // Booking Details (Name, Email, Phone, Special Requests)
+  bookingDetails: {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    specialRequests: String,
   },
-  // Booking details
+  
+  // Date & Time
   date: {
     type: Date,
     required: true,
   },
-  endDate: Date, // For lodging
-  time: String,
-  guests: {
-    type: Number,
+  time: {
+    type: String,
     required: true,
-    min: 1,
   },
+  endTime: String,
+  
+  // Guests
+  guestCount: {
+    type: Number,
+    default: 1,
+  },
+  
+  // Occasion
+  occasion: {
+    type: String,
+    enum: ['casual', 'birthday', 'anniversary', 'business', 'celebration', 'date', 'other', null],
+  },
+  
+  // Dietary Restrictions (transmitted to venue)
+  dietaryRestrictions: [{
+    type: String,
+  }],
+  
+  // Fixed Event Flag (read-only date/time for events like Investor Summit)
+  isFixedEvent: {
+    type: Boolean,
+    default: false,
+  },
+  
   // Status
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'no-show'],
+    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'],
     default: 'pending',
   },
-  // Additional info
-  specialRequests: String,
-  dietaryRequirements: String,
-  occasion: String,
-  // Pricing
-  totalPrice: Number,
-  discount: Number,
-  discountCode: String,
+  
   // Confirmation
   confirmationNumber: {
     type: String,
     unique: true,
   },
   confirmedAt: Date,
+  confirmedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  
   // Cancellation
   cancelledAt: Date,
   cancellationReason: String,
-  // Notes
-  adminNotes: String,
-}, {
-  timestamps: true,
-});
+  
+  // Payment
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'refunded', 'failed'],
+    default: 'pending',
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['card', 'bank', 'credit_line', 'equity'],
+  },
+  amount: Number,
+  transactionId: String,
+  
+  // Notes for venue
+  venueNotes: String,
+  
+}, { timestamps: true });
 
-// Generate confirmation number before save
+// Generate confirmation number
 ReservationSchema.pre('save', function(next) {
   if (!this.confirmationNumber) {
-    const prefix = this.type.substring(0, 3).toUpperCase();
+    const prefix = this.itemType.substring(0, 3).toUpperCase();
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     this.confirmationNumber = `${prefix}-${timestamp}-${random}`;
   }
+  
+  const modelMap = {
+    restaurant: 'Restaurant',
+    lodging: 'Lodging',
+    activity: 'Activity',
+    event: 'Event',
+    fleet: 'ExoticFleet',
+  };
+  this.itemModel = modelMap[this.itemType];
+  
   next();
 });
 
 ReservationSchema.index({ user: 1, status: 1 });
-ReservationSchema.index({ date: 1, type: 1 });
+ReservationSchema.index({ itemType: 1, itemId: 1, date: 1 });
 ReservationSchema.index({ confirmationNumber: 1 });
 
 module.exports = mongoose.model('Reservation', ReservationSchema);
