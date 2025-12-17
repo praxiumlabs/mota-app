@@ -28,6 +28,7 @@ import FavoritesScreen from './screens/FavoritesScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import HelpScreen from './screens/HelpScreen';
 import api from './services/api';
+import { TouchableWithoutFeedback } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -139,12 +140,59 @@ const ConciergeServices = {
 // HERO SLIDES
 // ============================================
 const DefaultSlides = [
-  { id: 1, title: 'Luxury Retreats', subtitle: 'WHERE PARADISE MEETS PERFECTION', description: 'World-class accommodations with breathtaking Caribbean views', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80' },
-  { id: 2, title: 'World-Class Gaming', subtitle: 'THE ULTIMATE ENTERTAINMENT', description: 'Premier casino experience with exclusive VIP lounges', imageUrl: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&q=80' },
-  { id: 3, title: 'Outdoor Adventures', subtitle: 'EXPLORE THE UNTAMED BEAUTY', description: 'From pristine beaches to lush jungles, discover Belize', imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80' },
-  { id: 4, title: 'Culinary Excellence', subtitle: 'A FEAST FOR THE SENSES', description: 'Exquisite cuisines crafted by world-renowned chefs', imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80' },
-  { id: 5, title: 'Vibrant Nightlife', subtitle: 'WHERE THE NIGHT COMES ALIVE', description: 'Exclusive clubs, lounges, and entertainment venues', imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&q=80' },
+  { 
+    id: 1, 
+    title: 'Luxury Retreats', 
+    subtitle: 'WHERE PARADISE MEETS PERFECTION', 
+    description: 'World-class accommodations with breathtaking Caribbean views', 
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80',
+    // Deep linking configuration
+    linkType: 'tab',        // 'tab' | 'screen' | 'external'
+    linkTarget: 'Lodging',  // Category name for Explore tab, or screen name, or URL
+    linkTab: 1,             // Tab index (0=Home, 1=Explore, 2=Events, 3=Concierge, 4=Profile)
+  },
+  { 
+    id: 2, 
+    title: 'World-Class Gaming', 
+    subtitle: 'THE ULTIMATE ENTERTAINMENT', 
+    description: 'Premier casino experience with exclusive VIP lounges', 
+    imageUrl: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&q=80',
+    linkType: 'tab',
+    linkTarget: 'Nightlife',
+    linkTab: 1,
+  },
+  { 
+    id: 3, 
+    title: 'Adventure Awaits', 
+    subtitle: 'EXPLORE THE UNTAMED BEAUTY', 
+    description: 'From pristine beaches to lush jungles, discover Belize', 
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80',
+    linkType: 'tab',
+    linkTarget: 'Experiences',
+    linkTab: 1,
+  },
+  { 
+    id: 4, 
+    title: 'Exquisite Dining', 
+    subtitle: 'A FEAST FOR THE SENSES', 
+    description: 'Exquisite cuisines crafted by world-renowned chefs', 
+    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+    linkType: 'tab',
+    linkTarget: 'Eateries',
+    linkTab: 1,
+  },
+  { 
+    id: 5, 
+    title: 'Unforgettable Events', 
+    subtitle: 'WHERE THE NIGHT COMES ALIVE', 
+    description: 'Exclusive clubs, lounges, and entertainment venues', 
+    imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&q=80',
+    linkType: 'tab',
+    linkTarget: null,       // null means go directly to Events tab
+    linkTab: 2,             // Events tab
+  },
 ];
+
 
 // ============================================
 // INVESTOR TIER BENEFITS
@@ -190,6 +238,43 @@ const TierBenefits: Record<string, any> = {
   }
 };
 
+
+// ============================================
+// ADD: Slide navigation handler function
+// ============================================
+const handleSlidePress = (slide: any) => {
+  // Handle different link types
+  if (!slide.linkType) return; // No link configured
+  
+  switch (slide.linkType) {
+    case 'tab':
+      // Navigate to specific tab
+      setActiveTab(slide.linkTab);
+      // If there's a category target, set it for Explore tab
+      if (slide.linkTarget && slide.linkTab === 1) {
+        setExploreCategory(slide.linkTarget);
+      }
+      break;
+      
+    case 'screen':
+      // Navigate to a specific screen
+      if (slide.linkTarget) {
+        setCurrentScreen(slide.linkTarget);
+      }
+      break;
+      
+    case 'external':
+      // Open external URL
+      if (slide.linkTarget) {
+        // Linking.openURL(slide.linkTarget);
+        Alert.alert('External Link', `Opening: ${slide.linkTarget}`);
+      }
+      break;
+      
+    default:
+      break;
+  }
+};
 // ============================================
 // INVESTMENT TIMELINE
 // ============================================
@@ -436,104 +521,113 @@ const PaymentMethodsModal = ({ visible, onClose, onAddToWallet }: any) => {
   
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={s.modalOverlay}>
-        <View style={s.paymentModalContent}>
-          <View style={s.modalHeader}>
-            <Text style={s.modalTitle}>Payment Methods</Text>
-            <TouchableOpacity onPress={onClose} style={s.modalClose}>
-              <Ionicons name="close" size={24} color={C.text} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
-            <Text style={s.paymentSectionTitle}>Your Cards</Text>
-            {cards.map((card) => (
-              <View key={card.id} style={s.paymentCard}>
-                <View style={s.paymentCardIcon}>
-                  <Ionicons name="card" size={24} color={card.type === 'visa' ? '#1A1F71' : '#EB001B'} />
-                </View>
-                <View style={s.paymentCardInfo}>
-                  <Text style={s.paymentCardType}>{card.type.toUpperCase()} •••• {card.last4}</Text>
-                  <Text style={s.paymentCardExpiry}>Expires {card.expiry}</Text>
-                </View>
-                {card.isDefault && <View style={s.defaultBadge}><Text style={s.defaultBadgeText}>Default</Text></View>}
-                <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={s.paymentModalContent}>
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>Payment Methods</Text>
+                <TouchableOpacity onPress={onClose} style={s.modalClose}>
+                  <Ionicons name="close" size={24} color={C.text} />
+                </TouchableOpacity>
               </View>
-            ))}
-            
-            <TouchableOpacity style={s.addPaymentBtn}>
-              <Ionicons name="add-circle-outline" size={24} color={C.gold} />
-              <Text style={s.addPaymentText}>Add New Card</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={s.addPaymentBtn}>
-              <Ionicons name="business-outline" size={24} color={C.gold} />
-              <Text style={s.addPaymentText}>Link Bank Account</Text>
-            </TouchableOpacity>
-            
-            <View style={s.walletDivider} />
-            
-            <Text style={s.paymentSectionTitle}>MOTA Digital Card</Text>
-            <Text style={s.walletDesc}>Add your MOTA card to Apple Pay or Google Pay for seamless payments throughout the resort.</Text>
-            
-            <TouchableOpacity style={s.walletBtn} onPress={() => { onClose(); onAddToWallet('apple'); }}>
-              <Ionicons name="logo-apple" size={24} color="#fff" />
-              <Text style={s.walletBtnText}>Add to Apple Wallet</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={[s.walletBtn, s.googleWalletBtn]} onPress={() => { onClose(); onAddToWallet('google'); }}>
-              <Ionicons name="logo-google" size={24} color="#fff" />
-              <Text style={s.walletBtnText}>Add to Google Pay</Text>
-            </TouchableOpacity>
-          </ScrollView>
+              
+              <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+                <Text style={s.paymentSectionTitle}>Your Cards</Text>
+                {cards.map((card) => (
+                  <View key={card.id} style={s.paymentCard}>
+                    <View style={s.paymentCardIcon}>
+                      <Ionicons name="card" size={24} color={card.type === 'visa' ? '#1A1F71' : '#EB001B'} />
+                    </View>
+                    <View style={s.paymentCardInfo}>
+                      <Text style={s.paymentCardType}>{card.type.toUpperCase()} •••• {card.last4}</Text>
+                      <Text style={s.paymentCardExpiry}>Expires {card.expiry}</Text>
+                    </View>
+                    {card.isDefault && <View style={s.defaultBadge}><Text style={s.defaultBadgeText}>Default</Text></View>}
+                    <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+                  </View>
+                ))}
+                
+                <TouchableOpacity style={s.addPaymentBtn}>
+                  <Ionicons name="add-circle-outline" size={24} color={C.gold} />
+                  <Text style={s.addPaymentText}>Add New Card</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={s.addPaymentBtn}>
+                  <Ionicons name="business-outline" size={24} color={C.gold} />
+                  <Text style={s.addPaymentText}>Link Bank Account</Text>
+                </TouchableOpacity>
+                
+                <View style={s.walletDivider} />
+                
+                <Text style={s.paymentSectionTitle}>MOTA Digital Card</Text>
+                <Text style={s.walletDesc}>Add your MOTA card to Apple Pay or Google Pay for seamless payments throughout the resort.</Text>
+                
+                <TouchableOpacity style={s.walletBtn} onPress={() => { onClose(); onAddToWallet('apple'); }}>
+                  <Ionicons name="logo-apple" size={24} color="#fff" />
+                  <Text style={s.walletBtnText}>Add to Apple Wallet</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={[s.walletBtn, s.googleWalletBtn]} onPress={() => { onClose(); onAddToWallet('google'); }}>
+                  <Ionicons name="logo-google" size={24} color="#fff" />
+                  <Text style={s.walletBtnText}>Add to Google Pay</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
+
 
 // ============================================
 // DIGITAL WALLET MODAL
 // ============================================
 const DigitalWalletModal = ({ visible, onClose, walletType, user }: any) => (
   <Modal visible={visible} transparent animationType="slide">
-    <View style={s.modalOverlay}>
-      <View style={s.walletModalContent}>
-        <LinearGradient colors={walletType === 'apple' ? ['#1a1a1a', '#2d2d2d'] : ['#4285F4', '#34A853']} style={s.walletModalGradient}>
-          <TouchableOpacity style={s.walletModalClose} onPress={onClose}>
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-          
-          <View style={s.walletModalHeader}>
-            <Ionicons name={walletType === 'apple' ? 'logo-apple' : 'logo-google'} size={40} color="#fff" />
-            <Text style={s.walletModalTitle}>
-              {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}
-            </Text>
-          </View>
-          
-          <View style={s.motaDigitalCard}>
-            <LinearGradient colors={G.gold} style={s.motaDigitalCardGrad}>
-              <Text style={s.motaDigitalCardLogo}>MOTA</Text>
-              <Text style={s.motaDigitalCardName}>{user?.name || 'Member'}</Text>
-              <Text style={s.motaDigitalCardNumber}>•••• •••• •••• {Math.floor(1000 + Math.random() * 9000)}</Text>
-              <View style={s.motaDigitalCardFooter}>
-                <Text style={s.motaDigitalCardType}>{user?.investorTier?.toUpperCase() || 'MEMBER'} CARD</Text>
-                <Text style={s.motaDigitalCardValid}>VALID THRU 12/29</Text>
+    <TouchableWithoutFeedback onPress={onClose}>
+      <View style={s.modalOverlay}>
+        <TouchableWithoutFeedback onPress={() => {}}>
+          <View style={s.walletModalContent}>
+            <LinearGradient colors={walletType === 'apple' ? ['#1a1a1a', '#2d2d2d'] : ['#4285F4', '#34A853']} style={s.walletModalGradient}>
+              <TouchableOpacity style={s.walletModalClose} onPress={onClose}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+              
+              <View style={s.walletModalHeader}>
+                <Ionicons name={walletType === 'apple' ? 'logo-apple' : 'logo-google'} size={40} color="#fff" />
+                <Text style={s.walletModalTitle}>
+                  {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}
+                </Text>
               </View>
+              
+              <View style={s.motaDigitalCard}>
+                <LinearGradient colors={G.gold} style={s.motaDigitalCardGrad}>
+                  <Text style={s.motaDigitalCardLogo}>MOTA</Text>
+                  <Text style={s.motaDigitalCardName}>{user?.name || 'Member'}</Text>
+                  <Text style={s.motaDigitalCardNumber}>•••• •••• •••• {Math.floor(1000 + Math.random() * 9000)}</Text>
+                  <View style={s.motaDigitalCardFooter}>
+                    <Text style={s.motaDigitalCardType}>{user?.investorTier?.toUpperCase() || 'MEMBER'} CARD</Text>
+                    <Text style={s.motaDigitalCardValid}>VALID THRU 12/29</Text>
+                  </View>
+                </LinearGradient>
+              </View>
+              
+              <Text style={s.walletModalDesc}>
+                Your MOTA card will be added to {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}. 
+                Use it for contactless payments at all MOTA venues.
+              </Text>
+              
+              <TouchableOpacity style={s.walletModalBtn} onPress={() => { Alert.alert('Success!', `MOTA Card added to ${walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}!`); onClose(); }}>
+                <Text style={s.walletModalBtnText}>Add Card</Text>
+              </TouchableOpacity>
             </LinearGradient>
           </View>
-          
-          <Text style={s.walletModalDesc}>
-            Your MOTA card will be added to {walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}. 
-            Use it for contactless payments at all MOTA venues.
-          </Text>
-          
-          <TouchableOpacity style={s.walletModalBtn} onPress={() => { Alert.alert('Success!', `MOTA Card added to ${walletType === 'apple' ? 'Apple Wallet' : 'Google Pay'}!`); onClose(); }}>
-            <Text style={s.walletModalBtnText}>Add Card</Text>
-          </TouchableOpacity>
-        </LinearGradient>
+        </TouchableWithoutFeedback>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   </Modal>
 );
 
@@ -545,44 +639,48 @@ const ConciergeServiceDetailModal = ({ visible, service, onClose, onBook }: any)
   
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={s.modalOverlay}>
-        <View style={s.conciergeDetailModal}>
-          <Image source={{ uri: service.image }} style={s.conciergeDetailImage} />
-          <LinearGradient colors={['transparent', C.bg]} style={s.conciergeDetailOverlay} />
-          
-          <TouchableOpacity style={s.conciergeDetailClose} onPress={onClose}>
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-          
-          <View style={s.conciergeDetailContent}>
-            <View style={[s.conciergeDetailIconWrap, { backgroundColor: service.color + '30' }]}>
-              <Ionicons name={service.icon} size={28} color={service.color} />
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={s.conciergeDetailModal}>
+              <Image source={{ uri: service.image }} style={s.conciergeDetailImage} />
+              <LinearGradient colors={['transparent', C.bg]} style={s.conciergeDetailOverlay} />
+              
+              <TouchableOpacity style={s.conciergeDetailClose} onPress={onClose}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+              
+              <View style={s.conciergeDetailContent}>
+                <View style={[s.conciergeDetailIconWrap, { backgroundColor: service.color + '30' }]}>
+                  <Ionicons name={service.icon} size={28} color={service.color} />
+                </View>
+                <Text style={s.conciergeDetailTitle}>{service.title}</Text>
+                <Text style={s.conciergeDetailDesc}>{service.desc}</Text>
+                
+                <Text style={s.conciergeDetailSectionTitle}>Available Options</Text>
+                <ScrollView style={s.conciergeDetailOptions} showsVerticalScrollIndicator={false}>
+                  {service.options?.map((option: any, index: number) => (
+                    <TouchableOpacity key={index} style={s.conciergeOptionCard} onPress={() => { onBook(option); onClose(); }}>
+                      <Image source={{ uri: option.image }} style={s.conciergeOptionImage} />
+                      <View style={s.conciergeOptionInfo}>
+                        <Text style={s.conciergeOptionName}>{option.name}</Text>
+                        <Text style={s.conciergeOptionType}>{option.type}</Text>
+                        <View style={s.conciergeOptionMeta}>
+                          {option.duration && <Text style={s.conciergeOptionMetaText}>{option.duration}</Text>}
+                          {option.guests && <Text style={s.conciergeOptionMetaText}>{option.guests}</Text>}
+                          {option.beds && <Text style={s.conciergeOptionMetaText}>{option.beds}</Text>}
+                        </View>
+                        <Text style={s.conciergeOptionPrice}>{option.price}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={C.gold} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
-            <Text style={s.conciergeDetailTitle}>{service.title}</Text>
-            <Text style={s.conciergeDetailDesc}>{service.desc}</Text>
-            
-            <Text style={s.conciergeDetailSectionTitle}>Available Options</Text>
-            <ScrollView style={s.conciergeDetailOptions} showsVerticalScrollIndicator={false}>
-              {service.options?.map((option: any, index: number) => (
-                <TouchableOpacity key={index} style={s.conciergeOptionCard} onPress={() => { onBook(option); onClose(); }}>
-                  <Image source={{ uri: option.image }} style={s.conciergeOptionImage} />
-                  <View style={s.conciergeOptionInfo}>
-                    <Text style={s.conciergeOptionName}>{option.name}</Text>
-                    <Text style={s.conciergeOptionType}>{option.type}</Text>
-                    <View style={s.conciergeOptionMeta}>
-                      {option.duration && <Text style={s.conciergeOptionMetaText}>{option.duration}</Text>}
-                      {option.guests && <Text style={s.conciergeOptionMetaText}>{option.guests}</Text>}
-                      {option.beds && <Text style={s.conciergeOptionMetaText}>{option.beds}</Text>}
-                    </View>
-                    <Text style={s.conciergeOptionPrice}>{option.price}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={C.gold} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -637,76 +735,105 @@ const ServiceModal = ({ visible, service, onClose, onSubmit }: any) => {
     'Spa & Wellness': ['Couples Massage', 'Day Package', 'Private Suite', 'Wellness Retreat'],
   };
   const options = serviceOptions[service?.title] || [];
+  
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={s.modalOverlay}>
-        <View style={s.modalContent}>
-          <View style={s.modalHeader}>
-            <Text style={s.modalTitle}>{service?.title || 'Service'} Request</Text>
-            <TouchableOpacity onPress={onClose} style={s.modalClose}><Ionicons name="close" size={24} color={C.text} /></TouchableOpacity>
-          </View>
-          <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
-            <Text style={s.modalLabel}>Select Service Type</Text>
-            <View style={s.serviceOptions}>
-              {options.map((opt: string, i: number) => (
-                <TouchableOpacity key={i} style={s.serviceOption}><Text style={s.serviceOptionText}>{opt}</Text></TouchableOpacity>
-              ))}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={s.modalContent}>
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>{service?.title || 'Service'} Request</Text>
+                <TouchableOpacity onPress={onClose} style={s.modalClose}>
+                  <Ionicons name="close" size={24} color={C.text} />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+                <Text style={s.modalLabel}>Select Service Type</Text>
+                <View style={s.serviceOptions}>
+                  {options.map((opt: string, i: number) => (
+                    <TouchableOpacity key={i} style={s.serviceOption}>
+                      <Text style={s.serviceOptionText}>{opt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={s.modalLabel}>Preferred Date</Text>
+                <TextInput style={s.modalInput} placeholder="Select date" placeholderTextColor={C.textMuted} />
+                <Text style={s.modalLabel}>Preferred Time</Text>
+                <TextInput style={s.modalInput} placeholder="Select time" placeholderTextColor={C.textMuted} />
+                <Text style={s.modalLabel}>Number of Guests</Text>
+                <TextInput style={s.modalInput} placeholder="2" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
+                <Text style={s.modalLabel}>Special Requests</Text>
+                <TextInput style={[s.modalInput, s.modalTextarea]} placeholder="Any special requirements..." placeholderTextColor={C.textMuted} multiline value={notes} onChangeText={setNotes} />
+              </ScrollView>
+              <View style={s.modalFooter}>
+                <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}>
+                  <Text style={s.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { onSubmit({ notes }); onClose(); }}>
+                  <LinearGradient colors={G.gold} style={s.modalSubmitBtn}>
+                    <Text style={s.modalSubmitText}>Submit Request</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </View>
-            <Text style={s.modalLabel}>Preferred Date</Text>
-            <TextInput style={s.modalInput} placeholder="Select date" placeholderTextColor={C.textMuted} />
-            <Text style={s.modalLabel}>Preferred Time</Text>
-            <TextInput style={s.modalInput} placeholder="Select time" placeholderTextColor={C.textMuted} />
-            <Text style={s.modalLabel}>Number of Guests</Text>
-            <TextInput style={s.modalInput} placeholder="2" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
-            <Text style={s.modalLabel}>Special Requests</Text>
-            <TextInput style={[s.modalInput, s.modalTextarea]} placeholder="Any special requirements..." placeholderTextColor={C.textMuted} multiline value={notes} onChangeText={setNotes} />
-          </ScrollView>
-          <View style={s.modalFooter}>
-            <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}><Text style={s.modalCancelText}>Cancel</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => { onSubmit({ notes }); onClose(); }}>
-              <LinearGradient colors={G.gold} style={s.modalSubmitBtn}><Text style={s.modalSubmitText}>Submit Request</Text></LinearGradient>
-            </TouchableOpacity>
-          </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
+
 
 // ============================================
 // VIP PROMO MODAL
 // ============================================
 const VIPPromoModal = ({ visible, onClose }: any) => (
   <Modal visible={visible} transparent animationType="fade">
-    <View style={s.modalOverlay}>
-      <View style={[s.modalContent, { maxHeight: '80%' }]}>
-        <LinearGradient colors={G.gold} style={s.vipPromoHeader}>
-          <Ionicons name="diamond" size={48} color={C.bg} />
-          <Text style={s.vipPromoTitle}>VIP Concierge</Text>
-          <Text style={s.vipPromoSubtitle}>Exclusive Benefit for MOTA Investors</Text>
-        </LinearGradient>
-        <ScrollView style={s.modalBody}>
-          <Text style={s.vipPromoText}>VIP Concierge is an exclusive benefit available only to MOTA investors. Unlock premium services and personalized experiences.</Text>
-          <Text style={s.vipBenefitsTitle}>VIP Benefits Include:</Text>
-          {['24/7 Dedicated Concierge Team', 'Priority Reservations at All Venues', 'Private Jet & Yacht Arrangements', 'Bespoke Experience Curation', 'Exclusive Event Access', 'Personal Account Manager'].map((b, i) => (
-            <View key={i} style={s.vipBenefitItem}><Ionicons name="checkmark-circle" size={20} color={C.gold} /><Text style={s.vipBenefitText}>{b}</Text></View>
-          ))}
-          <View style={s.vipTiersPreview}>
-            <Text style={s.vipTiersTitle}>Investment Tiers</Text>
-            {Object.values(TierBenefits).map((tier: any) => (
-              <View key={tier.id} style={s.vipTierRow}>
-                <LinearGradient colors={tier.gradient} style={s.vipTierBadge}><Text style={s.vipTierName}>{tier.name}</Text></LinearGradient>
-                <Text style={s.vipTierAmount}>{tier.investment}</Text>
+    <TouchableWithoutFeedback onPress={onClose}>
+      <View style={s.modalOverlay}>
+        <TouchableWithoutFeedback onPress={() => {}}>
+          <View style={[s.modalContent, { maxHeight: '80%' }]}>
+            <LinearGradient colors={G.gold} style={s.vipPromoHeader}>
+              <Ionicons name="diamond" size={48} color={C.bg} />
+              <Text style={s.vipPromoTitle}>VIP Concierge</Text>
+              <Text style={s.vipPromoSubtitle}>Exclusive Benefit for MOTA Investors</Text>
+            </LinearGradient>
+            <ScrollView style={s.modalBody}>
+              <Text style={s.vipPromoText}>VIP Concierge is an exclusive benefit available only to MOTA investors. Unlock premium services and personalized experiences.</Text>
+              <Text style={s.vipBenefitsTitle}>VIP Benefits Include:</Text>
+              {['24/7 Dedicated Concierge Team', 'Priority Reservations at All Venues', 'Private Jet & Yacht Arrangements', 'Bespoke Experience Curation', 'Exclusive Event Access', 'Personal Account Manager'].map((b, i) => (
+                <View key={i} style={s.vipBenefitItem}>
+                  <Ionicons name="checkmark-circle" size={20} color={C.gold} />
+                  <Text style={s.vipBenefitText}>{b}</Text>
+                </View>
+              ))}
+              <View style={s.vipTiersPreview}>
+                <Text style={s.vipTiersTitle}>Investment Tiers</Text>
+                {Object.values(TierBenefits).map((tier: any) => (
+                  <View key={tier.id} style={s.vipTierRow}>
+                    <LinearGradient colors={tier.gradient} style={s.vipTierBadge}>
+                      <Text style={s.vipTierName}>{tier.name}</Text>
+                    </LinearGradient>
+                    <Text style={s.vipTierAmount}>{tier.investment}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
+            </ScrollView>
+            <View style={s.modalFooter}>
+              <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}>
+                <Text style={s.modalCancelText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose}>
+                <LinearGradient colors={G.gold} style={s.modalSubmitBtn}>
+                  <Text style={s.modalSubmitText}>Learn More</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-        <View style={s.modalFooter}>
-          <TouchableOpacity style={s.modalCancelBtn} onPress={onClose}><Text style={s.modalCancelText}>Close</Text></TouchableOpacity>
-          <TouchableOpacity onPress={onClose}><LinearGradient colors={G.gold} style={s.modalSubmitBtn}><Text style={s.modalSubmitText}>Learn More</Text></LinearGradient></TouchableOpacity>
-        </View>
+        </TouchableWithoutFeedback>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   </Modal>
 );
 
@@ -729,7 +856,7 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [exploreCategory, setExploreCategory] = useState('All');
+  const [exploreCategory, setExploreCategory] = useState('Lodging');
   const [priceFilter, setPriceFilter] = useState('All');
   const [ratingFilter, setRatingFilter] = useState('All');
   const [amenityFilter, setAmenityFilter] = useState('All');
@@ -777,10 +904,10 @@ function AppContent() {
 
   const getFilteredItems = () => {
     let items: any[] = [];
-    if (exploreCategory === 'All' || exploreCategory === 'Lodging') items = [...items, ...lodging.map(l => ({ ...l, _type: 'lodging' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Eateries') items = [...items, ...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Experiences') items = [...items, ...activities.map(a => ({ ...a, _type: 'activity' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Nightlife') items = [...items, ...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
+    if (exploreCategory === 'Lodging') items = [...lodging.map(l => ({ ...l, _type: 'lodging' }))];
+    if (exploreCategory === 'Eateries') items = [...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
+    if (exploreCategory === 'Experiences') items = [...activities.map(a => ({ ...a, _type: 'activity' }))];
+    if (exploreCategory === 'Nightlife') items = [...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
     
     // Price filter
     if (priceFilter !== 'All') {
@@ -833,54 +960,103 @@ function AppContent() {
   // ============================================
   // HOME TAB
   // ============================================
-  const renderHomeTab = () => (
-    <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
-      <View style={s.heroContainer}>
-        <FlatList ref={slideRef} data={slides} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
-          keyExtractor={(_, i) => `slide-${i}`}
-          renderItem={({ item }) => (
-            <View style={s.heroSlide}>
-              <Image source={{ uri: item.imageUrl || item.image }} style={s.heroImage} />
-              <LinearGradient colors={G.overlay} style={s.heroOverlay} />
-              <View style={s.heroContent}>
-                <Text style={s.heroSubtitle}>{item.subtitle}</Text>
-                <Text style={s.heroTitle}>{item.title}</Text>
-                <Text style={s.heroDesc}>{item.description}</Text>
-              </View>
+const renderHomeTab = () => (
+  <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
+    <View style={s.heroContainer}>
+      <FlatList 
+        ref={slideRef} 
+        data={slides} 
+        horizontal 
+        pagingEnabled 
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
+        keyExtractor={(_, i) => `slide-${i}`}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={s.heroSlide} 
+            activeOpacity={0.9}
+            onPress={() => handleSlidePress(item)}
+          >
+            <Image source={{ uri: item.imageUrl || item.image }} style={s.heroImage} />
+            <LinearGradient colors={G.overlay} style={s.heroOverlay} />
+            <View style={s.heroContent}>
+              <Text style={s.heroSubtitle}>{item.subtitle}</Text>
+              <Text style={s.heroTitle}>{item.title}</Text>
+              <Text style={s.heroDesc}>{item.description}</Text>
+              {/* Optional: Show a "Explore" button indicator */}
+              {item.linkType && (
+                <View style={s.heroExploreBtn}>
+                  <Text style={s.heroExploreBtnText}>Explore</Text>
+                  <Ionicons name="arrow-forward" size={14} color={C.gold} />
+                </View>
+              )}
             </View>
-          )}
-        />
-        <View style={s.slideIndicators}>{slides.map((_, i) => <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />)}</View>
-      </View>
-      {isInvestor && user?.investorTier && <InvestmentBar investmentAmount={user.investmentAmount || 0} portfolioValue={user.portfolioValue || 0} tier={user.investorTier} />}
-      <TouchableOpacity style={s.searchSection} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
-        <View style={s.searchBar}>
-          <Ionicons name="sparkles" size={20} color={C.gold} />
-          <Text style={s.searchPlaceholder}>Ask me anything...</Text>
-          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
-        </View>
-      </TouchableOpacity>
-      <View style={s.quickCats}>
-        {[{ icon: 'bed-outline', label: 'Lodging' }, { icon: 'restaurant-outline', label: 'Eateries' }, { icon: 'compass-outline', label: 'Experiences' }, { icon: 'wine-outline', label: 'Nightlife' }].map((cat, i) => (
-          <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
-            <LinearGradient colors={G.card} style={s.quickCatIcon}><Ionicons name={cat.icon as any} size={24} color={C.gold} /></LinearGradient>
-            <Text style={s.quickCatLabel}>{cat.label}</Text>
           </TouchableOpacity>
+        )}
+      />
+      <View style={s.slideIndicators}>
+        {slides.map((_, i) => (
+          <View key={i} style={[s.slideIndicator, currentSlide === i && s.slideIndicatorActive]} />
         ))}
       </View>
-      {[{ title: 'Featured Destinations', data: lodging, type: 'lodging', filter: 'Lodging' }, { title: 'Featured Dining', data: restaurants, type: 'restaurant', filter: 'Eateries' }, { title: 'Upcoming Events', data: events, type: 'event' }, { title: 'Experiences', data: activities, type: 'activity', filter: 'Experiences' }].map((section, si) => (
-        <View key={si} style={s.section}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>{section.title}</Text>
-            <TouchableOpacity onPress={() => { if (section.filter) setExploreCategory(section.filter); setActiveTab(section.type === 'event' ? 2 : 1); }}><Text style={s.sectionMore}>View all</Text></TouchableOpacity>
-          </View>
-          <FlatList data={section.data.slice(0, 5)} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }} keyExtractor={(item) => item._id || item.id} renderItem={({ item }) => <ItemCard item={item} onPress={() => openDetail(item, section.type)} />} />
-        </View>
+    </View>
+    
+    {/* REST OF HOME TAB - WITHOUT INVESTMENT BAR */}
+    {/* See Fix 3 below - InvestmentBar is removed */}
+    
+    <TouchableOpacity style={s.searchSection} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
+      <View style={s.searchBar}>
+        <Ionicons name="sparkles" size={20} color={C.gold} />
+        <Text style={s.searchPlaceholder}>Ask me anything...</Text>
+        <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
+      </View>
+    </TouchableOpacity>
+    
+    {/* Quick Categories */}
+    <View style={s.quickCats}>
+      {[
+        { icon: 'bed-outline', label: 'Lodging' }, 
+        { icon: 'restaurant-outline', label: 'Eateries' }, 
+        { icon: 'compass-outline', label: 'Experiences' }, 
+        { icon: 'wine-outline', label: 'Nightlife' }
+      ].map((cat, i) => (
+        <TouchableOpacity key={i} style={s.quickCat} onPress={() => { setExploreCategory(cat.label); setActiveTab(1); }}>
+          <LinearGradient colors={G.card} style={s.quickCatIcon}>
+            <Ionicons name={cat.icon as any} size={24} color={C.gold} />
+          </LinearGradient>
+          <Text style={s.quickCatLabel}>{cat.label}</Text>
+        </TouchableOpacity>
       ))}
-      <View style={{ height: 100 }} />
-    </ScrollView>
-  );
+    </View>
+    
+    {/* Featured Sections */}
+    {[
+      { title: 'Featured Destinations', data: lodging, type: 'lodging', filter: 'Lodging' }, 
+      { title: 'Featured Dining', data: restaurants, type: 'restaurant', filter: 'Eateries' }, 
+      { title: 'Upcoming Events', data: events, type: 'event' }, 
+      { title: 'Experiences', data: activities, type: 'activity', filter: 'Experiences' }
+    ].map((section, si) => (
+      <View key={si} style={s.section}>
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>{section.title}</Text>
+          <TouchableOpacity onPress={() => { if (section.filter) setExploreCategory(section.filter); setActiveTab(section.type === 'event' ? 2 : 1); }}>
+            <Text style={s.sectionMore}>View all</Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList 
+          data={section.data.slice(0, 5)} 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingHorizontal: 20 }} 
+          keyExtractor={(item) => item._id || item.id} 
+          renderItem={({ item }) => <ItemCard item={item} onPress={() => openDetail(item, section.type)} />} 
+        />
+      </View>
+    ))}
+    
+    <View style={{ height: 100 }} />
+  </ScrollView>
+);
 
   // ============================================
   // EXPLORE TAB
@@ -889,18 +1065,19 @@ function AppContent() {
     setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
   };
 
-  const priceOptions = [
-    { value: '$', label: '$ - Budget Friendly' },
-    { value: '$$', label: '$$ - Moderate' },
-    { value: '$$$', label: '$$$ - Upscale' },
-    { value: '$$$$', label: '$$$$ - Luxury' },
-  ];
+ const priceOptions = [
+  { value: '$', label: '$' },
+  { value: '$$', label: '$$' },
+  { value: '$$$', label: '$$$' },
+  { value: '$$$$', label: '$$$$' },
+];
 
-  const ratingOptions = [
-    { value: '4.5', label: '4.5+ Stars' },
-    { value: '4.0', label: '4.0+ Stars' },
-    { value: '3.5', label: '3.5+ Stars' },
-  ];
+const ratingOptions = [
+  { value: '4', label: '4+ Stars' },
+  { value: '3', label: '3+ Stars' },
+  { value: 'sort', label: 'Highest to Lowest' },
+];
+
 
   const amenityOptions = [
     { value: 'Dog Friendly', label: '🐕 Dog Friendly' },
@@ -911,63 +1088,75 @@ function AppContent() {
     { value: 'Spa', label: '💆 Spa' },
   ];
 
-  const getFilteredItemsNew = () => {
-    let items: any[] = [];
-    if (exploreCategory === 'All' || exploreCategory === 'Lodging') items = [...items, ...lodging.map(l => ({ ...l, _type: 'lodging' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Eateries') items = [...items, ...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Experiences') items = [...items, ...activities.map(a => ({ ...a, _type: 'activity' }))];
-    if (exploreCategory === 'All' || exploreCategory === 'Nightlife') items = [...items, ...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
+const getFilteredItemsNew = () => {
+  let items: any[] = [];
+  
+  // No more 'All' option - items based on selected category only
+  if (exploreCategory === 'Lodging') items = [...lodging.map(l => ({ ...l, _type: 'lodging' }))];
+  if (exploreCategory === 'Eateries') items = [...restaurants.map(r => ({ ...r, _type: 'restaurant' }))];
+  if (exploreCategory === 'Experiences') items = [...activities.map(a => ({ ...a, _type: 'activity' }))];
+  if (exploreCategory === 'Nightlife') items = [...nightlife.map(n => ({ ...n, _type: 'nightlife' }))];
+  
+  // Multi-select price filter
+  if (selectedPrices.length > 0) {
+    items = items.filter(item => selectedPrices.includes(item.priceRange || '$$'));
+  }
+  
+  // Rating filter - integer values with sort option
+  if (selectedRatings.length > 0) {
+    const hasSort = selectedRatings.includes('sort');
+    const ratingValues = selectedRatings.filter(r => r !== 'sort').map(r => parseInt(r));
     
-    // Multi-select price filter
-    if (selectedPrices.length > 0) {
-      items = items.filter(item => selectedPrices.includes(item.priceRange || '$$'));
-    }
-    
-    // Multi-select rating filter
-    if (selectedRatings.length > 0) {
-      const minRating = Math.min(...selectedRatings.map(r => parseFloat(r)));
+    if (ratingValues.length > 0) {
+      const minRating = Math.min(...ratingValues);
       items = items.filter(item => item.rating && item.rating >= minRating);
     }
     
-    // Multi-select amenity filter
-    if (selectedAmenities.length > 0) {
-      items = items.filter(item => {
-        return selectedAmenities.some(amenity => {
-          if (amenity === 'Dog Friendly') return item.dogFriendly === true;
-          if (amenity === 'Kids Friendly') return item.kidsFriendly === true;
-          if (amenity === 'Ocean View') return item.view === 'ocean';
-          if (amenity === 'Beach View') return item.view === 'beach';
-          if (amenity === 'Pool') return item.hasPool === true;
-          if (amenity === 'Spa') return item.hasSpa === true;
-          return false;
-        });
-      });
+    if (hasSort) {
+      items = items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
-    
-    return items;
-  };
+  }
+  
+  // Multi-select amenity filter
+  if (selectedAmenities.length > 0) {
+    items = items.filter(item => {
+      return selectedAmenities.some(amenity => {
+        if (amenity === 'Dog Friendly') return item.dogFriendly === true;
+        if (amenity === 'Kids Friendly') return item.kidsFriendly === true;
+        if (amenity === 'Ocean View') return item.view === 'ocean';
+        if (amenity === 'Beach View') return item.view === 'beach';
+        if (amenity === 'Pool') return item.hasPool === true;
+        if (amenity === 'Spa') return item.hasSpa === true;
+        return false;
+      });
+    });
+  }
+  
+  return items;
+};
 
-  const renderExploreTab = () => (
-    <View style={{ flex: 1 }}>
-      {/* AI Search Bar - Opens Popup */}
-      <TouchableOpacity style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
-        <View style={s.searchBar}>
-          <Ionicons name="sparkles" size={20} color={C.gold} />
-          <Text style={s.searchPlaceholder}>Tell Me What You're Looking For</Text>
-          <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
-        </View>
-      </TouchableOpacity>
-      
-      {/* Category Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' }}>
-        {['All', 'Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
-          <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
-        ))}
-      </ScrollView>
-      
-      {/* Filter Dropdowns Row */}
+const renderExploreTab = () => (
+  <View style={{ flex: 1 }}>
+    {/* AI Search Bar */}
+    <TouchableOpacity style={[s.searchSection, { paddingTop: 10, paddingBottom: 8 }]} activeOpacity={0.9} onPress={() => setAiPopupVisible(true)}>
+      <View style={s.searchBar}>
+        <Ionicons name="sparkles" size={20} color={C.gold} />
+        <Text style={s.searchPlaceholder}>Tell Me What You're Looking For</Text>
+        <View style={s.aiTag}><Text style={s.aiTagText}>AI</Text></View>
+      </View>
+    </TouchableOpacity>
+    
+    {/* Category Filter - NO "All" option */}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, alignItems: 'center' }}>
+      {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
+        <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
+      ))}
+    </ScrollView>
+    
+    {/* Filter by Header + Dropdowns in Horizontal Row */}
+    <View style={s.filterDropdownSection}>
+      <Text style={s.filterByHeader}>Filter by</Text>
       <View style={s.filterDropdownRow}>
-        <Text style={s.filterByLabel}>Filter by:</Text>
         <FilterDropdown 
           title="Price" 
           icon="cash-outline"
@@ -996,44 +1185,51 @@ function AppContent() {
           onToggle={() => setFilterDropdown(filterDropdown === 'amenity' ? null : 'amenity')}
         />
       </View>
-      
-      {/* Clear filters button */}
-      {(selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0) && (
-        <TouchableOpacity style={s.clearFiltersBtn} onPress={() => { setSelectedPrices([]); setSelectedRatings([]); setSelectedAmenities([]); }}>
-          <Ionicons name="close-circle" size={16} color={C.gold} />
-          <Text style={s.clearFiltersText}>Clear all filters</Text>
+    </View>
+    
+    {/* Clear filters button */}
+    {(selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0) && (
+      <TouchableOpacity style={s.clearFiltersBtn} onPress={() => { setSelectedPrices([]); setSelectedRatings([]); setSelectedAmenities([]); }}>
+        <Ionicons name="close-circle" size={16} color={C.gold} />
+        <Text style={s.clearFiltersText}>Clear all filters</Text>
+      </TouchableOpacity>
+    )}
+    
+    <FlatList 
+      data={getFilteredItemsNew()} 
+      numColumns={2} 
+      keyExtractor={(item, i) => item._id || `item-${i}`} 
+      contentContainerStyle={{ padding: 16, paddingBottom: 100 }} 
+      columnWrapperStyle={{ justifyContent: 'space-between' }} 
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+      renderItem={({ item }) => (
+        <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
+          <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
+          <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
+          <View style={s.exploreCardContent}>
+            <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
+            {(item.cuisine || item.category || item.type) && (
+              <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
+            )}
+            {item.rating && (
+              <View style={s.exploreCardRating}>
+                <Ionicons name="star" size={12} color={C.gold} />
+                <Text style={s.exploreCardRatingText}>{item.rating}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       )}
-      
-      <FlatList data={getFilteredItemsNew()} numColumns={2} keyExtractor={(item, i) => item._id || `item-${i}`} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} columnWrapperStyle={{ justifyContent: 'space-between' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={s.exploreCard} onPress={() => openDetail(item, item._type)} activeOpacity={0.9}>
-            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
-            <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
-            <View style={s.exploreCardContent}>
-              <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
-              <Text style={s.exploreCardSub} numberOfLines={1}>{(item.cuisine || item.category || item.type) ? (
-  <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>
-) : null}</Text>
-              {item.rating ? (
-                <View style={s.exploreCardRating}>
-                  <Ionicons name="star" size={12} color={C.gold} />
-                  <Text style={s.exploreCardRatingText}>{item.rating}</Text>
-                </View>
-              ) : null}
-            </View>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <View style={s.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={C.textMuted} />
-            <Text style={s.emptyTitle}>No Results</Text>
-            <Text style={s.emptySubtitle}>Try adjusting your filters</Text>
-          </View>
-        }
-      />
-    </View>
-  );
+      ListEmptyComponent={
+        <View style={s.emptyContainer}>
+          <Ionicons name="search-outline" size={48} color={C.textMuted} />
+          <Text style={s.emptyTitle}>No Results</Text>
+          <Text style={s.emptySubtitle}>Try adjusting your filters</Text>
+        </View>
+      }
+    />
+  </View>
+);
 
   // ============================================
   // EVENTS TAB
@@ -1564,8 +1760,6 @@ const s = StyleSheet.create({
   searchPlaceholder: { flex: 1, marginLeft: 12, fontSize: 15, color: C.textMuted },
   
   // Filter Dropdown Styles
-  filterDropdownRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, gap: 8, flexWrap: 'wrap' },
-  filterByLabel: { fontSize: 13, color: C.textMuted, marginRight: 4 },
   filterDropdownContainer: { position: 'relative', zIndex: 100 },
   filterDropdownBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.cardLight, gap: 4 },
   filterDropdownBtnActive: { backgroundColor: C.gold, borderColor: C.gold },
@@ -1671,4 +1865,49 @@ const s = StyleSheet.create({
   vipContactBtn: { width: '100%' },
   vipContactBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, gap: 10 },
   vipContactBtnText: { fontSize: 15, fontWeight: '700', color: C.bg },
+
+
+  //filter section
+  filterDropdownSection: {
+  paddingHorizontal: 16,
+  paddingTop: 8,
+  paddingBottom: 4,
+},
+
+// ADD this new style for "Filter by" header:
+filterByHeader: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: C.textSec,
+  marginBottom: 10,
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+},
+
+// UPDATE the filterDropdownRow style (remove filterByLabel):
+filterDropdownRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+
+
+// styles for explore button
+  heroExploreBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    borderRadius: 20,
+    alignSelf: 'flex-start' as const,
+    gap: 6,
+  },
+  heroExploreBtnText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#D4AF37', // C.gold
+  },
+
 });

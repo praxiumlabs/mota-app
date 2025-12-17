@@ -1,6 +1,8 @@
 /**
  * Content Model
  * Manages all app content: slideshows, text, settings
+ * 
+ * UPDATED: Added deep linking support for slides
  */
 
 const mongoose = require('mongoose');
@@ -12,6 +14,40 @@ const SlideSchema = new mongoose.Schema({
   imageUrl: { type: String, required: true },
   buttonText: { type: String },
   buttonLink: { type: String },
+  
+  // ============================================
+  // DEEP LINKING CONFIGURATION
+  // ============================================
+  // linkType: What type of navigation to perform
+  //   - 'tab': Navigate to a specific tab (optionally with category)
+  //   - 'screen': Navigate to a specific screen
+  //   - 'external': Open an external URL
+  //   - 'none': No action (default)
+  linkType: { 
+    type: String, 
+    enum: ['tab', 'screen', 'external', 'none'],
+    default: 'none'
+  },
+  
+  // linkTarget: The destination
+  //   - For 'tab': Category name (Lodging, Eateries, Experiences, Nightlife) or null
+  //   - For 'screen': Screen name (fleet, reservations, favorites, etc.)
+  //   - For 'external': Full URL (https://...)
+  linkTarget: { type: String },
+  
+  // linkTab: Tab index for 'tab' linkType
+  //   - 0: Home
+  //   - 1: Explore
+  //   - 2: Events
+  //   - 3: Concierge
+  //   - 4: Profile
+  linkTab: { 
+    type: Number,
+    min: 0,
+    max: 4
+  },
+  // ============================================
+  
   order: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true }
 });
