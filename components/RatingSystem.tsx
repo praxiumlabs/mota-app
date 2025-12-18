@@ -1,7 +1,12 @@
 /**
  * =====================================================
- * MOTA RATING SYSTEM
+ * MOTA RATING SYSTEM - FIXED VERSION
  * =====================================================
+ * 
+ * FIXES APPLIED:
+ * 1. RatingModal accepts BOTH onSubmit AND onSubmitFeedback props
+ * 2. EngagementTracker has BOTH markRatingComplete AND markRatingCompleted methods
+ * 3. user prop is optional with safe handling
  * 
  * Features:
  * - Smart feedback routing based on rating
@@ -43,7 +48,7 @@ const C = {
 };
 
 const G = {
-  gold: ['#E8C547', '#D4AF37', '#B8952F'],
+  gold: ['#E8C547', '#D4AF37', '#B8952F'] as const,
 };
 
 // App Store URLs - Replace with your actual app IDs
@@ -59,111 +64,123 @@ const ENGAGEMENT_STORAGE_KEY = '@mota_engagement';
 const RATING_SHOWN_KEY = '@mota_rating_shown';
 const RATING_COMPLETED_KEY = '@mota_rating_completed';
 
+interface EngagementData {
+  actions: Record<string, number>;
+  sessionCount: number;
+  lastSession: string;
+  totalActions: number;
+}
+
 export const EngagementTracker = {
   // Track user actions
-  async trackAction(action: string) {
+  async trackAction(action: string): Promise<void> {
     try {
       const data = await AsyncStorage.getItem(ENGAGEMENT_STORAGE_KEY);
-      const engagement = data ? JSON.parse(data) : {
+      const engagement: EngagementData = data ? JSON.parse(data) : {
+        actions: {},
         sessionCount: 0,
-        bookingsCount: 0,
-        favoritesCount: 0,
-        screenViews: 0,
-        lastActive: null,
-        firstUse: null,
+        lastSession: '',
+        totalActions: 0,
       };
 
-      // Update metrics based on action
-      switch (action) {
-        case 'session_start':
-          engagement.sessionCount++;
-          engagement.lastActive = new Date().toISOString();
-          if (!engagement.firstUse) {
-            engagement.firstUse = new Date().toISOString();
-          }
-          break;
-        case 'booking_complete':
-          engagement.bookingsCount++;
-          break;
-        case 'favorite_added':
-          engagement.favoritesCount++;
-          break;
-        case 'screen_view':
-          engagement.screenViews++;
-          break;
-      }
+      engagement.actions[action] = (engagement.actions[action] || 0) + 1;
+      engagement.totalActions += 1;
 
       await AsyncStorage.setItem(ENGAGEMENT_STORAGE_KEY, JSON.stringify(engagement));
-      return engagement;
     } catch (error) {
-      console.error('Error tracking engagement:', error);
-      return null;
+      console.log('Track action error:', error);
     }
   },
 
-  // Check if user is highly engaged
-  async isHighlyEngaged(): Promise<boolean> {
-    try {
-      const data = await AsyncStorage.getItem(ENGAGEMENT_STORAGE_KEY);
-      if (!data) return false;
-
-      const engagement = JSON.parse(data);
-      
-      // Criteria for high engagement:
-      // - At least 5 sessions OR
-      // - At least 1 booking OR
-      // - At least 3 favorites OR
-      // - At least 20 screen views
-      const isEngaged = 
-        engagement.sessionCount >= 5 ||
-        engagement.bookingsCount >= 1 ||
-        engagement.favoritesCount >= 3 ||
-        engagement.screenViews >= 20;
-
-      return isEngaged;
-    } catch (error) {
-      return false;
-    }
-  },
-
-  // Check if rating has been shown recently
+  // Check if we should show rating prompt
   async shouldShowRating(): Promise<boolean> {
     try {
-      // Check if user already completed rating
+      // Check if already completed
       const completed = await AsyncStorage.getItem(RATING_COMPLETED_KEY);
       if (completed === 'true') return false;
 
-      // Check last shown time
+      // Check if shown recently
       const lastShown = await AsyncStorage.getItem(RATING_SHOWN_KEY);
       if (lastShown) {
-        const daysSince = (Date.now() - parseInt(lastShown)) / (1000 * 60 * 60 * 24);
-        if (daysSince < 7) return false; // Don't show within 7 days
+        const daysSinceShown = (Date.now() - parseInt(lastShown)) / (1000 * 60 * 60 * 24);
+        if (daysSinceShown < 7) return false; // Don't show within 7 days
       }
 
-      // Check engagement level
-      return await this.isHighlyEngaged();
+      // Check engagement threshold
+      const data = await AsyncStorage.getItem(ENGAGEMENT_STORAGE_KEY);
+      if (!data) return false;
+
+      const engagement: EngagementData = JSON.parse(data);
+      
+      // Show if: 5+ sessions OR 20+ total actions OR specific action counts
+      const shouldShow = 
+        engagement.sessionCount >= 5 ||
+        engagement.totalActions >= 20 ||
+        (engagement.actions['booking_complete'] || 0) >= 2;
+
+      return shouldShow;
     } catch (error) {
+      console.log('Should show rating error:', error);
       return false;
     }
   },
 
   // Mark rating as shown
-  async markRatingShown() {
-    await AsyncStorage.setItem(RATING_SHOWN_KEY, Date.now().toString());
+  async markRatingShown(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(RATING_SHOWN_KEY, Date.now().toString());
+    } catch (error) {
+      console.log('Mark rating shown error:', error);
+    }
   },
 
-  // Mark rating as completed
-  async markRatingCompleted() {
-    await AsyncStorage.setItem(RATING_COMPLETED_KEY, 'true');
+  // Mark rating as completed - BOTH METHOD NAMES for compatibility
+  async markRatingCompleted(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(RATING_COMPLETED_KEY, 'true');
+    } catch (error) {
+      console.log('Mark rating completed error:', error);
+    }
   },
 
-  // Reset (for testing)
-  async reset() {
-    await AsyncStorage.multiRemove([
-      ENGAGEMENT_STORAGE_KEY,
-      RATING_SHOWN_KEY,
-      RATING_COMPLETED_KEY,
-    ]);
+  // Alias for markRatingCompleted (App.tsx uses this name)
+  async markRatingComplete(): Promise<void> {
+    return this.markRatingCompleted();
+  },
+
+  // Increment session count
+  async incrementSession(): Promise<void> {
+    try {
+      const data = await AsyncStorage.getItem(ENGAGEMENT_STORAGE_KEY);
+      const engagement: EngagementData = data ? JSON.parse(data) : {
+        actions: {},
+        sessionCount: 0,
+        lastSession: '',
+        totalActions: 0,
+      };
+
+      const today = new Date().toDateString();
+      if (engagement.lastSession !== today) {
+        engagement.sessionCount += 1;
+        engagement.lastSession = today;
+        await AsyncStorage.setItem(ENGAGEMENT_STORAGE_KEY, JSON.stringify(engagement));
+      }
+    } catch (error) {
+      console.log('Increment session error:', error);
+    }
+  },
+
+  // Reset all engagement data (for testing)
+  async reset(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        ENGAGEMENT_STORAGE_KEY,
+        RATING_SHOWN_KEY,
+        RATING_COMPLETED_KEY,
+      ]);
+    } catch (error) {
+      console.log('Reset engagement error:', error);
+    }
   },
 };
 
@@ -171,7 +188,14 @@ export const EngagementTracker = {
 // =====================================================
 // STAR RATING COMPONENT
 // =====================================================
-const StarRating = ({ rating, onRatingChange, size = 40, readonly = false }) => {
+interface StarRatingProps {
+  rating: number;
+  onRatingChange: (rating: number) => void;
+  size?: number;
+  readonly?: boolean;
+}
+
+const StarRating = ({ rating, onRatingChange, size = 40, readonly = false }: StarRatingProps) => {
   const stars = [1, 2, 3, 4, 5];
   const animatedValues = useRef(stars.map(() => new Animated.Value(1))).current;
 
@@ -227,15 +251,35 @@ const starStyles = StyleSheet.create({
 
 
 // =====================================================
-// RATING MODAL (Main Component)
+// RATING MODAL (Main Component) - FIXED
+// Accepts BOTH onSubmit AND onSubmitFeedback props
 // =====================================================
+interface FeedbackData {
+  type: 'improvement' | 'positive';
+  rating: number;
+  feedback: string;
+  userId?: string;
+  userEmail?: string;
+  timestamp: string;
+}
+
+interface RatingModalProps {
+  visible: boolean;
+  onClose: () => void;
+  // Accept BOTH prop names for compatibility with App.tsx
+  onSubmit?: (rating: number, feedback: string) => void | Promise<void>;
+  onSubmitFeedback?: (data: FeedbackData) => void | Promise<void>;
+  user?: any;  // Optional user prop
+}
+
 export const RatingModal = ({
   visible,
   onClose,
-  onSubmitFeedback,
+  onSubmit,        // App.tsx uses this
+  onSubmitFeedback, // Original prop name
   user,
-}) => {
-  const [step, setStep] = useState('rating'); // 'rating' | 'low_feedback' | 'high_feedback' | 'thank_you'
+}: RatingModalProps) => {
+  const [step, setStep] = useState<'rating' | 'low_feedback' | 'high_feedback' | 'thank_you'>('rating');
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [likedMost, setLikedMost] = useState('');
@@ -253,6 +297,27 @@ export const RatingModal = ({
       }).start();
     }
   }, [visible]);
+
+  // Safe submit function that handles BOTH callback types
+  const safeSubmitFeedback = async (feedbackData: FeedbackData) => {
+    try {
+      // Try onSubmitFeedback first (original)
+      if (typeof onSubmitFeedback === 'function') {
+        await onSubmitFeedback(feedbackData);
+      } 
+      // Fall back to onSubmit (App.tsx uses this)
+      else if (typeof onSubmit === 'function') {
+        await onSubmit(feedbackData.rating, feedbackData.feedback);
+      }
+      // No callback provided - just log
+      else {
+        console.log('Rating feedback (no callback):', feedbackData);
+      }
+    } catch (error) {
+      console.error('Submit feedback error:', error);
+      throw error;
+    }
+  };
 
   const handleRatingSelect = (selectedRating: number) => {
     setRating(selectedRating);
@@ -281,8 +346,7 @@ export const RatingModal = ({
 
     setSubmitting(true);
     try {
-      // Send to support backend
-      await onSubmitFeedback({
+      await safeSubmitFeedback({
         type: 'improvement',
         rating,
         feedback,
@@ -305,7 +369,7 @@ export const RatingModal = ({
     try {
       // Save what they liked (optional)
       if (likedMost.trim()) {
-        await onSubmitFeedback({
+        await safeSubmitFeedback({
           type: 'positive',
           rating,
           feedback: likedMost,
@@ -327,11 +391,11 @@ export const RatingModal = ({
         await Linking.openURL(PLAY_STORE_WEB_URL);
       }
 
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error opening store:', error);
       Alert.alert('Thank You!', 'We appreciate your feedback!');
-      onClose();
+      handleClose();
     } finally {
       setSubmitting(false);
     }
@@ -346,10 +410,11 @@ export const RatingModal = ({
     onClose();
   };
 
+  // Render functions for each step
   const renderRatingStep = () => (
     <View style={ratingStyles.content}>
       <View style={ratingStyles.header}>
-        <LinearGradient colors={G.gold} style={ratingStyles.iconWrap}>
+        <LinearGradient colors={[...G.gold]} style={ratingStyles.iconWrap}>
           <Ionicons name="sparkles" size={32} color={C.bg} />
         </LinearGradient>
         <Text style={ratingStyles.title}>What do you think of MOTA?</Text>
@@ -363,7 +428,7 @@ export const RatingModal = ({
         {rating > 0 && (
           <Text style={ratingStyles.ratingText}>
             {rating <= 2 ? 'We can do better' : 
-             rating === 3 ? 'It\'s okay' :
+             rating === 3 ? "It's okay" :
              rating === 4 ? 'Pretty good!' : 'Excellent!'}
           </Text>
         )}
@@ -379,7 +444,7 @@ export const RatingModal = ({
           disabled={rating === 0}
         >
           <LinearGradient 
-            colors={rating > 0 ? G.gold : ['#555', '#444']} 
+            colors={rating > 0 ? [...G.gold] : ['#555', '#444']} 
             style={ratingStyles.continueBtnGrad}
           >
             <Text style={ratingStyles.continueText}>Continue</Text>
@@ -451,7 +516,7 @@ export const RatingModal = ({
           onPress={handleSubmitLowFeedback}
           disabled={submitting}
         >
-          <LinearGradient colors={G.gold} style={ratingStyles.continueBtnGrad}>
+          <LinearGradient colors={[...G.gold]} style={ratingStyles.continueBtnGrad}>
             <Text style={ratingStyles.continueText}>
               {submitting ? 'Sending...' : 'Send Feedback'}
             </Text>
@@ -526,7 +591,7 @@ export const RatingModal = ({
           onPress={handleSubmitHighFeedback}
           disabled={submitting}
         >
-          <LinearGradient colors={G.gold} style={ratingStyles.continueBtnGrad}>
+          <LinearGradient colors={[...G.gold]} style={ratingStyles.continueBtnGrad}>
             <Ionicons name="star" size={18} color={C.bg} />
             <Text style={ratingStyles.continueText}>
               {submitting ? 'Opening...' : 'Rate on Store'}
@@ -550,7 +615,7 @@ export const RatingModal = ({
       </View>
 
       <TouchableOpacity style={ratingStyles.doneBtn} onPress={handleClose}>
-        <LinearGradient colors={G.gold} style={ratingStyles.doneBtnGrad}>
+        <LinearGradient colors={[...G.gold]} style={ratingStyles.doneBtnGrad}>
           <Text style={ratingStyles.doneText}>Done</Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -849,6 +914,9 @@ const ratingStyles = StyleSheet.create({
 });
 
 
+// =====================================================
+// DEFAULT EXPORT - All components
+// =====================================================
 export default {
   RatingModal,
   StarRating,

@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { C, G, PLACEHOLDER_IMAGE } from '../constants/theme';
 import api from '../services/api';
+import { CalendarGrid } from '../components/BookingComponents';
+
 
 const { width } = Dimensions.get('window');
 
@@ -463,16 +465,10 @@ export default function DetailScreen({ item, type, onBack }: Props) {
               {/* Date Selection */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Date *</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="calendar-outline" size={20} color={C.textMuted} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Select date (YYYY-MM-DD)"
-                    placeholderTextColor={C.textMuted}
-                    value={date}
-                    onChangeText={setDate}
-                  />
-                </View>
+                <CalendarGrid 
+                  selectedDate={date ? new Date(date) : null}
+                  onSelectDate={(selectedDate) => setDate(selectedDate.toISOString().split('T')[0])}
+                />
               </View>
 
               {/* Time Selection */}
