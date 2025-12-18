@@ -230,6 +230,21 @@ const DefaultSlides = [
   },
 ];
 
+
+  const amenityOptions = [
+    { id: 'dogFriendly', label: 'Dog Friendly', icon: 'paw' },
+    { id: 'kidsFriendly', label: 'Kids Friendly', icon: 'people' },
+    { id: 'wheelchairAccessible', label: 'Wheelchair Accessible', icon: 'accessibility' },
+    { id: 'wifi', label: 'WiFi', icon: 'wifi' },
+    { id: 'pool', label: 'Pool', icon: 'water' },
+    { id: 'spa', label: 'Spa', icon: 'leaf' },
+    { id: 'parking', label: 'Parking', icon: 'car' },
+    { id: 'oceanView', label: 'Ocean View', icon: 'eye' },
+    { id: 'roomService', label: 'Room Service', icon: 'restaurant' },
+    { id: 'bar', label: 'Bar', icon: 'wine' },
+    { id: 'fitness', label: 'Fitness Center', icon: 'fitness' },
+  ];
+
 // ============================================
 // INVESTOR TIER BENEFITS
 // ============================================
@@ -1002,7 +1017,10 @@ function AppContent() {
   
   // Favorites state
   const [favorites, setFavorites] = useState<any[]>([]);
-
+  // Dropdown state for Explore filters
+  const [priceDropdownOpen, setPriceDropdownOpen] = useState(false);
+  const [ratingDropdownOpen, setRatingDropdownOpen] = useState(false);
+  const [amenityDropdownOpen, setAmenityDropdownOpen] = useState(false);
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
@@ -1181,14 +1199,60 @@ function AppContent() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 3);
   };
-  const getExploreData = () => {
+
+const getExploreData = () => {
+    let data: any[] = [];
     switch (exploreCategory) {
-      case 'Eateries': return Array.isArray(restaurants) ? restaurants : [];
-      case 'Lodging': return Array.isArray(lodging) ? lodging : [];
-      case 'Experiences': return Array.isArray(activities) ? activities : [];
-      case 'Nightlife': return Array.isArray(nightlife) ? nightlife : [];
-      default: return Array.isArray(lodging) ? lodging : [];
+      case 'Eateries': data = Array.isArray(restaurants) ? [...restaurants] : []; break;
+      case 'Lodging': data = Array.isArray(lodging) ? [...lodging] : []; break;
+      case 'Experiences': data = Array.isArray(activities) ? [...activities] : []; break;
+      case 'Nightlife': data = Array.isArray(nightlife) ? [...nightlife] : []; break;
+      default: data = Array.isArray(lodging) ? [...lodging] : [];
     }
+    
+    // Apply price filter
+    if (selectedPrices.length > 0) {
+      data = data.filter(item => {
+        const priceRange = item.priceRange || '';
+        const itemPriceLevel = (priceRange.match(/\$/g) || []).length;
+        return selectedPrices.some(p => p.length === itemPriceLevel);
+      });
+    }
+    
+    // Apply rating filter
+    if (selectedRatings.length > 0) {
+      data = data.filter(item => {
+        const rating = parseFloat(item.rating) || 0;
+        return selectedRatings.some(r => {
+          if (r === '4+') return rating >= 4;
+          if (r === '3+') return rating >= 3;
+          return true;
+        });
+      });
+    }
+    
+    // Apply amenities filter
+    if (selectedAmenities.length > 0) {
+      data = data.filter(item => {
+        return selectedAmenities.every(amenityId => {
+          // Check direct boolean properties
+          if (item[amenityId] === true) return true;
+          // Check in amenities array
+          if (Array.isArray(item.amenities)) {
+            const amenityLabel = amenityOptions.find(a => a.id === amenityId)?.label?.toLowerCase() || '';
+            return item.amenities.some((a: string) => a.toLowerCase().includes(amenityLabel) || a.toLowerCase().includes(amenityId.toLowerCase()));
+          }
+          // Check in features array
+          if (Array.isArray(item.features)) {
+            const amenityLabel = amenityOptions.find(a => a.id === amenityId)?.label?.toLowerCase() || '';
+            return item.features.some((f: string) => f.toLowerCase().includes(amenityLabel) || f.toLowerCase().includes(amenityId.toLowerCase()));
+          }
+          return false;
+        });
+      });
+    }
+    
+    return data;
   };
   // Screen routing
   if (currentScreen === 'login') return <LoginScreen onBack={() => setCurrentScreen('main')} onSwitchToSignup={() => setCurrentScreen('signup')} />;
@@ -1304,41 +1368,245 @@ function AppContent() {
     </ScrollView>
   );
 
+// ============================================
+  // EXPLORE TAB - WITH DROPDOWN FILTERS
   // ============================================
-  // EXPLORE TAB
-  // ============================================
+  const priceOptions = ['$', '$$', '$$$', '$$$$'];
+  const ratingOptions = ['4+', '3+'];
+
+  const togglePriceFilter = (price: string) => {
+    setSelectedPrices(prev => 
+      prev.includes(price) ? prev.filter(p => p !== price) : [...prev, price]
+    );
+  };
+  
+  const toggleRatingFilter = (rating: string) => {
+    setSelectedRatings(prev => 
+      prev.includes(rating) ? prev.filter(r => r !== rating) : [...prev, rating]
+    );
+  };
+  
+  const toggleAmenityFilter = (amenityId: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(amenityId) ? prev.filter(a => a !== amenityId) : [...prev, amenityId]
+    );
+  };
+  
+  const clearAllFilters = () => {
+    setSelectedPrices([]);
+    setSelectedRatings([]);
+    setSelectedAmenities([]);
+  };
+  
+  const closeAllDropdowns = () => {
+    setPriceDropdownOpen(false);
+    setRatingDropdownOpen(false);
+    setAmenityDropdownOpen(false);
+  };
+  
+  const hasActiveFilters = selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0;
+  const activeFilterCount = selectedPrices.length + selectedRatings.length + selectedAmenities.length;
+
   const renderExploreTab = () => (
     <View style={{ flex: 1 }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterRow} contentContainerStyle={{ paddingHorizontal: 20 }}>
-        {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
-          <FilterChip key={cat} label={cat} active={exploreCategory === cat} onPress={() => setExploreCategory(cat)} />
-        ))}
-      </ScrollView>
+      {/* Category Chips - Fixed Height */}
+      <View style={s.categoryContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+          {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
+            <TouchableOpacity 
+              key={cat} 
+              style={[s.categoryChip, exploreCategory === cat && s.categoryChipActive]}
+              onPress={() => { setExploreCategory(cat); closeAllDropdowns(); }}
+            >
+              <Text style={[s.categoryChipText, exploreCategory === cat && s.categoryChipTextActive]}>{cat}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+      
+      {/* Filter Row with Dropdowns */}
+      <View style={s.filterDropdownRow}>
+        <Text style={s.filterByText}>Filter by</Text>
+        
+        {/* Price Dropdown */}
+        <View style={[s.dropdownWrapper, { zIndex: 103 }]}>
+          <TouchableOpacity 
+            style={[s.dropdownBtn, selectedPrices.length > 0 && s.dropdownBtnActive]}
+            onPress={() => { setPriceDropdownOpen(!priceDropdownOpen); setRatingDropdownOpen(false); setAmenityDropdownOpen(false); }}
+          >
+            <Text style={[s.dropdownBtnText, selectedPrices.length > 0 && s.dropdownBtnTextActive]}>
+              {selectedPrices.length > 0 ? selectedPrices.join(' ') : 'Price'}
+            </Text>
+            <Ionicons name={priceDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedPrices.length > 0 ? C.bg : C.textSec} />
+          </TouchableOpacity>
+          
+          {priceDropdownOpen && (
+            <View style={s.dropdownMenu}>
+              {priceOptions.map((price) => (
+                <TouchableOpacity
+                  key={price}
+                  style={[s.dropdownItem, selectedPrices.includes(price) && s.dropdownItemActive]}
+                  onPress={() => togglePriceFilter(price)}
+                >
+                  <Text style={[s.dropdownItemText, selectedPrices.includes(price) && s.dropdownItemTextActive]}>{price}</Text>
+                  {selectedPrices.includes(price) && <Ionicons name="checkmark" size={16} color={C.gold} />}
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={s.dropdownDone} onPress={() => setPriceDropdownOpen(false)}>
+                <Text style={s.dropdownDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
+        {/* Rating Dropdown */}
+        <View style={[s.dropdownWrapper, { zIndex: 102 }]}>
+          <TouchableOpacity 
+            style={[s.dropdownBtn, selectedRatings.length > 0 && s.dropdownBtnActive]}
+            onPress={() => { setRatingDropdownOpen(!ratingDropdownOpen); setPriceDropdownOpen(false); setAmenityDropdownOpen(false); }}
+          >
+            <Ionicons name="star" size={12} color={selectedRatings.length > 0 ? C.bg : C.gold} />
+            <Text style={[s.dropdownBtnText, selectedRatings.length > 0 && s.dropdownBtnTextActive]}>
+              {selectedRatings.length > 0 ? selectedRatings.join(', ') : 'Rating'}
+            </Text>
+            <Ionicons name={ratingDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedRatings.length > 0 ? C.bg : C.textSec} />
+          </TouchableOpacity>
+          
+          {ratingDropdownOpen && (
+            <View style={s.dropdownMenu}>
+              {ratingOptions.map((rating) => (
+                <TouchableOpacity
+                  key={rating}
+                  style={[s.dropdownItem, selectedRatings.includes(rating) && s.dropdownItemActive]}
+                  onPress={() => toggleRatingFilter(rating)}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="star" size={14} color={C.gold} />
+                    <Text style={[s.dropdownItemText, selectedRatings.includes(rating) && s.dropdownItemTextActive]}>{rating}</Text>
+                  </View>
+                  {selectedRatings.includes(rating) && <Ionicons name="checkmark" size={16} color={C.gold} />}
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={s.dropdownDone} onPress={() => setRatingDropdownOpen(false)}>
+                <Text style={s.dropdownDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
+        {/* Amenities Dropdown */}
+        <View style={[s.dropdownWrapper, { zIndex: 101 }]}>
+          <TouchableOpacity 
+            style={[s.dropdownBtn, selectedAmenities.length > 0 && s.dropdownBtnActive]}
+            onPress={() => { setAmenityDropdownOpen(!amenityDropdownOpen); setPriceDropdownOpen(false); setRatingDropdownOpen(false); }}
+          >
+            <Ionicons name="options" size={14} color={selectedAmenities.length > 0 ? C.bg : C.textSec} />
+            <Text style={[s.dropdownBtnText, selectedAmenities.length > 0 && s.dropdownBtnTextActive]}>
+              {selectedAmenities.length > 0 ? `${selectedAmenities.length} selected` : 'Amenities'}
+            </Text>
+            <Ionicons name={amenityDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedAmenities.length > 0 ? C.bg : C.textSec} />
+          </TouchableOpacity>
+          
+          {amenityDropdownOpen && (
+            <View style={[s.dropdownMenu, s.dropdownMenuWide]}>
+              <ScrollView style={{ maxHeight: 250 }} showsVerticalScrollIndicator={false}>
+                {amenityOptions.map((amenity) => (
+                  <TouchableOpacity
+                    key={amenity.id}
+                    style={[s.dropdownItem, selectedAmenities.includes(amenity.id) && s.dropdownItemActive]}
+                    onPress={() => toggleAmenityFilter(amenity.id)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name={amenity.icon as any} size={16} color={selectedAmenities.includes(amenity.id) ? C.gold : C.textSec} />
+                      <Text style={[s.dropdownItemText, selectedAmenities.includes(amenity.id) && s.dropdownItemTextActive]}>{amenity.label}</Text>
+                    </View>
+                    {selectedAmenities.includes(amenity.id) && <Ionicons name="checkmark" size={16} color={C.gold} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity style={s.dropdownDone} onPress={() => setAmenityDropdownOpen(false)}>
+                <Text style={s.dropdownDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
+        {/* Clear Filters */}
+        {hasActiveFilters && (
+          <TouchableOpacity style={s.clearFiltersBtn} onPress={clearAllFilters}>
+            <View style={s.clearFiltersBadge}>
+              <Text style={s.clearFiltersBadgeText}>{activeFilterCount}</Text>
+            </View>
+            <Ionicons name="close-circle" size={20} color={C.error} />
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {/* Active Filters Pills */}
+      {hasActiveFilters && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.activeFiltersRow} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+          {selectedPrices.map(price => (
+            <TouchableOpacity key={price} style={s.activeFilterPill} onPress={() => togglePriceFilter(price)}>
+              <Text style={s.activeFilterPillText}>{price}</Text>
+              <Ionicons name="close" size={14} color={C.text} />
+            </TouchableOpacity>
+          ))}
+          {selectedRatings.map(rating => (
+            <TouchableOpacity key={rating} style={s.activeFilterPill} onPress={() => toggleRatingFilter(rating)}>
+              <Ionicons name="star" size={12} color={C.gold} />
+              <Text style={s.activeFilterPillText}>{rating}</Text>
+              <Ionicons name="close" size={14} color={C.text} />
+            </TouchableOpacity>
+          ))}
+          {selectedAmenities.map(amenityId => {
+            const amenity = amenityOptions.find(a => a.id === amenityId);
+            return amenity ? (
+              <TouchableOpacity key={amenityId} style={s.activeFilterPill} onPress={() => toggleAmenityFilter(amenityId)}>
+                <Ionicons name={amenity.icon as any} size={12} color={C.gold} />
+                <Text style={s.activeFilterPillText}>{amenity.label}</Text>
+                <Ionicons name="close" size={14} color={C.text} />
+              </TouchableOpacity>
+            ) : null;
+          })}
+        </ScrollView>
+      )}
+      
+      {/* Results List */}
       <FlatList 
         data={getExploreData()} 
-        keyExtractor={(item) => item._id} 
+        keyExtractor={(item, index) => item._id || `explore-${index}`} 
         numColumns={2} 
         contentContainerStyle={{ padding: 10, paddingBottom: 100 }} 
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={s.exploreCard} 
-            onPress={() => openDetail(item, exploreCategory === 'Eateries' ? 'restaurant' : exploreCategory === 'Lodging' ? 'lodging' : 'activity')}
+            onPress={() => { closeAllDropdowns(); openDetail(item, exploreCategory === 'Eateries' ? 'restaurant' : exploreCategory === 'Lodging' ? 'lodging' : 'activity'); }}
           >
             <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
             <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
             <TouchableOpacity style={s.favoriteBtn} onPress={() => toggleFavorite(item, exploreCategory.toLowerCase())}>
               <Ionicons name={isFavorited(item._id) ? 'heart' : 'heart-outline'} size={20} color={isFavorited(item._id) ? C.error : '#fff'} />
             </TouchableOpacity>
+            {/* Amenity Badges */}
+            {(item.dogFriendly || item.kidsFriendly) && (
+              <View style={s.amenityBadges}>
+                {item.dogFriendly && <View style={s.amenityBadge}><Ionicons name="paw" size={10} color={C.gold} /></View>}
+                {item.kidsFriendly && <View style={s.amenityBadge}><Ionicons name="people" size={10} color={C.gold} /></View>}
+              </View>
+            )}
             <View style={s.exploreCardContent}>
               <Text style={s.exploreCardName} numberOfLines={1}>{item.name}</Text>
               {(item.cuisine || item.category || item.type) && <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>}
-              {item.rating && (
-                <View style={s.exploreCardRating}>
-                  <Ionicons name="star" size={12} color={C.gold} />
-                  <Text style={s.exploreCardRatingText}>{item.rating}</Text>
-                </View>
-              )}
+              <View style={s.exploreCardFooter}>
+                {item.priceRange && <Text style={s.exploreCardPrice}>{item.priceRange}</Text>}
+                {item.rating && (
+                  <View style={s.exploreCardRating}>
+                    <Ionicons name="star" size={12} color={C.gold} />
+                    <Text style={s.exploreCardRatingText}>{item.rating}</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -1352,6 +1620,7 @@ function AppContent() {
       />
     </View>
   );
+
 
   // ============================================
   // EVENTS TAB - FIX #3: All events as fixed schedule
@@ -1794,6 +2063,64 @@ const s = StyleSheet.create({
   filterChipActive: { backgroundColor: C.gold },
   filterChipText: { fontSize: 13, color: C.textSec, fontWeight: '600' },
   filterChipTextActive: { color: C.bg },
+
+  // Category Section - Fixed Height
+  categoryContainer: { height: 50, justifyContent: 'center' },
+  categoryChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, backgroundColor: C.card, marginRight: 10, borderWidth: 1, borderColor: C.cardLight },
+  categoryChipActive: { backgroundColor: C.gold, borderColor: C.gold },
+  categoryChipText: { fontSize: 14, fontWeight: '600', color: C.textSec },
+  categoryChipTextActive: { color: C.bg },
+  
+  // Filter Dropdown Row
+  filterDropdownRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 10, zIndex: 100 },
+  filterByText: { fontSize: 13, fontWeight: '600', color: C.textMuted },
+  
+  // Dropdown
+  dropdownWrapper: { position: 'relative' },
+  dropdownBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: C.card, borderWidth: 1, borderColor: C.cardLight },
+  dropdownBtnActive: { backgroundColor: C.gold, borderColor: C.gold },
+  dropdownBtnText: { fontSize: 13, fontWeight: '600', color: C.textSec },
+  dropdownBtnTextActive: { color: C.bg },
+  dropdownMenu: { position: 'absolute', top: 42, left: 0, minWidth: 120, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.cardLight, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 10 },
+  dropdownMenuWide: { minWidth: 180, right: 'auto' },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  dropdownItemActive: { backgroundColor: C.cardLight },
+  dropdownItemText: { fontSize: 14, color: C.text },
+  dropdownItemTextActive: { color: C.gold, fontWeight: '600' },
+  dropdownDone: { paddingVertical: 12, alignItems: 'center', backgroundColor: C.cardLight },
+  dropdownDoneText: { fontSize: 14, fontWeight: '600', color: C.gold },
+  
+  // Clear Filters
+  clearFiltersBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
+  clearFiltersBadge: { width: 18, height: 18, borderRadius: 9, backgroundColor: C.error, alignItems: 'center', justifyContent: 'center' },
+  clearFiltersBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  
+  // Active Filters Row
+  activeFiltersRow: { maxHeight: 40, marginBottom: 8 },
+  activeFilterPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: C.cardLight },
+  activeFilterPillText: { fontSize: 12, fontWeight: '600', color: C.text },
+  
+  // Amenity Badges on Cards
+  amenityBadges: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', gap: 4 },
+  amenityBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  
+  // Card Footer
+  exploreCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  exploreCardPrice: { fontSize: 12, color: C.gold, fontWeight: '600' },
+
+
+  // Filter Section
+  filterSection: { paddingHorizontal: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  filterByLabel: { fontSize: 13, fontWeight: '600', color: C.textMuted, marginBottom: 8 },
+  filterOptionsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 16 },
+  filterGroup: { },
+  filterGroupLabel: { fontSize: 11, color: C.textMuted, marginBottom: 4 },
+  filterChipsRow: { flexDirection: 'row', gap: 6 },
+  miniFilterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.cardLight, gap: 4 },
+  miniFilterChipActive: { backgroundColor: C.gold, borderColor: C.gold },
+  miniFilterChipText: { fontSize: 12, fontWeight: '600', color: C.textSec },
+  miniFilterChipTextActive: { color: C.bg },
+  clearFiltersText: { fontSize: 12, color: C.error, fontWeight: '500' },
   exploreCard: { flex: 1, margin: 6, height: 180, borderRadius: 12, overflow: 'hidden', backgroundColor: C.card },
   exploreCardImage: { width: '100%', height: '100%', position: 'absolute' },
   exploreCardOverlay: { ...StyleSheet.absoluteFillObject },

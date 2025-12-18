@@ -1,6 +1,6 @@
 /**
  * Login Screen
- * Full screen login with Demo Accounts for testing
+ * Full screen login to avoid keyboard issues
  */
 
 import React, { useState } from 'react';
@@ -12,36 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-
-// Colors
-const C = {
-  bg: '#0A122A',
-  card: '#101C40',
-  cardLight: '#1A2A50',
-  gold: '#D4AF37',
-  goldLight: '#E8C547',
-  goldMuted: 'rgba(212,175,55,0.15)',
-  text: '#F5F5F5',
-  textSec: '#A0AEC0',
-  textMuted: '#718096',
-  border: '#2D3A5C',
-  success: '#48BB78',
-  error: '#FC8181',
-};
-
-const G = {
-  dark: ['#0A122A', '#0D1528'] as const,
-  gold: ['#E8C547', '#D4AF37', '#B8952F'] as const,
-};
-
-// Demo accounts data
-const DEMO_ACCOUNTS = [
-  { email: 'demo@mota.com', password: 'demo123', label: 'Member', icon: 'person', color: '#4299E1' },
-  { email: 'guest@mota.com', password: 'guest123', label: 'Guest', icon: 'eye', color: '#A0AEC0' },
-  { email: 'gold@mota.com', password: 'gold123', label: 'Gold', icon: 'trophy', color: '#D4AF37' },
-  { email: 'platinum@mota.com', password: 'platinum123', label: 'Platinum', icon: 'medal', color: '#E5E4E2' },
-  { email: 'diamond@mota.com', password: 'diamond123', label: 'Diamond', icon: 'diamond', color: '#81D4FA' },
-];
+import { C, G } from '../constants/theme';
 
 interface Props {
   onBack: () => void;
@@ -64,22 +35,13 @@ export default function LoginScreen({ onBack, onSwitchToSignup }: Props) {
 
     setLoading(true);
     try {
-      const result = await login(email, password);
-      if (result.success) {
-        onBack();
-      } else {
-        Alert.alert('Login Failed', result.error || 'Invalid credentials');
-      }
+      await login(email, password);
+      onBack();
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
-  };
-
-  const selectDemoAccount = (demo: typeof DEMO_ACCOUNTS[0]) => {
-    setEmail(demo.email);
-    setPassword(demo.password);
   };
 
   return (
@@ -165,39 +127,27 @@ export default function LoginScreen({ onBack, onSwitchToSignup }: Props) {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* ═══════════════════════════════════════════════════════ */}
-            {/* DEMO ACCOUNTS SECTION */}
-            {/* ═══════════════════════════════════════════════════════ */}
+            {/* Demo Accounts */}
             <View style={styles.demoSection}>
-              <View style={styles.demoHeader}>
-                <View style={styles.demoLine} />
-                <Text style={styles.demoTitle}>Demo Accounts</Text>
-                <View style={styles.demoLine} />
-              </View>
-              
-              <View style={styles.demoGrid}>
-                {DEMO_ACCOUNTS.map((demo, i) => (
+              <Text style={styles.demoTitle}>Demo Accounts</Text>
+              <View style={styles.demoAccounts}>
+                {[
+                  { email: 'demo@mota.com', password: 'demo123', label: 'Member', color: '#4299E1' },
+                  { email: 'guest@mota.com', password: 'guest123', label: 'Guest', color: '#A0AEC0' },
+                  { email: 'gold@mota.com', password: 'gold123', label: 'Gold', color: '#D4AF37' },
+                  { email: 'platinum@mota.com', password: 'platinum123', label: 'Platinum', color: '#E5E4E2' },
+                  { email: 'diamond@mota.com', password: 'diamond123', label: 'Diamond', color: '#B9F2FF' },
+                ].map((demo, i) => (
                   <TouchableOpacity 
                     key={i}
-                    style={[styles.demoBtn, { borderColor: demo.color + '60' }]}
-                    onPress={() => selectDemoAccount(demo)}
-                    activeOpacity={0.7}
+                    style={[styles.demoBtn, { borderColor: demo.color }]}
+                    onPress={() => { setEmail(demo.email); setPassword(demo.password); }}
                   >
-                    <View style={[styles.demoIconWrap, { backgroundColor: demo.color + '20' }]}>
-                      <Ionicons name={demo.icon as any} size={16} color={demo.color} />
-                    </View>
                     <Text style={[styles.demoBtnText, { color: demo.color }]}>{demo.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              
-              <Text style={styles.demoHint}>
-                Tap to auto-fill credentials, then Sign In
-              </Text>
             </View>
-            {/* ═══════════════════════════════════════════════════════ */}
-
-          </View>
 
           {/* Switch to Signup */}
           <View style={styles.footer}>
@@ -225,20 +175,19 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 20,
   },
   backBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: C.card,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
   },
   logoCircle: {
     width: 80,
@@ -246,7 +195,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -274,22 +223,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: C.card,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: C.border,
-    paddingHorizontal: 16,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   inputIcon: {
-    marginRight: 12,
+    marginLeft: 16,
   },
   input: {
     flex: 1,
-    height: 52,
-    fontSize: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    fontSize: 15,
     color: C.text,
   },
   eyeBtn: {
-    padding: 8,
+    padding: 16,
   },
   forgotBtn: {
     alignSelf: 'flex-end',
@@ -302,83 +251,59 @@ const styles = StyleSheet.create({
   },
   loginBtn: {
     flexDirection: 'row',
-    height: 52,
-    borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    borderRadius: 14,
+    marginBottom: 24,
   },
   loginBtnText: {
     fontSize: 16,
     fontWeight: '700',
     color: C.bg,
   },
-  
-  // ═══════════════════════════════════════════════════════
-  // DEMO SECTION STYLES
-  // ═══════════════════════════════════════════════════════
   demoSection: {
-    marginTop: 32,
-    paddingTop: 24,
-  },
-  demoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  demoLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: C.border,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
   },
   demoTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: C.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginHorizontal: 12,
+    color: C.textSec,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  demoGrid: {
+  demoAccounts: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
   },
   demoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
     backgroundColor: C.card,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    minWidth: 100,
-  },
-  demoIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
+    borderColor: 'rgba(212,175,55,0.3)',
   },
   demoBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    color: C.gold,
+    fontWeight: '500',
   },
   demoHint: {
     fontSize: 11,
     color: C.textMuted,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 10,
   },
-  // ═══════════════════════════════════════════════════════
-
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
   },
   footerText: {
     fontSize: 14,
@@ -386,7 +311,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    fontWeight: '600',
     color: C.gold,
+    fontWeight: '600',
   },
 });

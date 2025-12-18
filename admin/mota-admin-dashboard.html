@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOTA Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f1419;
+      --bg-secondary: #1a1f2e;
+      --bg-tertiary: #242b3d;
+      --bg-hover: #2d3548;
+      --bg-active: #363f54;
+      --gold: #d4af37;
+      --gold-light: #e8c547;
+      --gold-dark: #b8952f;
+      --gold-muted: rgba(212, 175, 55, 0.15);
+      --text-primary: #f5f5f5;
+      --text-secondary: #a0aec0;
+      --text-muted: #718096;
+      --border: #2d3748;
+      --border-light: #4a5568;
+      --success: #48bb78;
+      --success-bg: rgba(72, 187, 120, 0.15);
+      --warning: #ecc94b;
+      --warning-bg: rgba(236, 201, 75, 0.15);
+      --error: #fc8181;
+      --error-bg: rgba(252, 129, 129, 0.15);
+      --info: #63b3ed;
+      --info-bg: rgba(99, 179, 237, 0.15);
+      --tier-gold: #d4af37;
+      --tier-platinum: #e5e4e2;
+      --tier-diamond: #b9f2ff;
+      --sidebar-width: 260px;
+      --header-height: 64px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+    .app { display: flex; min-height: 100vh; }
+    
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--gold-light), var(--gold-dark)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--bg-primary); }
+    .logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--gold-light), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .nav-section { margin-bottom: 20px; }
+    .nav-section-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; padding: 0 12px; margin-bottom: 8px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; margin-bottom: 2px; font-size: 13px; font-weight: 500; user-select: none; }
+    .nav-item * { pointer-events: none; }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--gold-muted); color: var(--gold); }
+    .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+    .nav-item .badge { margin-left: auto; background: var(--error); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .nav-item .count { margin-left: auto; color: var(--text-muted); font-size: 12px; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-light), var(--gold-dark)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--bg-primary); font-size: 16px; }
+    .user-details { flex: 1; min-width: 0; }
+    .user-name { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 12px; color: var(--text-muted); }
+    
+    /* Main Content */
+    .main { flex: 1; margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
+    .header { height: var(--header-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-btn { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .header-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .header-btn .dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: var(--error); border-radius: 50%; }
+    .search-box { display: flex; align-items: center; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0 16px; width: 280px; }
+    .search-box i { color: var(--text-muted); margin-right: 12px; font-size: 14px; }
+    .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text-primary); font-size: 13px; padding: 10px 0; }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .content { flex: 1; padding: 24px; }
+    
+    /* Cards */
+    .card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .card-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .card-title i { color: var(--gold); font-size: 16px; }
+    .card-body { padding: 24px; }
+    .card-body.np { padding: 0; }
+    .card-footer { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg-tertiary); }
+    
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .stat-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: flex-start; gap: 16px; transition: all 0.3s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .stat-icon.gold { background: var(--gold-muted); color: var(--gold); }
+    .stat-icon.success { background: var(--success-bg); color: var(--success); }
+    .stat-icon.info { background: var(--info-bg); color: var(--info); }
+    .stat-icon.warning { background: var(--warning-bg); color: var(--warning); }
+    .stat-icon.error { background: var(--error-bg); color: var(--error); }
+    .stat-content { flex: 1; }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
+    .stat-change { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; margin-top: 6px; padding: 3px 8px; border-radius: 6px; }
+    .stat-change.up { background: var(--success-bg); color: var(--success); }
+    .stat-change.down { background: var(--error-bg); color: var(--error); }
+    
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; outline: none; font-family: inherit; }
+    .btn-primary { background: linear-gradient(135deg, var(--gold-light), var(--gold-dark)); color: var(--bg-primary); }
+    .btn-primary:hover { box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+    .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-light); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #38a169; }
+    .btn-danger { background: var(--error-bg); color: var(--error); border: 1px solid transparent; }
+    .btn-danger:hover { background: var(--error); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-lg { padding: 14px 28px; font-size: 15px; }
+    .btn-icon { width: 34px; height: 34px; padding: 0; }
+    .btn-block { width: 100%; }
+    
+    /* Tables */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-tertiary); position: sticky; top: 0; }
+    td { font-size: 13px; color: var(--text-primary); }
+    tr:hover td { background: var(--bg-hover); }
+    .table-img { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover; background: var(--bg-tertiary); }
+    .table-actions { display: flex; gap: 6px; }
+    
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); }
+    .badge-error { background: var(--error-bg); color: var(--error); }
+    .badge-info { background: var(--info-bg); color: var(--info); }
+    .badge-gold { background: var(--gold-muted); color: var(--gold); }
+    .badge-platinum { background: rgba(229,228,226,0.15); color: var(--tier-platinum); }
+    .badge-diamond { background: rgba(185,242,255,0.15); color: var(--tier-diamond); }
+    
+    /* Forms */
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 11px 14px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; font-family: inherit; transition: all 0.2s; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-muted); }
+    .form-textarea { min-height: 100px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .form-check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .form-check input { display: none; }
+    .form-check .checkmark { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .form-check input:checked + .checkmark { background: var(--gold); border-color: var(--gold); }
+    .form-check input:checked + .checkmark::after { content: '✓'; color: var(--bg-primary); font-size: 12px; font-weight: 700; }
+    
+    /* Toggle */
+    .toggle { position: relative; width: 44px; height: 24px; background: var(--bg-tertiary); border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid var(--border); }
+    .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: var(--text-muted); border-radius: 50%; transition: all 0.3s; }
+    .toggle.active { background: var(--gold); border-color: var(--gold); }
+    .toggle.active::after { left: 22px; background: white; }
+    
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s; }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-xl); width: 90%; max-width: 640px; max-height: 90vh; display: flex; flex-direction: column; transform: scale(0.95) translateY(20px); transition: all 0.3s; }
+    .modal-overlay.active .modal { transform: scale(1) translateY(0); }
+    .modal-lg { max-width: 800px; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .modal-title { font-size: 17px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .modal-title i { color: var(--gold); }
+    .modal-close { width: 34px; height: 34px; border-radius: 50%; background: var(--bg-tertiary); border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-close:hover { background: var(--error-bg); color: var(--error); }
+    .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--bg-tertiary); flex-shrink: 0; }
+    
+    /* Toast */
+    .toast-container { position: fixed; top: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
+    .toast { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 18px; display: flex; align-items: center; gap: 12px; min-width: 300px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .toast.success .toast-icon { background: var(--success-bg); color: var(--success); }
+    .toast.error .toast-icon { background: var(--error-bg); color: var(--error); }
+    .toast.warning .toast-icon { background: var(--warning-bg); color: var(--warning); }
+    .toast.info .toast-icon { background: var(--info-bg); color: var(--info); }
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .toast-message { font-size: 12px; color: var(--text-secondary); }
+    
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 24px; }
+    .empty-state i { font-size: 56px; color: var(--text-muted); margin-bottom: 16px; opacity: 0.5; }
+    .empty-state h3 { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .empty-state p { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; }
+    
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .page-header-left h1 { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 12px; }
+    .page-header-left h1 i { color: var(--gold); font-size: 24px; }
+    .page-header-left p { color: var(--text-muted); font-size: 13px; }
+    
+    /* Filters */
+    .filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 7px 14px; border-radius: 20px; background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover, .filter-btn.active { background: var(--gold-muted); border-color: var(--gold); color: var(--gold); }
+    
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; gap: 4px; overflow-x: auto; }
+    .tab { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    
+    /* Quick Actions */
+    .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .quick-action { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.3s; }
+    .quick-action:hover { border-color: var(--gold); background: var(--gold-muted); transform: translateY(-2px); }
+    .quick-action-icon { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--gold-muted); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .quick-action-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    
+    /* Activity */
+    .activity-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .activity-content { flex: 1; }
+    .activity-text { font-size: 13px; color: var(--text-primary); margin-bottom: 2px; }
+    .activity-time { font-size: 11px; color: var(--text-muted); }
+    
+    /* Data Grid */
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .data-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.3s; }
+    .data-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--gold-muted); }
+    .data-card-img { width: 100%; height: 150px; object-fit: cover; background: var(--bg-tertiary); }
+    .data-card-body { padding: 16px; }
+    .data-card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .data-card-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+    .data-card-meta { display: flex; justify-content: space-between; align-items: center; }
+    .data-card-price { font-size: 16px; font-weight: 700; color: var(--gold); }
+    .data-card-rating { display: flex; align-items: center; gap: 4px; color: var(--warning); font-size: 12px; font-weight: 600; }
+    .data-card-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+    .data-card-footer .btn { flex: 1; }
+    
+    /* Image Upload */
+    .image-upload { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s; }
+    .image-upload:hover { border-color: var(--gold); background: var(--gold-muted); }
+    .image-upload i { font-size: 40px; color: var(--text-muted); margin-bottom: 12px; }
+    .image-upload p { color: var(--text-secondary); font-size: 13px; }
+    .image-preview { width: 100%; height: 180px; border-radius: var(--radius-lg); object-fit: cover; margin-top: 12px; background: var(--bg-tertiary); }
+    
+    /* Multi-Image Manager */
+    .image-manager { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 16px; }
+    .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .image-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid var(--border); transition: all 0.2s; }
+    .image-item:hover { border-color: var(--gold); }
+    .image-item.primary { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-muted); }
+    .image-item img { width: 100%; height: 100%; object-fit: cover; }
+    .image-actions { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0; transition: opacity 0.2s; }
+    .image-item:hover .image-actions { opacity: 1; }
+    .img-btn { width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .img-btn.primary-btn { background: var(--gold-muted); color: var(--gold); }
+    .img-btn.primary-btn:hover { background: var(--gold); color: var(--bg-primary); }
+    .img-btn.delete-btn { background: var(--error-bg); color: var(--error); }
+    .img-btn.delete-btn:hover { background: var(--error); color: white; }
+    .primary-badge { position: absolute; bottom: 4px; left: 4px; background: var(--gold); color: var(--bg-primary); font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .add-image-section { display: flex; gap: 8px; }
+    .add-image-section .form-input { flex: 1; }
+    
+    /* Loading */
+    .loading-spinner { display: flex; align-items: center; justify-content: center; padding: 60px; flex-direction: column; gap: 16px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Login */
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%); padding: 20px; }
+    .login-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 40px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
+    .login-logo { text-align: center; margin-bottom: 32px; }
+    .login-logo-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--gold-light), var(--gold-dark)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--bg-primary); margin: 0 auto 14px; }
+    .login-title { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+    .login-subtitle { color: var(--text-muted); font-size: 13px; }
+    .quick-logins { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .quick-logins p { width: 100%; text-align: center; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    
+    /* Two Column Layout */
+    .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    @media (max-width: 1200px) { .two-col { grid-template-columns: 1fr; } }
+    
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-gold { color: var(--gold); }
+    .text-success { color: var(--success); }
+    .text-error { color: var(--error); }
+    .text-muted { color: var(--text-muted); }
+    .text-center { text-align: center; }
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .flex-1 { flex: 1; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MOTA ADMIN DASHBOARD - Complete Implementation
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    const API = window.location.port === '3001' ? '' : 'http://localhost:3001';
+    
+    const state = {
+      isLoggedIn: false,
+      user: null,
+      token: null,
+      currentPage: 'dashboard',
+      loading: true,
+      modal: null,
+      data: {
+        users: [], restaurants: [], lodging: [], activities: [], events: [],
+        nightlife: [], fleet: [], reservations: [], content: [], notifications: [],
+        stats: {}
+      }
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // API CALLS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    async function api(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+      const opts = { method, headers };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(`${API}/api${endpoint}`, opts);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function loadData() {
+      state.loading = true;
+      render();
+      try {
+        const [users, restaurants, lodging, activities, events, content, reservations, nightlife, fleet] = await Promise.all([
+          api('/users').catch(() => ({ users: [] })),
+          api('/restaurants').catch(() => ({ restaurants: [] })),
+          api('/lodging').catch(() => ({ lodging: [] })),
+          api('/activities').catch(() => ({ activities: [] })),
+          api('/events').catch(() => ({ events: [] })),
+          api('/content').catch(() => ({ content: [] })),
+          api('/reservations').catch(() => ({ reservations: [] })),
+          api('/nightlife').catch(() => ({ nightlife: [] })),
+          api('/fleet').catch(() => ({ fleet: [] }))
+        ]);
+        
+        state.data = {
+          users: users.users || [],
+          restaurants: restaurants.restaurants || [],
+          lodging: lodging.lodging || [],
+          activities: activities.activities || [],
+          events: events.events || [],
+          content: Array.isArray(content) ? content : (content.content || []),
+          reservations: reservations.reservations || (Array.isArray(reservations) ? reservations : []),
+          nightlife: nightlife.nightlife || (Array.isArray(nightlife) ? nightlife : []),
+          fleet: fleet.fleet || fleet.vehicles || [],
+          stats: {
+            totalUsers: (users.users || []).length,
+            investors: (users.users || []).filter(u => u.accessLevel === 'investor').length,
+            pendingRes: (reservations.reservations || (Array.isArray(reservations) ? reservations : [])).filter(r => r.status === 'pending').length,
+            totalInvestment: (users.users || []).reduce((s, u) => s + (u.investmentAmount || 0), 0)
+          }
+        };
+      } catch (e) {
+        console.error('Load error:', e);
+        toast('Error', 'Failed to load data', 'error');
+      }
+      state.loading = false;
+      render();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // AUTH
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    async function login(email, password) {
+      try {
+        const data = await api('/auth/login', 'POST', { email, password });
+        state.token = data.token;
+        state.user = data.user;
+        state.isLoggedIn = true;
+        localStorage.setItem('mota_token', data.token);
+        localStorage.setItem('mota_user', JSON.stringify(data.user));
+        toast('Welcome!', `Logged in as ${data.user.name}`, 'success');
+        await loadData();
+      } catch (e) {
+        toast('Login Failed', e.message, 'error');
+      }
+    }
+
+    function logout() {
+      state.isLoggedIn = false;
+      state.user = null;
+      state.token = null;
+      localStorage.removeItem('mota_token');
+      localStorage.removeItem('mota_user');
+      render();
+    }
+
+    function checkAuth() {
+      const token = localStorage.getItem('mota_token');
+      const user = localStorage.getItem('mota_user');
+      if (token && user) {
+        state.token = token;
+        state.user = JSON.parse(user);
+        state.isLoggedIn = true;
+        loadData();
+      } else {
+        state.loading = false;
+        render();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // CRUD OPERATIONS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    async function createItem(type, data) {
+      try {
+        await api(`/${type}`, 'POST', data);
+        toast('Created', `${type} created successfully`, 'success');
+        closeModal();
+        await loadData();
+      } catch (e) { toast('Error', e.message, 'error'); }
+    }
+
+    async function updateItem(type, id, data) {
+      try {
+        await api(`/${type}/${id}`, 'PUT', data);
+        toast('Updated', `${type} updated successfully`, 'success');
+        closeModal();
+        await loadData();
+      } catch (e) { toast('Error', e.message, 'error'); }
+    }
+
+    async function deleteItem(type, id, name) {
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        await api(`/${type}/${id}`, 'DELETE');
+        toast('Deleted', `${name} has been deleted`, 'success');
+        await loadData();
+      } catch (e) { toast('Error', e.message, 'error'); }
+    }
+
+    async function updateReservationStatus(id, status) {
+      try {
+        await api(`/reservations/${id}/status`, 'PUT', { status });
+        toast('Updated', `Reservation ${status}`, 'success');
+        await loadData();
+      } catch (e) { toast('Error', e.message, 'error'); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TOAST & MODAL
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function toast(title, message, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      const icons = { success: 'fa-check', error: 'fa-times', warning: 'fa-exclamation', info: 'fa-info' };
+      t.innerHTML = `<div class="toast-icon"><i class="fas ${icons[type]}"></i></div><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${message}</div></div>`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    function openModal(type, data = null) { state.modal = { type, data }; render(); }
+    function closeModal() { state.modal = null; render(); }
+    function navigate(page) { 
+      console.log('Navigating to:', page);
+      state.currentPage = page; 
+      render(); 
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - MAIN
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = state.isLoggedIn ? renderApp() : renderLogin();
+      attachEvents();
+    }
+
+    function renderLogin() {
+      return `
+        <div class="login-page">
+          <div class="login-card">
+            <div class="login-logo">
+              <div class="login-logo-icon"><i class="fas fa-gem"></i></div>
+              <h1 class="login-title">MOTA Admin</h1>
+              <p class="login-subtitle">Content Management System</p>
+            </div>
+            <form id="login-form">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" class="form-input" value="admin@mota.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="login-password" class="form-input" value="admin123" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg btn-block mt-2">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+              </button>
+            </form>
+            <div class="quick-logins">
+              <p>Quick Access</p>
+              <button class="btn btn-secondary btn-sm" onclick="quickLogin('admin@mota.com','admin123')">Admin</button>
+              <button class="btn btn-secondary btn-sm" onclick="quickLogin('diamond@mota.com','diamond123')">Diamond</button>
+              <button class="btn btn-secondary btn-sm" onclick="quickLogin('demo@mota.com','demo123')">Member</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function quickLogin(email, pass) {
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = pass;
+    }
+
+    function renderApp() {
+      return `
+        <div class="app">
+          ${renderSidebar()}
+          <main class="main">
+            ${renderHeader()}
+            <div class="content">
+              ${state.loading ? '<div class="loading-spinner"><div class="spinner"></div><span class="text-muted">Loading...</span></div>' : renderPage()}
+            </div>
+          </main>
+        </div>
+        ${state.modal ? renderModal() : ''}
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - SIDEBAR
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderSidebar() {
+      const nav = [
+        { section: 'Overview', items: [{ id: 'dashboard', icon: 'fa-chart-line', label: 'Dashboard' }] },
+        { section: 'Content', items: [
+          { id: 'slideshow', icon: 'fa-images', label: 'Slideshow' },
+          { id: 'restaurants', icon: 'fa-utensils', label: 'Restaurants', count: state.data.restaurants.length },
+          { id: 'lodging', icon: 'fa-hotel', label: 'Lodging', count: state.data.lodging.length },
+          { id: 'activities', icon: 'fa-hiking', label: 'Activities', count: state.data.activities.length },
+          { id: 'events', icon: 'fa-calendar-star', label: 'Events', count: state.data.events.length },
+          { id: 'nightlife', icon: 'fa-moon', label: 'Nightlife', count: state.data.nightlife.length },
+          { id: 'fleet', icon: 'fa-car', label: 'Exotic Fleet', count: state.data.fleet.length }
+        ]},
+        { section: 'Users', items: [
+          { id: 'users', icon: 'fa-users', label: 'All Users', count: state.data.users.length },
+          { id: 'investors', icon: 'fa-gem', label: 'Investors', count: state.data.stats.investors }
+        ]},
+        { section: 'Operations', items: [
+          { id: 'reservations', icon: 'fa-calendar-check', label: 'Reservations', badge: state.data.stats.pendingRes },
+          { id: 'notifications', icon: 'fa-bell', label: 'Notifications' }
+        ]},
+        { section: 'System', items: [{ id: 'settings', icon: 'fa-cog', label: 'Settings' }] }
+      ];
+
+      return `
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-logo">
+              <div class="logo-icon"><i class="fas fa-gem"></i></div>
+              <div><div class="logo-text">MOTA</div><div class="logo-sub">Admin Dashboard</div></div>
+            </div>
+          </div>
+          <nav class="sidebar-nav">
+            ${nav.map(s => `
+              <div class="nav-section">
+                <div class="nav-section-title">${s.section}</div>
+                ${s.items.map(i => `
+                  <div class="nav-item ${state.currentPage === i.id ? 'active' : ''}" onclick="navigate('${i.id}')">
+                    <i class="fas ${i.icon}"></i><span>${i.label}</span>
+                    ${i.badge ? `<span class="badge">${i.badge}</span>` : ''}
+                    ${i.count !== undefined ? `<span class="count">${i.count}</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            `).join('')}
+          </nav>
+          <div class="sidebar-footer">
+            <div class="user-info">
+              <div class="user-avatar">${state.user?.name?.charAt(0) || 'A'}</div>
+              <div class="user-details">
+                <div class="user-name">${state.user?.name || 'Admin'}</div>
+                <div class="user-role">${state.user?.accessLevel || 'Admin'}</div>
+              </div>
+              <button class="btn btn-icon btn-secondary" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+          </div>
+        </aside>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - HEADER
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderHeader() {
+      const titles = {
+        dashboard: 'Dashboard', slideshow: 'Homepage Slideshow', restaurants: 'Restaurants',
+        lodging: 'Lodging', activities: 'Activities', events: 'Events', nightlife: 'Nightlife',
+        fleet: 'Exotic Fleet', users: 'Users', investors: 'Investors', reservations: 'Reservations',
+        notifications: 'Notifications', settings: 'Settings'
+      };
+      return `
+        <header class="header">
+          <div class="header-left"><h1 class="page-title">${titles[state.currentPage] || 'Dashboard'}</h1></div>
+          <div class="header-right">
+            <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search..."></div>
+            <button class="header-btn" onclick="loadData()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+            <button class="header-btn">${state.data.stats.pendingRes > 0 ? '<span class="dot"></span>' : ''}<i class="fas fa-bell"></i></button>
+          </div>
+        </header>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - PAGES
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderPage() {
+      const pages = {
+        dashboard: renderDashboard,
+        slideshow: renderSlideshow,
+        restaurants: () => renderCRUDPage('restaurants', 'Restaurant', 'fa-utensils', restaurantColumns),
+        lodging: () => renderCRUDPage('lodging', 'Lodging', 'fa-hotel', lodgingColumns),
+        activities: () => renderCRUDPage('activities', 'Activity', 'fa-hiking', activityColumns),
+        events: () => renderCRUDPage('events', 'Event', 'fa-calendar-star', eventColumns),
+        nightlife: () => renderCRUDPage('nightlife', 'Nightlife', 'fa-moon', nightlifeColumns),
+        fleet: () => renderCRUDPage('fleet', 'Vehicle', 'fa-car', fleetColumns),
+        users: renderUsers,
+        investors: renderInvestors,
+        reservations: renderReservations,
+        notifications: renderNotifications,
+        settings: renderSettings
+      };
+      return (pages[state.currentPage] || renderDashboard)();
+    }
+
+    // Column definitions
+    const restaurantColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'cuisine', label: 'Cuisine' },
+      { key: 'priceRange', label: 'Price' },
+      { key: 'rating', label: 'Rating', type: 'rating' },
+      { key: 'isAvailable', label: 'Status', type: 'status' }
+    ];
+    const lodgingColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'type', label: 'Type' },
+      { key: 'price', label: 'Price', type: 'currency' },
+      { key: 'rating', label: 'Rating', type: 'rating' },
+      { key: 'isAvailable', label: 'Status', type: 'status' }
+    ];
+    const activityColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'price', label: 'Price', type: 'currency' },
+      { key: 'duration', label: 'Duration' },
+      { key: 'isAvailable', label: 'Status', type: 'status' }
+    ];
+    const eventColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'venue', label: 'Venue' },
+      { key: 'status', label: 'Status', type: 'badge' }
+    ];
+    const nightlifeColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'type', label: 'Type' },
+      { key: 'priceRange', label: 'Price' },
+      { key: 'isAvailable', label: 'Status', type: 'status' }
+    ];
+    const fleetColumns = [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'brand', label: 'Brand' },
+      { key: 'pricePerDay', label: 'Price/Day', type: 'currency' },
+      { key: 'isAvailable', label: 'Status', type: 'status' }
+    ];
+
+    function renderDashboard() {
+      const s = state.data.stats;
+      return `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon gold"><i class="fas fa-users"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value">${s.totalUsers || 0}</div>
+              <div class="stat-change up"><i class="fas fa-arrow-up"></i> Active</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon info"><i class="fas fa-gem"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Investors</div>
+              <div class="stat-value">${s.investors || 0}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Total Investment</div>
+              <div class="stat-value">$${formatNum(s.totalInvestment || 0)}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon warning"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Pending Reservations</div>
+              <div class="stat-value">${s.pendingRes || 0}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-action" onclick="navigate('restaurants'); openModal('add', {type:'restaurants'})">
+            <div class="quick-action-icon"><i class="fas fa-plus"></i></div>
+            <div class="quick-action-text">Add Restaurant</div>
+          </div>
+          <div class="quick-action" onclick="navigate('lodging'); openModal('add', {type:'lodging'})">
+            <div class="quick-action-icon"><i class="fas fa-plus"></i></div>
+            <div class="quick-action-text">Add Lodging</div>
+          </div>
+          <div class="quick-action" onclick="navigate('events'); openModal('add', {type:'events'})">
+            <div class="quick-action-icon"><i class="fas fa-plus"></i></div>
+            <div class="quick-action-text">Add Event</div>
+          </div>
+          <div class="quick-action" onclick="openModal('notification')">
+            <div class="quick-action-icon"><i class="fas fa-bell"></i></div>
+            <div class="quick-action-text">Send Notification</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="fas fa-clock"></i> Recent Activity</div></div>
+            <div class="card-body">
+              ${renderActivity()}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> Content Overview</div></div>
+            <div class="card-body">
+              ${renderContentOverview()}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderActivity() {
+      const items = [
+        { icon: 'fa-user-plus', bg: 'var(--success-bg)', color: 'var(--success)', text: '<strong>New user</strong> registered', time: '5 min ago' },
+        { icon: 'fa-calendar-check', bg: 'var(--info-bg)', color: 'var(--info)', text: 'Reservation <strong>confirmed</strong>', time: '15 min ago' },
+        { icon: 'fa-star', bg: 'var(--warning-bg)', color: 'var(--warning)', text: '<strong>5-star review</strong> received', time: '1 hour ago' },
+        { icon: 'fa-gem', bg: 'var(--gold-muted)', color: 'var(--gold)', text: 'New <strong>investor</strong> joined', time: '2 hours ago' }
+      ];
+      return items.map(i => `
+        <div class="activity-item">
+          <div class="activity-icon" style="background:${i.bg};color:${i.color}"><i class="fas ${i.icon}"></i></div>
+          <div class="activity-content">
+            <div class="activity-text">${i.text}</div>
+            <div class="activity-time">${i.time}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderContentOverview() {
+      const items = [
+        { label: 'Restaurants', count: state.data.restaurants.length, icon: 'fa-utensils', color: 'var(--success)' },
+        { label: 'Lodging', count: state.data.lodging.length, icon: 'fa-hotel', color: 'var(--info)' },
+        { label: 'Activities', count: state.data.activities.length, icon: 'fa-hiking', color: 'var(--warning)' },
+        { label: 'Events', count: state.data.events.length, icon: 'fa-calendar', color: 'var(--error)' }
+      ];
+      return items.map(i => `
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div style="width:36px;height:36px;border-radius:8px;background:${i.color}20;color:${i.color};display:flex;align-items:center;justify-content:center">
+              <i class="fas ${i.icon}"></i>
+            </div>
+            <span>${i.label}</span>
+          </div>
+          <strong>${i.count}</strong>
+        </div>
+      `).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - CRUD PAGE (Generic)
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderCRUDPage(type, singular, icon, columns) {
+      const data = state.data[type] || [];
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas ${icon}"></i> ${singular}s</h1>
+            <p>Manage all ${singular.toLowerCase()}s in the system</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('add', {type:'${type}'})">
+            <i class="fas fa-plus"></i> Add ${singular}
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${data.length} ${singular}s</div>
+            <div class="filters">
+              <button class="filter-btn active">All</button>
+              <button class="filter-btn">Featured</button>
+              <button class="filter-btn">Active</button>
+            </div>
+          </div>
+          <div class="card-body np">
+            ${data.length ? renderTable(type, data, columns) : renderEmpty(singular)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTable(type, data, columns) {
+      return `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                ${columns.map(c => `<th>${c.label}</th>`).join('')}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(item => `
+                <tr>
+                  ${columns.map(c => `<td>${renderCell(item, c)}</td>`).join('')}
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-secondary btn-icon" onclick='openModal("edit", {type:"${type}", data:${JSON.stringify(item).replace(/'/g, "&#39;")}})' title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-danger btn-icon" onclick="deleteItem('${type}', '${item._id}', '${esc(item.name)}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderCell(item, col) {
+      const v = item[col.key];
+      switch (col.type) {
+        case 'image': return `<img src="${item.images?.[0]?.url || 'https://via.placeholder.com/44'}" class="table-img" onerror="this.src='https://via.placeholder.com/44'">`;
+        case 'rating': return `<span class="data-card-rating"><i class="fas fa-star"></i> ${v || 0}</span>`;
+        case 'currency': return `<span class="text-gold" style="font-weight:600">$${v || 0}</span>`;
+        case 'status': return v !== false ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-error">Inactive</span>';
+        case 'badge': return `<span class="badge badge-info">${v || 'N/A'}</span>`;
+        case 'date': return v ? new Date(v).toLocaleDateString() : '-';
+        default: return v || '-';
+      }
+    }
+
+    function renderEmpty(type) {
+      return `
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No ${type}s Found</h3>
+          <p>Get started by adding your first ${type.toLowerCase()}.</p>
+          <button class="btn btn-primary" onclick="openModal('add', {type:'${type.toLowerCase()}s'})">
+            <i class="fas fa-plus"></i> Add ${type}
+          </button>
+        </div>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - USERS & INVESTORS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderUsers() {
+      const users = state.data.users || [];
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-users"></i> User Management</h1>
+            <p>Manage all users in the system</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('add-user')">
+            <i class="fas fa-user-plus"></i> Add User
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${users.length} Users</div>
+            <div class="filters">
+              <button class="filter-btn active">All</button>
+              <button class="filter-btn">Members</button>
+              <button class="filter-btn">Investors</button>
+              <button class="filter-btn">Guests</button>
+            </div>
+          </div>
+          <div class="card-body np">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr><th>User</th><th>Email</th><th>Access</th><th>Tier</th><th>Since</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  ${users.map(u => `
+                    <tr>
+                      <td>
+                        <div class="flex items-center gap-3">
+                          <div class="user-avatar" style="width:36px;height:36px;font-size:14px">${u.name?.charAt(0) || '?'}</div>
+                          <strong>${u.name || 'Unknown'}</strong>
+                        </div>
+                      </td>
+                      <td>${u.email}</td>
+                      <td><span class="badge badge-info">${u.accessLevel}</span></td>
+                      <td>${tierBadge(u.investorTier)}</td>
+                      <td>${u.memberSince ? new Date(u.memberSince).toLocaleDateString() : '-'}</td>
+                      <td>${u.isActive ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-error">Inactive</span>'}</td>
+                      <td>
+                        <div class="table-actions">
+                          <button class="btn btn-secondary btn-icon" onclick='openModal("view-user", ${JSON.stringify(u).replace(/'/g, "&#39;")})' title="View">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button class="btn btn-secondary btn-icon" onclick='openModal("edit-user", ${JSON.stringify(u).replace(/'/g, "&#39;")})' title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInvestors() {
+      const investors = state.data.users.filter(u => u.accessLevel === 'investor') || [];
+      const gold = investors.filter(i => i.investorTier === 'gold');
+      const plat = investors.filter(i => i.investorTier === 'platinum');
+      const diamond = investors.filter(i => i.investorTier === 'diamond');
+      
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-gem"></i> Investors</h1>
+            <p>Manage investor accounts and portfolios</p>
+          </div>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--tier-gold)20;color:var(--tier-gold)"><i class="fas fa-trophy"></i></div>
+            <div class="stat-content"><div class="stat-label">Gold</div><div class="stat-value">${gold.length}</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(229,228,226,0.15);color:#888"><i class="fas fa-medal"></i></div>
+            <div class="stat-content"><div class="stat-label">Platinum</div><div class="stat-value">${plat.length}</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--tier-diamond)20;color:var(--tier-diamond)"><i class="fas fa-gem"></i></div>
+            <div class="stat-content"><div class="stat-label">Diamond</div><div class="stat-value">${diamond.length}</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success"><i class="fas fa-dollar-sign"></i></div>
+            <div class="stat-content"><div class="stat-label">Total Investment</div><div class="stat-value">$${formatNum(investors.reduce((s,i) => s + (i.investmentAmount || 0), 0))}</div></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-body np">
+            <div class="table-container">
+              <table>
+                <thead><tr><th>Investor</th><th>Tier</th><th>Investment</th><th>Portfolio</th><th>KYC</th><th>Actions</th></tr></thead>
+                <tbody>
+                  ${investors.map(i => `
+                    <tr>
+                      <td>
+                        <div class="flex items-center gap-3">
+                          <div class="user-avatar" style="width:36px;height:36px;font-size:14px">${i.name?.charAt(0)}</div>
+                          <div><strong>${i.name}</strong><div class="text-muted" style="font-size:12px">${i.email}</div></div>
+                        </div>
+                      </td>
+                      <td>${tierBadge(i.investorTier)}</td>
+                      <td class="text-gold" style="font-weight:600">$${formatNum(i.investmentAmount || 0)}</td>
+                      <td class="text-success" style="font-weight:600">$${formatNum(i.portfolioValue || 0)}</td>
+                      <td>${i.investorProfile?.kycCompleted ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-warning">Pending</span>'}</td>
+                      <td><button class="btn btn-secondary btn-sm" onclick='openModal("view-user", ${JSON.stringify(i).replace(/'/g, "&#39;")})'><i class="fas fa-eye"></i> View</button></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function tierBadge(tier) {
+      if (!tier) return '<span class="text-muted">-</span>';
+      const cls = { gold: 'badge-gold', platinum: 'badge-platinum', diamond: 'badge-diamond' };
+      return `<span class="badge ${cls[tier]}">${tier.toUpperCase()}</span>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - RESERVATIONS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderReservations() {
+      const res = state.data.reservations || [];
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-calendar-check"></i> Reservations</h1>
+            <p>Manage all bookings and reservations</p>
+          </div>
+        </div>
+        
+        <div class="tabs">
+          <div class="tab active">All (${res.length})</div>
+          <div class="tab">Pending (${res.filter(r => r.status === 'pending').length})</div>
+          <div class="tab">Confirmed</div>
+          <div class="tab">Completed</div>
+          <div class="tab">Cancelled</div>
+        </div>
+        
+        <div class="card">
+          <div class="card-body np">
+            ${res.length ? `
+              <div class="table-container">
+                <table>
+                  <thead><tr><th>Confirmation</th><th>Guest</th><th>Type</th><th>Item</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    ${res.map(r => `
+                      <tr>
+                        <td><code class="text-gold">${r.confirmationNumber || 'N/A'}</code></td>
+                        <td>${r.bookingDetails?.name || 'Unknown'}</td>
+                        <td><span class="badge badge-info">${r.itemType}</span></td>
+                        <td>${r.itemName || '-'}</td>
+                        <td>${r.date ? new Date(r.date).toLocaleDateString() : '-'}</td>
+                        <td>${statusBadge(r.status)}</td>
+                        <td>
+                          <div class="table-actions">
+                            ${r.status === 'pending' ? `
+                              <button class="btn btn-success btn-icon" onclick="updateReservationStatus('${r._id}', 'confirmed')" title="Confirm">
+                                <i class="fas fa-check"></i>
+                              </button>
+                              <button class="btn btn-danger btn-icon" onclick="updateReservationStatus('${r._id}', 'cancelled')" title="Cancel">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            ` : ''}
+                            <button class="btn btn-secondary btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            ` : renderEmpty('Reservation')}
+          </div>
+        </div>
+      `;
+    }
+
+    function statusBadge(status) {
+      const map = { pending: 'warning', confirmed: 'success', completed: 'info', cancelled: 'error' };
+      return `<span class="badge badge-${map[status] || 'info'}">${status}</span>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - SLIDESHOW
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderSlideshow() {
+      const contentArr = Array.isArray(state.data.content) ? state.data.content : [];
+      const slideshow = contentArr.find(c => c.key === 'homepage_slideshow');
+      const slides = slideshow?.slides || [];
+      
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-images"></i> Homepage Slideshow</h1>
+            <p>Manage hero slideshow on the app homepage</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('add-slide')">
+            <i class="fas fa-plus"></i> Add Slide
+          </button>
+        </div>
+        
+        <div class="data-grid">
+          ${slides.length ? slides.map((s, i) => `
+            <div class="data-card">
+              <img src="${s.imageUrl}" class="data-card-img" onerror="this.src='https://via.placeholder.com/280x150'">
+              <div class="data-card-body">
+                <div class="data-card-title">${s.title}</div>
+                <div class="data-card-subtitle">${s.subtitle || ''}</div>
+                <div class="flex gap-2 mt-2">
+                  ${s.linkType !== 'none' ? `<span class="badge badge-gold">${s.linkType}</span>` : '<span class="badge">No Link</span>'}
+                  ${s.isActive !== false ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-error">Hidden</span>'}
+                </div>
+              </div>
+              <div class="data-card-footer">
+                <button class="btn btn-secondary btn-sm" onclick='openModal("edit-slide", ${JSON.stringify({...s, index: i}).replace(/'/g, "&#39;")})'><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSlide(${i}, '${esc(s.title)}')"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          `).join('') : renderEmpty('Slide')}
+        </div>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - NOTIFICATIONS & SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderNotifications() {
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-bell"></i> Notifications</h1>
+            <p>Send push notifications to users</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('notification')">
+            <i class="fas fa-paper-plane"></i> Send Notification
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-body">
+            <div class="empty-state">
+              <i class="fas fa-bell"></i>
+              <h3>Notification History</h3>
+              <p>Recent notifications will appear here.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSettings() {
+      return `
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1><i class="fas fa-cog"></i> Settings</h1>
+            <p>Configure system settings</p>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fas fa-sliders-h"></i> App Configuration</div></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">App Name</label>
+                <input type="text" class="form-input" value="MOTA Resort & Casino">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Support Email</label>
+                <input type="email" class="form-input" value="support@motaresort.com">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Currency</label>
+                <select class="form-select"><option>USD - US Dollar</option><option>BZD - Belize Dollar</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Timezone</label>
+                <select class="form-select"><option>America/Belize</option><option>America/New_York</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // RENDER - MODAL
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function renderModal() {
+      if (!state.modal) return '';
+      const { type, data } = state.modal;
+      
+      let title = '', content = '', size = '';
+      
+      if (type === 'add' || type === 'edit') {
+        const entityType = data?.type || 'restaurants';
+        const isEdit = type === 'edit';
+        const item = isEdit ? data.data : null;
+        title = `${isEdit ? 'Edit' : 'Add'} ${entityType.slice(0, -1).charAt(0).toUpperCase() + entityType.slice(1, -1)}`;
+        content = renderEntityForm(entityType, item);
+        size = 'modal-lg';
+      } else if (type === 'add-slide' || type === 'edit-slide') {
+        const isEdit = type === 'edit-slide';
+        const slide = isEdit ? data : null;
+        title = isEdit ? 'Edit Slide' : 'Add Slide';
+        content = renderSlideForm(slide);
+        size = 'modal-lg';
+      } else if (type === 'view-user') {
+        title = 'User Details';
+        content = renderUserDetail(data);
+      } else if (type === 'notification') {
+        title = 'Send Notification';
+        content = renderNotificationForm();
+      } else if (type === 'add-user' || type === 'edit-user') {
+        title = type === 'add-user' ? 'Add User' : 'Edit User';
+        content = renderUserForm(type === 'edit-user' ? data : null);
+      }
+      
+      const iconMap = {
+        'add-slide': 'fa-images',
+        'edit-slide': 'fa-images',
+        'add-user': 'fa-user-plus',
+        'edit-user': 'fa-user-edit',
+        'view-user': 'fa-user',
+        'notification': 'fa-bell'
+      };
+      const modalIcon = iconMap[type] || 'fa-edit';
+      
+      return `
+        <div class="modal-overlay active" onclick="if(event.target===this)closeModal()">
+          <div class="modal ${size}">
+            <div class="modal-header">
+              <h3 class="modal-title"><i class="fas ${modalIcon}"></i> ${title}</h3>
+              <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">${content}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEntityForm(type, item) {
+      const isEdit = !!item;
+      
+      const forms = {
+        restaurants: `
+          <form id="entity-form" data-type="restaurants" data-id="${item?._id || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-input" value="${item?.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cuisine *</label>
+                <input type="text" name="cuisine" class="form-input" value="${item?.cuisine || ''}" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description *</label>
+              <textarea name="description" class="form-textarea" required>${item?.description || ''}</textarea>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Price Range</label>
+                <select name="priceRange" class="form-select">
+                  <option value="$" ${item?.priceRange === '$' ? 'selected' : ''}>$ Budget</option>
+                  <option value="$$" ${item?.priceRange === '$$' ? 'selected' : ''}>$$ Moderate</option>
+                  <option value="$$$" ${item?.priceRange === '$$$' ? 'selected' : ''}>$$$ Upscale</option>
+                  <option value="$$$$" ${item?.priceRange === '$$$$' ? 'selected' : ''}>$$$$ Fine Dining</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating</label>
+                <input type="number" name="rating" class="form-input" min="0" max="5" step="0.1" value="${item?.rating || 4.5}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dress Code</label>
+                <select name="dressCode" class="form-select">
+                  <option value="casual" ${item?.dressCode === 'casual' ? 'selected' : ''}>Casual</option>
+                  <option value="smart casual" ${item?.dressCode === 'smart casual' ? 'selected' : ''}>Smart Casual</option>
+                  <option value="business casual" ${item?.dressCode === 'business casual' ? 'selected' : ''}>Business Casual</option>
+                  <option value="formal" ${item?.dressCode === 'formal' ? 'selected' : ''}>Formal</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Multi-Image Manager -->
+            <div class="form-group">
+              <label class="form-label">Images</label>
+              <div class="image-manager" id="image-manager">
+                <div class="image-grid" id="image-grid">
+                  ${(item?.images || []).map((img, idx) => `
+                    <div class="image-item ${img.isPrimary ? 'primary' : ''}" data-index="${idx}">
+                      <img src="${img.url}" onerror="this.src='https://via.placeholder.com/120'">
+                      <div class="image-actions">
+                        <button type="button" class="img-btn primary-btn" onclick="setImagePrimary(${idx})" title="Set as Primary">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="img-btn delete-btn" onclick="removeImage(${idx})" title="Remove">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                      ${img.isPrimary ? '<span class="primary-badge">Primary</span>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="add-image-section">
+                  <input type="url" id="new-image-url" class="form-input" placeholder="Paste image URL...">
+                  <button type="button" class="btn btn-secondary" onclick="addImageUrl()">
+                    <i class="fas fa-plus"></i> Add Image
+                  </button>
+                </div>
+                <input type="hidden" name="imagesJson" id="images-json" value='${JSON.stringify(item?.images || [])}'>
+              </div>
+            </div>
+            
+            <div class="flex gap-4 mt-4">
+              <label class="form-check"><input type="checkbox" name="isAvailable" ${item?.isAvailable !== false ? 'checked' : ''}><span class="checkmark"></span><span>Available</span></label>
+              <label class="form-check"><input type="checkbox" name="isFeatured" ${item?.isFeatured ? 'checked' : ''}><span class="checkmark"></span><span>Featured</span></label>
+              <label class="form-check"><input type="checkbox" name="reservationRequired" ${item?.reservationRequired ? 'checked' : ''}><span class="checkmark"></span><span>Reservation Required</span></label>
+            </div>
+            <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+              <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'}</button>
+            </div>
+          </form>
+        `,
+        lodging: `
+          <form id="entity-form" data-type="lodging" data-id="${item?._id || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-input" value="${item?.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type *</label>
+                <select name="type" class="form-select" required>
+                  <option value="Suite" ${item?.type === 'Suite' ? 'selected' : ''}>Suite</option>
+                  <option value="Villa" ${item?.type === 'Villa' ? 'selected' : ''}>Villa</option>
+                  <option value="Bungalow" ${item?.type === 'Bungalow' ? 'selected' : ''}>Bungalow</option>
+                  <option value="Penthouse" ${item?.type === 'Penthouse' ? 'selected' : ''}>Penthouse</option>
+                  <option value="Cottage" ${item?.type === 'Cottage' ? 'selected' : ''}>Cottage</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description *</label>
+              <textarea name="description" class="form-textarea" required>${item?.description || ''}</textarea>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Price/Night *</label>
+                <input type="number" name="price" class="form-input" value="${item?.price || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bedrooms</label>
+                <input type="number" name="bedrooms" class="form-input" value="${item?.bedrooms || 1}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Max Guests</label>
+                <input type="number" name="maxGuests" class="form-input" value="${item?.maxGuests || 2}">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">View</label>
+              <select name="view" class="form-select">
+                <option value="ocean" ${item?.view === 'ocean' ? 'selected' : ''}>Ocean</option>
+                <option value="beach" ${item?.view === 'beach' ? 'selected' : ''}>Beach</option>
+                <option value="garden" ${item?.view === 'garden' ? 'selected' : ''}>Garden</option>
+                <option value="pool" ${item?.view === 'pool' ? 'selected' : ''}>Pool</option>
+              </select>
+            </div>
+            
+            <!-- Multi-Image Manager -->
+            <div class="form-group">
+              <label class="form-label">Images</label>
+              <div class="image-manager" id="image-manager">
+                <div class="image-grid" id="image-grid">
+                  ${(item?.images || []).map((img, idx) => `
+                    <div class="image-item ${img.isPrimary ? 'primary' : ''}" data-index="${idx}">
+                      <img src="${img.url}" onerror="this.src='https://via.placeholder.com/120'">
+                      <div class="image-actions">
+                        <button type="button" class="img-btn primary-btn" onclick="setImagePrimary(${idx})" title="Set as Primary">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="img-btn delete-btn" onclick="removeImage(${idx})" title="Remove">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                      ${img.isPrimary ? '<span class="primary-badge">Primary</span>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="add-image-section">
+                  <input type="url" id="new-image-url" class="form-input" placeholder="Paste image URL...">
+                  <button type="button" class="btn btn-secondary" onclick="addImageUrl()">
+                    <i class="fas fa-plus"></i> Add Image
+                  </button>
+                </div>
+                <input type="hidden" name="imagesJson" id="images-json" value='${JSON.stringify(item?.images || [])}'>
+              </div>
+            </div>
+            
+            <div class="flex gap-4 mt-4">
+              <label class="form-check"><input type="checkbox" name="isAvailable" ${item?.isAvailable !== false ? 'checked' : ''}><span class="checkmark"></span><span>Available</span></label>
+              <label class="form-check"><input type="checkbox" name="isFeatured" ${item?.isFeatured ? 'checked' : ''}><span class="checkmark"></span><span>Featured</span></label>
+            </div>
+            <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+              <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'}</button>
+            </div>
+          </form>
+        `,
+        activities: `
+          <form id="entity-form" data-type="activities" data-id="${item?._id || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-input" value="${item?.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select name="category" class="form-select" required>
+                  <option value="Water Sports" ${item?.category === 'Water Sports' ? 'selected' : ''}>Water Sports</option>
+                  <option value="Adventure" ${item?.category === 'Adventure' ? 'selected' : ''}>Adventure</option>
+                  <option value="Wellness" ${item?.category === 'Wellness' ? 'selected' : ''}>Wellness</option>
+                  <option value="Cultural" ${item?.category === 'Cultural' ? 'selected' : ''}>Cultural</option>
+                  <option value="Entertainment" ${item?.category === 'Entertainment' ? 'selected' : ''}>Entertainment</option>
+                  <option value="Tours" ${item?.category === 'Tours' ? 'selected' : ''}>Tours</option>
+                  <option value="Gaming" ${item?.category === 'Gaming' ? 'selected' : ''}>Gaming</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description *</label>
+              <textarea name="description" class="form-textarea" required>${item?.description || ''}</textarea>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Price *</label>
+                <input type="number" name="price" class="form-input" value="${item?.price || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Duration *</label>
+                <input type="text" name="duration" class="form-input" value="${item?.duration || ''}" placeholder="3 hours" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Skill Level</label>
+                <select name="skillLevel" class="form-select">
+                  <option value="all levels" ${item?.skillLevel === 'all levels' ? 'selected' : ''}>All Levels</option>
+                  <option value="beginner" ${item?.skillLevel === 'beginner' ? 'selected' : ''}>Beginner</option>
+                  <option value="intermediate" ${item?.skillLevel === 'intermediate' ? 'selected' : ''}>Intermediate</option>
+                  <option value="advanced" ${item?.skillLevel === 'advanced' ? 'selected' : ''}>Advanced</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Multi-Image Manager -->
+            <div class="form-group">
+              <label class="form-label">Images</label>
+              <div class="image-manager" id="image-manager">
+                <div class="image-grid" id="image-grid">
+                  ${(item?.images || []).map((img, idx) => `
+                    <div class="image-item ${img.isPrimary ? 'primary' : ''}" data-index="${idx}">
+                      <img src="${img.url}" onerror="this.src='https://via.placeholder.com/120'">
+                      <div class="image-actions">
+                        <button type="button" class="img-btn primary-btn" onclick="setImagePrimary(${idx})" title="Set as Primary">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="img-btn delete-btn" onclick="removeImage(${idx})" title="Remove">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                      ${img.isPrimary ? '<span class="primary-badge">Primary</span>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="add-image-section">
+                  <input type="url" id="new-image-url" class="form-input" placeholder="Paste image URL...">
+                  <button type="button" class="btn btn-secondary" onclick="addImageUrl()">
+                    <i class="fas fa-plus"></i> Add Image
+                  </button>
+                </div>
+                <input type="hidden" name="imagesJson" id="images-json" value='${JSON.stringify(item?.images || [])}'>
+              </div>
+            </div>
+            
+            <div class="flex gap-4 mt-4">
+              <label class="form-check"><input type="checkbox" name="isAvailable" ${item?.isAvailable !== false ? 'checked' : ''}><span class="checkmark"></span><span>Available</span></label>
+              <label class="form-check"><input type="checkbox" name="isFeatured" ${item?.isFeatured ? 'checked' : ''}><span class="checkmark"></span><span>Featured</span></label>
+            </div>
+            <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+              <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'}</button>
+            </div>
+          </form>
+        `,
+        events: `
+          <form id="entity-form" data-type="events" data-id="${item?._id || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Event Name *</label>
+                <input type="text" name="name" class="form-input" value="${item?.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <option value="Gala" ${item?.category === 'Gala' ? 'selected' : ''}>Gala</option>
+                  <option value="Concert" ${item?.category === 'Concert' ? 'selected' : ''}>Concert</option>
+                  <option value="Dining" ${item?.category === 'Dining' ? 'selected' : ''}>Dining</option>
+                  <option value="Sports" ${item?.category === 'Sports' ? 'selected' : ''}>Sports</option>
+                  <option value="Wellness" ${item?.category === 'Wellness' ? 'selected' : ''}>Wellness</option>
+                  <option value="Entertainment" ${item?.category === 'Entertainment' ? 'selected' : ''}>Entertainment</option>
+                  <option value="Investor" ${item?.category === 'Investor' ? 'selected' : ''}>Investor</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description *</label>
+              <textarea name="description" class="form-textarea" required>${item?.description || ''}</textarea>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Date *</label>
+                <input type="date" name="date" class="form-input" value="${item?.date ? item.date.split('T')[0] : ''}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Time</label>
+                <input type="text" name="time" class="form-input" value="${item?.time || ''}" placeholder="7:00 PM">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Venue *</label>
+                <input type="text" name="venue" class="form-input" value="${item?.venue || ''}" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Price ($0 for free)</label>
+                <input type="number" name="price" class="form-input" value="${item?.price || 0}">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Capacity</label>
+                <input type="number" name="capacity" class="form-input" value="${item?.capacity || ''}">
+              </div>
+            </div>
+            
+            <!-- Multi-Image Manager -->
+            <div class="form-group">
+              <label class="form-label">Images</label>
+              <div class="image-manager" id="image-manager">
+                <div class="image-grid" id="image-grid">
+                  ${(item?.images || []).map((img, idx) => `
+                    <div class="image-item ${img.isPrimary ? 'primary' : ''}" data-index="${idx}">
+                      <img src="${img.url}" onerror="this.src='https://via.placeholder.com/120'">
+                      <div class="image-actions">
+                        <button type="button" class="img-btn primary-btn" onclick="setImagePrimary(${idx})" title="Set as Primary">
+                          <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="img-btn delete-btn" onclick="removeImage(${idx})" title="Remove">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                      ${img.isPrimary ? '<span class="primary-badge">Primary</span>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="add-image-section">
+                  <input type="url" id="new-image-url" class="form-input" placeholder="Paste image URL...">
+                  <button type="button" class="btn btn-secondary" onclick="addImageUrl()">
+                    <i class="fas fa-plus"></i> Add Image
+                  </button>
+                </div>
+                <input type="hidden" name="imagesJson" id="images-json" value='${JSON.stringify(item?.images || [])}'>
+              </div>
+            </div>
+            
+            <div class="flex gap-4 mt-4">
+              <label class="form-check"><input type="checkbox" name="isFeatured" ${item?.isFeatured ? 'checked' : ''}><span class="checkmark"></span><span>Featured</span></label>
+              <label class="form-check"><input type="checkbox" name="isVIPOnly" ${item?.isVIPOnly ? 'checked' : ''}><span class="checkmark"></span><span>VIP Only</span></label>
+            </div>
+            <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+              <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'}</button>
+            </div>
+          </form>
+        `
+      };
+      
+      return forms[type] || `<p>Form for ${type} coming soon...</p>`;
+    }
+
+    function renderUserDetail(user) {
+      return `
+        <div class="text-center mb-4">
+          <div class="user-avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px">${user.name?.charAt(0)}</div>
+          <h2 style="margin-bottom:4px">${user.name}</h2>
+          <p class="text-muted">${user.email}</p>
+          <div class="mt-2">${tierBadge(user.investorTier)} <span class="badge badge-info">${user.accessLevel}</span></div>
+        </div>
+        
+        <div class="form-row mb-4">
+          <div style="background:var(--bg-tertiary);padding:16px;border-radius:var(--radius-md)">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Investment</div>
+            <div class="text-gold" style="font-size:20px;font-weight:700">$${formatNum(user.investmentAmount || 0)}</div>
+          </div>
+          <div style="background:var(--bg-tertiary);padding:16px;border-radius:var(--radius-md)">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Portfolio</div>
+            <div class="text-success" style="font-size:20px;font-weight:700">$${formatNum(user.portfolioValue || 0)}</div>
+          </div>
+        </div>
+        
+        <div>
+          <div class="flex justify-between mb-2"><span class="text-muted">Phone</span><span>${user.phone || '-'}</span></div>
+          <div class="flex justify-between mb-2"><span class="text-muted">Member Since</span><span>${user.memberSince ? new Date(user.memberSince).toLocaleDateString() : '-'}</span></div>
+          <div class="flex justify-between mb-2"><span class="text-muted">Status</span><span>${user.isActive ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-error">Inactive</span>'}</span></div>
+          <div class="flex justify-between"><span class="text-muted">KYC</span><span>${user.investorProfile?.kycCompleted ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-warning">Pending</span>'}</span></div>
+        </div>
+        
+        <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+          <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+          <button class="btn btn-primary" onclick='openModal("edit-user", ${JSON.stringify(user).replace(/'/g, "&#39;")})'><i class="fas fa-edit"></i> Edit</button>
+        </div>
+      `;
+    }
+
+    function renderUserForm(user) {
+      return `
+        <form id="user-form" data-id="${user?._id || ''}">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" name="name" class="form-input" value="${user?.name || ''}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" name="email" class="form-input" value="${user?.email || ''}" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" name="phone" class="form-input" value="${user?.phone || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Access Level</label>
+              <select name="accessLevel" class="form-select">
+                <option value="guest" ${user?.accessLevel === 'guest' ? 'selected' : ''}>Guest</option>
+                <option value="member" ${user?.accessLevel === 'member' ? 'selected' : ''}>Member</option>
+                <option value="investor" ${user?.accessLevel === 'investor' ? 'selected' : ''}>Investor</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Investor Tier</label>
+              <select name="investorTier" class="form-select">
+                <option value="">None</option>
+                <option value="gold" ${user?.investorTier === 'gold' ? 'selected' : ''}>Gold</option>
+                <option value="platinum" ${user?.investorTier === 'platinum' ? 'selected' : ''}>Platinum</option>
+                <option value="diamond" ${user?.investorTier === 'diamond' ? 'selected' : ''}>Diamond</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Investment Amount</label>
+              <input type="number" name="investmentAmount" class="form-input" value="${user?.investmentAmount || 0}">
+            </div>
+          </div>
+          ${!user ? `
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" name="password" class="form-input" required minlength="6">
+            </div>
+          ` : ''}
+          <div class="flex gap-4 mt-4">
+            <label class="form-check"><input type="checkbox" name="isActive" ${user?.isActive !== false ? 'checked' : ''}><span class="checkmark"></span><span>Active</span></label>
+          </div>
+          <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${user ? 'Update' : 'Create'} User</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function renderNotificationForm() {
+      return `
+        <form id="notification-form">
+          <div class="form-group">
+            <label class="form-label">Target Audience</label>
+            <select name="targetType" class="form-select">
+              <option value="all">All Users</option>
+              <option value="members">Members Only</option>
+              <option value="investors">Investors Only</option>
+              <option value="gold">Gold Investors</option>
+              <option value="platinum">Platinum Investors</option>
+              <option value="diamond">Diamond Investors</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" name="title" class="form-input" required placeholder="Notification title">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message *</label>
+            <textarea name="message" class="form-textarea" required placeholder="Enter your message..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select name="type" class="form-select">
+              <option value="info">Info</option>
+              <option value="success">Success</option>
+              <option value="warning">Warning</option>
+              <option value="promo">Promotional</option>
+            </select>
+          </div>
+          <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function renderSlideForm(slide) {
+      const isEdit = !!slide;
+      return `
+        <form id="slide-form" data-index="${slide?.index || ''}">
+          <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" name="title" class="form-input" value="${slide?.title || ''}" required placeholder="Slide title">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subtitle</label>
+            <input type="text" name="subtitle" class="form-input" value="${slide?.subtitle || ''}" placeholder="Optional subtitle">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Image URL *</label>
+            <input type="url" name="imageUrl" class="form-input" value="${slide?.imageUrl || ''}" required placeholder="https://...">
+            <p class="form-hint">Recommended size: 1920x1080px</p>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Link Type</label>
+              <select name="linkType" class="form-select" id="slide-link-type" onchange="toggleLinkFields()">
+                <option value="none" ${slide?.linkType === 'none' || !slide?.linkType ? 'selected' : ''}>No Link</option>
+                <option value="tab" ${slide?.linkType === 'tab' ? 'selected' : ''}>Tab (Navigate to tab)</option>
+                <option value="screen" ${slide?.linkType === 'screen' ? 'selected' : ''}>Screen (Deep link)</option>
+                <option value="url" ${slide?.linkType === 'url' ? 'selected' : ''}>External URL</option>
+              </select>
+            </div>
+            <div class="form-group" id="link-tab-group" style="display:${slide?.linkType === 'tab' ? 'block' : 'none'}">
+              <label class="form-label">Target Tab</label>
+              <select name="linkTab" class="form-select">
+                <option value="0" ${slide?.linkTab === 0 ? 'selected' : ''}>Home (0)</option>
+                <option value="1" ${slide?.linkTab === 1 ? 'selected' : ''}>Explore (1)</option>
+                <option value="2" ${slide?.linkTab === 2 ? 'selected' : ''}>Events (2)</option>
+                <option value="3" ${slide?.linkTab === 3 ? 'selected' : ''}>Profile (3)</option>
+              </select>
+            </div>
+            <div class="form-group" id="link-target-group" style="display:${slide?.linkType === 'screen' || slide?.linkType === 'url' ? 'block' : 'none'}">
+              <label class="form-label">Link Target</label>
+              <input type="text" name="linkTarget" class="form-input" value="${slide?.linkTarget || ''}" placeholder="${slide?.linkType === 'url' ? 'https://...' : 'RestaurantDetail'}">
+            </div>
+          </div>
+          <div class="form-group" id="link-params-group" style="display:${slide?.linkType === 'screen' ? 'block' : 'none'}">
+            <label class="form-label">Link Parameters (JSON)</label>
+            <input type="text" name="linkParams" class="form-input" value='${slide?.linkParams ? JSON.stringify(slide.linkParams) : ''}' placeholder='{"id": "123"}'>
+            <p class="form-hint">Optional: Pass parameters to the screen</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order</label>
+            <input type="number" name="order" class="form-input" value="${slide?.order || 0}" min="0">
+          </div>
+          <div class="flex gap-4 mt-4">
+            <label class="form-check">
+              <input type="checkbox" name="isActive" ${slide?.isActive !== false ? 'checked' : ''}>
+              <span class="checkmark"></span>
+              <span>Active</span>
+            </label>
+          </div>
+          <div class="modal-footer" style="margin:24px -24px -24px;padding:16px 24px">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> ${isEdit ? 'Update' : 'Add'} Slide</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function toggleLinkFields() {
+      const linkType = document.getElementById('slide-link-type').value;
+      document.getElementById('link-tab-group').style.display = linkType === 'tab' ? 'block' : 'none';
+      document.getElementById('link-target-group').style.display = (linkType === 'screen' || linkType === 'url') ? 'block' : 'none';
+      document.getElementById('link-params-group').style.display = linkType === 'screen' ? 'block' : 'none';
+    }
+
+    async function deleteSlide(index, title) {
+      if (!confirm(`Delete slide "${title}"? This cannot be undone.`)) return;
+      
+      try {
+        const contentArr = Array.isArray(state.data.content) ? state.data.content : [];
+        const slideshow = contentArr.find(c => c.key === 'homepage_slideshow');
+        
+        if (slideshow && slideshow.slides) {
+          const slides = [...slideshow.slides];
+          slides.splice(index, 1);
+          
+          await api('/content/homepage_slideshow', 'PUT', {
+            key: 'homepage_slideshow',
+            slides: slides
+          });
+          
+          toast('Deleted', `Slide "${title}" has been deleted`, 'success');
+          await loadData();
+        }
+      } catch (err) {
+        toast('Error', err.message, 'error');
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MULTI-IMAGE MANAGER
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function getImagesFromForm() {
+      const jsonInput = document.getElementById('images-json');
+      if (!jsonInput) return [];
+      try {
+        return JSON.parse(jsonInput.value) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function setImagesInForm(images) {
+      const jsonInput = document.getElementById('images-json');
+      if (jsonInput) {
+        jsonInput.value = JSON.stringify(images);
+      }
+      renderImageGrid(images);
+    }
+
+    function renderImageGrid(images) {
+      const grid = document.getElementById('image-grid');
+      if (!grid) return;
+      
+      grid.innerHTML = images.map((img, idx) => `
+        <div class="image-item ${img.isPrimary ? 'primary' : ''}" data-index="${idx}">
+          <img src="${img.url}" onerror="this.src='https://via.placeholder.com/120'">
+          <div class="image-actions">
+            <button type="button" class="img-btn primary-btn" onclick="setImagePrimary(${idx})" title="Set as Primary">
+              <i class="fas fa-star"></i>
+            </button>
+            <button type="button" class="img-btn delete-btn" onclick="removeImage(${idx})" title="Remove">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          ${img.isPrimary ? '<span class="primary-badge">Primary</span>' : ''}
+        </div>
+      `).join('');
+    }
+
+    function addImageUrl() {
+      const input = document.getElementById('new-image-url');
+      if (!input || !input.value.trim()) {
+        toast('Error', 'Please enter an image URL', 'error');
+        return;
+      }
+      
+      const url = input.value.trim();
+      const images = getImagesFromForm();
+      
+      // Set as primary if it's the first image
+      const isPrimary = images.length === 0;
+      
+      images.push({
+        url: url,
+        caption: '',
+        isPrimary: isPrimary
+      });
+      
+      setImagesInForm(images);
+      input.value = '';
+      toast('Added', 'Image added successfully', 'success');
+    }
+
+    function removeImage(index) {
+      const images = getImagesFromForm();
+      const wasPrimary = images[index]?.isPrimary;
+      
+      images.splice(index, 1);
+      
+      // If removed image was primary, make first image primary
+      if (wasPrimary && images.length > 0) {
+        images[0].isPrimary = true;
+      }
+      
+      setImagesInForm(images);
+    }
+
+    function setImagePrimary(index) {
+      const images = getImagesFromForm();
+      
+      // Reset all to non-primary
+      images.forEach(img => img.isPrimary = false);
+      
+      // Set selected as primary
+      if (images[index]) {
+        images[index].isPrimary = true;
+      }
+      
+      setImagesInForm(images);
+      toast('Updated', 'Primary image updated', 'success');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // UTILITIES
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function formatNum(n) {
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+      return n.toString();
+    }
+
+    function esc(str) {
+      return (str || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // EVENT LISTENERS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    function attachEvents() {
+      // Login form
+      const loginForm = document.getElementById('login-form');
+      if (loginForm) {
+        loginForm.onsubmit = async (e) => {
+          e.preventDefault();
+          await login(document.getElementById('login-email').value, document.getElementById('login-password').value);
+        };
+      }
+
+      // Entity form
+      const entityForm = document.getElementById('entity-form');
+      if (entityForm) {
+        entityForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const type = form.dataset.type;
+          const id = form.dataset.id;
+          const data = Object.fromEntries(new FormData(form));
+          
+          // Handle checkboxes
+          form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            data[cb.name] = cb.checked;
+          });
+          
+          // Handle images from multi-image manager
+          const imagesJson = document.getElementById('images-json');
+          if (imagesJson) {
+            try {
+              data.images = JSON.parse(imagesJson.value) || [];
+            } catch (e) {
+              data.images = [];
+            }
+          }
+          
+          // Remove the hidden field from data
+          delete data.imagesJson;
+          
+          // Handle numbers
+          ['price', 'rating', 'bedrooms', 'maxGuests', 'capacity'].forEach(k => {
+            if (data[k]) data[k] = Number(data[k]);
+          });
+          
+          if (id) {
+            await updateItem(type, id, data);
+          } else {
+            await createItem(type, data);
+          }
+        };
+      }
+
+      // User form
+      const userForm = document.getElementById('user-form');
+      if (userForm) {
+        userForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const id = form.dataset.id;
+          const data = Object.fromEntries(new FormData(form));
+          
+          form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            data[cb.name] = cb.checked;
+          });
+          
+          if (data.investmentAmount) data.investmentAmount = Number(data.investmentAmount);
+          if (!data.investorTier) data.investorTier = null;
+          
+          if (id) {
+            await updateItem('users', id, data);
+          } else {
+            await createItem('users', data);
+          }
+        };
+      }
+
+      // Notification form
+      const notifForm = document.getElementById('notification-form');
+      if (notifForm) {
+        notifForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(notifForm));
+          try {
+            await api('/notifications', 'POST', data);
+            toast('Sent!', 'Notification sent successfully', 'success');
+            closeModal();
+          } catch (err) {
+            toast('Error', err.message, 'error');
+          }
+        };
+      }
+
+      // Slide form
+      const slideForm = document.getElementById('slide-form');
+      if (slideForm) {
+        slideForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const formData = Object.fromEntries(new FormData(slideForm));
+          const editIndex = slideForm.dataset.index;
+          const isEdit = editIndex !== '' && editIndex !== undefined;
+          
+          // Build slide object
+          const slide = {
+            title: formData.title,
+            subtitle: formData.subtitle || '',
+            imageUrl: formData.imageUrl,
+            linkType: formData.linkType || 'none',
+            order: parseInt(formData.order) || 0,
+            isActive: slideForm.querySelector('input[name="isActive"]').checked
+          };
+
+          // Add link fields based on type
+          if (slide.linkType === 'tab') {
+            slide.linkTab = parseInt(formData.linkTab) || 0;
+          } else if (slide.linkType === 'screen' || slide.linkType === 'url') {
+            slide.linkTarget = formData.linkTarget || '';
+            if (slide.linkType === 'screen' && formData.linkParams) {
+              try {
+                slide.linkParams = JSON.parse(formData.linkParams);
+              } catch (e) {
+                slide.linkParams = {};
+              }
+            }
+          }
+
+          try {
+            // Get current slideshow content or create new
+            const contentArr = Array.isArray(state.data.content) ? state.data.content : [];
+            let slideshow = contentArr.find(c => c.key === 'homepage_slideshow');
+            
+            if (!slideshow) {
+              // Create new slideshow content
+              await api('/content', 'POST', {
+                key: 'homepage_slideshow',
+                slides: [slide]
+              });
+            } else {
+              // Update or add slide
+              const slides = [...(slideshow.slides || [])];
+              
+              if (isEdit) {
+                slides[parseInt(editIndex)] = slide;
+              } else {
+                slides.push(slide);
+              }
+              
+              await api('/content/homepage_slideshow', 'PUT', {
+                key: 'homepage_slideshow',
+                slides: slides
+              });
+            }
+            
+            toast('Success', isEdit ? 'Slide updated successfully' : 'Slide added successfully', 'success');
+            closeModal();
+            await loadData();
+          } catch (err) {
+            toast('Error', err.message, 'error');
+          }
+        };
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    document.addEventListener('DOMContentLoaded', checkAuth);
+  </script>
+</body>
+</html>

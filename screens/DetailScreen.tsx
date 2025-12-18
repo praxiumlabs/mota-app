@@ -1,7 +1,7 @@
 /**
  * Detail Screen
  * View details and book restaurants, events, activities, lodging
- * With comprehensive information and proper reservation flow
+ * With ImageGrid for multiple images display
  */
 
 import React, { useState, useRef } from 'react';
@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { C, G, PLACEHOLDER_IMAGE } from '../constants/theme';
 import api from '../services/api';
 import { CalendarGrid } from '../components/BookingComponents';
-
+import ImageGrid from '../components/ImageGrid';
 
 const { width } = Dimensions.get('window');
 
@@ -46,8 +46,6 @@ export default function DetailScreen({ item, type, onBack }: Props) {
   const { user } = useAuth();
   const [showBooking, setShowBooking] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const imageListRef = useRef<FlatList>(null);
   
   // Booking form state
   const [date, setDate] = useState('');
@@ -61,146 +59,82 @@ export default function DetailScreen({ item, type, onBack }: Props) {
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
 
-  // Get all images
+  // Get all images - format for ImageGrid
   const getImages = () => {
     if (item.images && item.images.length > 0) {
-      return item.images.map((img: any) => img.url || img);
+      return item.images.map((img: any) => ({
+        url: typeof img === 'string' ? img : img.url,
+        caption: img.caption || '',
+        isPrimary: img.isPrimary || false
+      }));
     }
-    return [item.image || PLACEHOLDER_IMAGE];
+    return [{ url: item.image || PLACEHOLDER_IMAGE, caption: '', isPrimary: true }];
   };
 
   const images = getImages();
 
   const handleBook = async () => {
     if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to make a reservation.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: onBack }
-      ]);
+      Alert.alert('Sign In Required', 'Please sign in to make a reservation.');
       return;
     }
 
     if (!date) {
-      Alert.alert('Required', 'Please select a date for your reservation');
+      Alert.alert('Date Required', 'Please select a date for your reservation.');
       return;
     }
 
-    if (!selectedTime && type !== 'lodging') {
-      Alert.alert('Required', 'Please select a time for your reservation');
-      return;
-    }
-
-    if (!firstName || !lastName) {
-      Alert.alert('Required', 'Please enter your name');
-      return;
-    }
-
-    if (!email) {
-      Alert.alert('Required', 'Please enter your email address');
+    if (type !== 'event' && !selectedTime) {
+      Alert.alert('Time Required', 'Please select a time for your reservation.');
       return;
     }
 
     setLoading(true);
     try {
-      const reservationData = {
-        type,
-        itemId: item._id || item.id,
+      const bookingData = {
+        itemType: type,
+        itemId: item._id,
         itemName: item.name,
-        date,
-        time: selectedTime || 'TBD',
-        guests: parseInt(guests) || 2,
-        specialRequests,
-        dietaryRequirements,
-        occasion: occasion !== 'None' ? occasion : undefined,
-        contactInfo: {
-          firstName,
-          lastName,
+        date: date,
+        time: type === 'event' ? item.time : selectedTime,
+        guestCount: parseInt(guests) || 1,
+        occasion: occasion !== 'None' ? occasion : null,
+        bookingDetails: {
+          name: `${firstName} ${lastName}`.trim(),
           email,
-          phone
-        }
+          phone,
+          specialRequests: `${specialRequests}${dietaryRequirements ? '\nDietary: ' + dietaryRequirements : ''}`
+        },
+        isFixedEvent: type === 'event'
       };
 
-      const response = await api.post('/reservations', reservationData);
+      const response = await api.post('/reservations', bookingData);
       
       Alert.alert(
-        '✓ Reservation Confirmed!',
-        `Your reservation at ${item.name} has been confirmed.\n\nConfirmation #: ${response.data?.reservation?.confirmationNumber || 'PENDING'}\n\nDate: ${date}\nTime: ${selectedTime || 'TBD'}\nGuests: ${guests}`,
-        [{ text: 'Done', onPress: onBack }]
+        'Reservation Confirmed! 🎉',
+        `Your ${type} reservation has been confirmed.\n\nConfirmation #: ${response.data.confirmationNumber || 'Pending'}`,
+        [{ text: 'Done', onPress: () => setShowBooking(false) }]
       );
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to make reservation. Please try again.');
+      
+      // Reset form
+      setDate('');
+      setSelectedTime('');
+      setSpecialRequests('');
+      setDietaryRequirements('');
+    } catch (error: any) {
+      Alert.alert('Booking Failed', error.response?.data?.error || 'Unable to complete your reservation. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleRSVP = async () => {
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to RSVP.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: onBack }
-      ]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await api.rsvpEvent(item._id, {
-        guests: parseInt(guests) || 1,
-        dietaryRequirements,
-        specialRequests
-      });
-      
-      Alert.alert(
-        '✓ RSVP Confirmed!',
-        `You're all set for ${item.name}!\n\nDate: ${new Date(item.date).toLocaleDateString()}\nTime: ${item.time || 'TBD'}\nGuests: ${guests}`,
-        [{ text: 'Done', onPress: onBack }]
-      );
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to RSVP');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Render image gallery
-  const renderImageGallery = () => (
-    <View style={styles.galleryContainer}>
-      <FlatList
-        ref={imageListRef}
-        data={images}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / width);
-          setCurrentImageIndex(index);
-        }}
-        keyExtractor={(_, i) => `img-${i}`}
-        renderItem={({ item: imageUrl }) => (
-          <Image source={{ uri: imageUrl }} style={styles.galleryImage} resizeMode="cover" />
-        )}
-      />
-      {images.length > 1 && (
-        <View style={styles.imageIndicators}>
-          {images.map((_: any, i: number) => (
-            <View key={i} style={[styles.imageIndicator, currentImageIndex === i && styles.imageIndicatorActive]} />
-          ))}
-        </View>
-      )}
-      <LinearGradient colors={['rgba(0,0,0,0.5)', 'transparent', G.dark[1]]} style={styles.galleryOverlay} />
-    </View>
-  );
 
   // Render restaurant-specific info
   const renderRestaurantInfo = () => (
     <View style={styles.infoSection}>
-      {/* Quick Info Row */}
       <View style={styles.quickInfoRow}>
         {item.priceRange && (
           <View style={styles.quickInfoItem}>
-            <Ionicons name="cash-outline" size={16} color={C.gold} />
-            <Text style={styles.quickInfoText}>{item.priceRange}</Text>
+            <Text style={styles.priceRange}>{item.priceRange}</Text>
           </View>
         )}
         {item.cuisine && (
@@ -212,36 +146,11 @@ export default function DetailScreen({ item, type, onBack }: Props) {
         {item.rating && (
           <View style={styles.quickInfoItem}>
             <Ionicons name="star" size={16} color={C.gold} />
-            <Text style={styles.quickInfoText}>{item.rating} ({item.reviewCount || 0})</Text>
+            <Text style={styles.quickInfoText}>{item.rating}</Text>
           </View>
         )}
       </View>
 
-      {/* Features */}
-      {(item.dogFriendly || item.kidsFriendly) && (
-        <View style={styles.featuresRow}>
-          {item.kidsFriendly && (
-            <View style={styles.featureBadge}>
-              <Ionicons name="people" size={14} color={C.gold} />
-              <Text style={styles.featureBadgeText}>Kids Friendly</Text>
-            </View>
-          )}
-          {item.dogFriendly && (
-            <View style={styles.featureBadge}>
-              <Ionicons name="paw" size={14} color={C.gold} />
-              <Text style={styles.featureBadgeText}>Dog Friendly</Text>
-            </View>
-          )}
-          {item.reservationRequired && (
-            <View style={styles.featureBadge}>
-              <Ionicons name="calendar" size={14} color={C.gold} />
-              <Text style={styles.featureBadgeText}>Reservation Required</Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Dress Code */}
       {item.dressCode && (
         <View style={styles.detailRow}>
           <Ionicons name="shirt-outline" size={18} color={C.textMuted} />
@@ -250,38 +159,14 @@ export default function DetailScreen({ item, type, onBack }: Props) {
         </View>
       )}
 
-      {/* Hours */}
       {item.hours && (
-        <View style={styles.hoursSection}>
-          <Text style={styles.sectionTitle}>Hours</Text>
-          {Object.entries(item.hours).map(([day, hours]: [string, any]) => (
-            hours && hours.open && (
-              <View key={day} style={styles.hoursRow}>
-                <Text style={styles.dayText}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
-                <Text style={styles.hoursText}>{hours.open} - {hours.close}</Text>
-              </View>
-            )
-          ))}
+        <View style={styles.detailRow}>
+          <Ionicons name="time-outline" size={18} color={C.textMuted} />
+          <Text style={styles.detailLabel}>Hours:</Text>
+          <Text style={styles.detailValue}>{item.hours}</Text>
         </View>
       )}
 
-      {/* Menu Highlights */}
-      {item.menuHighlights && item.menuHighlights.length > 0 && (
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Menu Highlights</Text>
-          {item.menuHighlights.map((menuItem: any, i: number) => (
-            <View key={i} style={styles.menuItem}>
-              <View style={styles.menuItemHeader}>
-                <Text style={styles.menuItemName}>{menuItem.name}</Text>
-                {menuItem.price && <Text style={styles.menuItemPrice}>${menuItem.price}</Text>}
-              </View>
-              {menuItem.description && <Text style={styles.menuItemDesc}>{menuItem.description}</Text>}
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Features List */}
       {item.features && item.features.length > 0 && (
         <View style={styles.featuresSection}>
           <Text style={styles.sectionTitle}>Features & Amenities</Text>
@@ -398,227 +283,28 @@ export default function DetailScreen({ item, type, onBack }: Props) {
       )}
 
       {item.price ? (
-        <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Admission</Text>
-          <Text style={styles.priceValue}>${item.price}</Text>
+        <View style={styles.priceBox}>
+          <Text style={styles.priceLabel}>Starting from</Text>
+          <Text style={styles.priceAmount}>${item.price}</Text>
+          <Text style={styles.priceNote}>per person</Text>
         </View>
       ) : (
-        <View style={styles.freeBadge}>
-          <Ionicons name="gift-outline" size={16} color={C.success} />
-          <Text style={styles.freeText}>Free Event</Text>
+        <View style={[styles.priceBox, { backgroundColor: C.success + '20' }]}>
+          <Text style={[styles.priceAmount, { color: C.success }]}>Complimentary</Text>
         </View>
       )}
 
       {item.capacity && (
-        <View style={styles.capacityRow}>
-          <Ionicons name="people-outline" size={18} color={C.textMuted} />
-          <Text style={styles.capacityText}>
-            {item.currentRSVPs || 0} / {item.capacity} spots filled
-          </Text>
-        </View>
-      )}
-
-      {item.dressCode && (
         <View style={styles.detailRow}>
-          <Ionicons name="shirt-outline" size={18} color={C.textMuted} />
-          <Text style={styles.detailLabel}>Dress Code:</Text>
-          <Text style={styles.detailValue}>{item.dressCode}</Text>
+          <Ionicons name="people-outline" size={18} color={C.textMuted} />
+          <Text style={styles.detailLabel}>Capacity:</Text>
+          <Text style={styles.detailValue}>{item.capacity} guests</Text>
         </View>
       )}
     </View>
   );
 
-  // Render reservation modal
-  const renderBookingModal = () => (
-    <Modal visible={showBooking} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          {/* Fixed Header */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Make a Reservation</Text>
-            <TouchableOpacity onPress={() => setShowBooking(false)} style={styles.closeBtn}>
-              <Ionicons name="close" size={24} color={C.text} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Scrollable Body */}
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={{ flex: 1 }}
-            keyboardVerticalOffset={0}
-          >
-            <ScrollView 
-              style={styles.modalBody} 
-              showsVerticalScrollIndicator={false} 
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 20 }}
-            >
-              {/* Venue Info */}
-              <View style={styles.reservationVenue}>
-                <Image source={{ uri: images[0] }} style={styles.reservationVenueImage} />
-                <View style={styles.reservationVenueInfo}>
-                  <Text style={styles.reservationVenueName}>{item.name}</Text>
-                  <Text style={styles.reservationVenueType}>{item.cuisine || item.type || type}</Text>
-                </View>
-              </View>
-
-              {/* Date Selection */}
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Date *</Text>
-                <CalendarGrid 
-                  selectedDate={date ? new Date(date) : null}
-                  onSelectDate={(selectedDate) => setDate(selectedDate.toISOString().split('T')[0])}
-                />
-              </View>
-
-              {/* Time Selection */}
-              {type !== 'lodging' && (
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Time *</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeSlots}>
-                    {TIME_SLOTS.map((slot) => (
-                      <TouchableOpacity
-                        key={slot}
-                        style={[styles.timeSlot, selectedTime === slot && styles.timeSlotActive]}
-                        onPress={() => setSelectedTime(slot)}
-                      >
-                        <Text style={[styles.timeSlotText, selectedTime === slot && styles.timeSlotTextActive]}>{slot}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-
-              {/* Guest Count */}
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Number of Guests</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.guestOptions}>
-                  {GUEST_OPTIONS.map((num) => (
-                    <TouchableOpacity
-                      key={num}
-                      style={[styles.guestOption, guests === num && styles.guestOptionActive]}
-                      onPress={() => setGuests(num)}
-                    >
-                      <Text style={[styles.guestOptionText, guests === num && styles.guestOptionTextActive]}>{num}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Occasion */}
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Occasion (Optional)</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.occasionOptions}>
-                  {OCCASIONS.map((occ) => (
-                    <TouchableOpacity
-                      key={occ}
-                      style={[styles.occasionOption, occasion === occ && styles.occasionOptionActive]}
-                      onPress={() => setOccasion(occ)}
-                    >
-                      <Text style={[styles.occasionOptionText, occasion === occ && styles.occasionOptionTextActive]}>{occ}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Contact Info */}
-              <Text style={styles.sectionHeader}>Contact Information</Text>
-              
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.formLabel}>First Name *</Text>
-                  <TextInput
-                    style={styles.inputSimple}
-                    placeholder="First name"
-                    placeholderTextColor={C.textMuted}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                  />
-                </View>
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.formLabel}>Last Name *</Text>
-                  <TextInput
-                    style={styles.inputSimple}
-                    placeholder="Last name"
-                    placeholderTextColor={C.textMuted}
-                    value={lastName}
-                    onChangeText={setLastName}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Email *</Text>
-                <TextInput
-                  style={styles.inputSimple}
-                  placeholder="your@email.com"
-                  placeholderTextColor={C.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Phone</Text>
-                <TextInput
-                  style={styles.inputSimple}
-                  placeholder="+1 (555) 000-0000"
-                  placeholderTextColor={C.textMuted}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              {/* Special Requests */}
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Special Requests</Text>
-                <TextInput
-                  style={[styles.inputSimple, styles.textArea]}
-                  placeholder="Any special requests..."
-                  placeholderTextColor={C.textMuted}
-                  value={specialRequests}
-                  onChangeText={setSpecialRequests}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Dietary Requirements</Text>
-                <TextInput
-                  style={styles.inputSimple}
-                  placeholder="Allergies, dietary restrictions..."
-                  placeholderTextColor={C.textMuted}
-                  value={dietaryRequirements}
-                  onChangeText={setDietaryRequirements}
-                />
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-
-          {/* Fixed Confirm Button at Bottom */}
-          <View style={[styles.modalFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <TouchableOpacity onPress={handleBook} disabled={loading} activeOpacity={0.85}>
-              <LinearGradient colors={G.gold} style={styles.confirmBtn}>
-                {loading ? (
-                  <ActivityIndicator color={C.bg} />
-                ) : (
-                  <>
-                    <Text style={styles.confirmBtnText}>Confirm Reservation</Text>
-                    <Ionicons name="checkmark-circle" size={20} color={C.bg} style={{ marginLeft: 8 }} />
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
+  // Action button based on type and auth state
   const getActionButton = () => {
     if (!user) {
       return (
@@ -654,16 +340,218 @@ export default function DetailScreen({ item, type, onBack }: Props) {
     );
   };
 
+  // Render booking modal
+  const renderBookingModal = () => (
+    <Modal visible={showBooking} animationType="slide" transparent>
+      <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContainer}>
+          <LinearGradient colors={G.card} style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {type === 'event' ? 'RSVP' : type === 'restaurant' ? 'Reserve Table' : 'Book Now'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowBooking(false)} style={styles.modalClose}>
+                <Ionicons name="close" size={24} color={C.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {/* Item Summary */}
+              <View style={styles.bookingSummary}>
+                <Image source={{ uri: images[0]?.url || PLACEHOLDER_IMAGE }} style={styles.bookingImage} />
+                <View style={styles.bookingInfo}>
+                  <Text style={styles.bookingName}>{item.name}</Text>
+                  <Text style={styles.bookingType}>{type.charAt(0).toUpperCase() + type.slice(1)}</Text>
+                </View>
+              </View>
+
+              {/* Date Selection */}
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Select Date</Text>
+                <CalendarGrid 
+                  selectedDate={date} 
+                  onSelectDate={setDate}
+                  minDate={new Date().toISOString().split('T')[0]}
+                />
+              </View>
+
+              {/* Time Selection (not for events) */}
+              {type !== 'event' && (
+                <View style={styles.formSection}>
+                  <Text style={styles.formLabel}>Select Time</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.timeSlots}>
+                      {TIME_SLOTS.map((time) => (
+                        <TouchableOpacity
+                          key={time}
+                          style={[styles.timeSlot, selectedTime === time && styles.timeSlotActive]}
+                          onPress={() => setSelectedTime(time)}
+                        >
+                          <Text style={[styles.timeSlotText, selectedTime === time && styles.timeSlotTextActive]}>
+                            {time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Guest Count */}
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Number of Guests</Text>
+                <View style={styles.guestOptions}>
+                  {GUEST_OPTIONS.map((num) => (
+                    <TouchableOpacity
+                      key={num}
+                      style={[styles.guestOption, guests === num && styles.guestOptionActive]}
+                      onPress={() => setGuests(num)}
+                    >
+                      <Text style={[styles.guestOptionText, guests === num && styles.guestOptionTextActive]}>
+                        {num}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Occasion (for restaurants) */}
+              {type === 'restaurant' && (
+                <View style={styles.formSection}>
+                  <Text style={styles.formLabel}>Occasion (Optional)</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.occasionOptions}>
+                      {OCCASIONS.map((occ) => (
+                        <TouchableOpacity
+                          key={occ}
+                          style={[styles.occasionOption, occasion === occ && styles.occasionOptionActive]}
+                          onPress={() => setOccasion(occ)}
+                        >
+                          <Text style={[styles.occasionOptionText, occasion === occ && styles.occasionOptionTextActive]}>
+                            {occ}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Contact Info */}
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Contact Information</Text>
+                <View style={styles.formRow}>
+                  <TextInput
+                    style={[styles.formInput, { flex: 1, marginRight: 8 }]}
+                    placeholder="First Name"
+                    placeholderTextColor={C.textMuted}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                  />
+                  <TextInput
+                    style={[styles.formInput, { flex: 1 }]}
+                    placeholder="Last Name"
+                    placeholderTextColor={C.textMuted}
+                    value={lastName}
+                    onChangeText={setLastName}
+                  />
+                </View>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Email"
+                  placeholderTextColor={C.textMuted}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Phone"
+                  placeholderTextColor={C.textMuted}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              {/* Special Requests */}
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Special Requests (Optional)</Text>
+                <TextInput
+                  style={[styles.formInput, styles.textArea]}
+                  placeholder="Any special requests..."
+                  placeholderTextColor={C.textMuted}
+                  value={specialRequests}
+                  onChangeText={setSpecialRequests}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
+              {/* Dietary Requirements (for restaurants) */}
+              {type === 'restaurant' && (
+                <View style={styles.formSection}>
+                  <Text style={styles.formLabel}>Dietary Requirements (Optional)</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g., Vegetarian, Gluten-free, Allergies..."
+                    placeholderTextColor={C.textMuted}
+                    value={dietaryRequirements}
+                    onChangeText={setDietaryRequirements}
+                  />
+                </View>
+              )}
+
+              <View style={{ height: 100 }} />
+            </ScrollView>
+
+            {/* Book Button */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity onPress={handleBook} disabled={loading} activeOpacity={0.85}>
+                <LinearGradient colors={G.gold} style={styles.bookBtn}>
+                  {loading ? (
+                    <ActivityIndicator color={C.bg} />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={20} color={C.bg} style={{ marginRight: 8 }} />
+                      <Text style={styles.bookBtnText}>Confirm Reservation</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );
+
   return (
     <LinearGradient colors={G.dark} style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Image Gallery */}
-        {renderImageGallery()}
-        
-        {/* Back Button */}
-        <TouchableOpacity style={[styles.backBtn, { top: insets.top + 16 }]} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color={C.text} />
-        </TouchableOpacity>
+        {/* Image Grid - Multi-image support */}
+        <View style={styles.imageGridContainer}>
+          <ImageGrid 
+            images={images}
+            height={300}
+            borderRadius={0}
+          />
+          
+          {/* Back Button Overlay */}
+          <TouchableOpacity style={[styles.backBtn, { top: insets.top + 16 }]} onPress={onBack}>
+            <Ionicons name="arrow-back" size={24} color={C.text} />
+          </TouchableOpacity>
+          
+          {/* Image Count Badge */}
+          {images.length > 1 && (
+            <View style={styles.imageCountBadge}>
+              <Ionicons name="images-outline" size={14} color="#fff" />
+              <Text style={styles.imageCountText}>{images.length}</Text>
+            </View>
+          )}
+        </View>
         
         {/* Content */}
         <View style={styles.content}>
@@ -731,149 +619,134 @@ export default function DetailScreen({ item, type, onBack }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   
-  // Gallery
-  galleryContainer: { height: 300, position: 'relative' },
-  galleryImage: { width, height: 300 },
-  galleryOverlay: { ...StyleSheet.absoluteFillObject },
-  imageIndicators: { position: 'absolute', bottom: 20, alignSelf: 'center', flexDirection: 'row', gap: 8 },
-  imageIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.4)' },
-  imageIndicatorActive: { backgroundColor: C.gold, width: 20 },
+  // Image Grid
+  imageGridContainer: { position: 'relative' },
+  imageCountBadge: { 
+    position: 'absolute', 
+    bottom: 16, 
+    right: 16, 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    paddingHorizontal: 10, 
+    paddingVertical: 6, 
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4
+  },
+  imageCountText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   
   // Navigation
-  backBtn: { position: 'absolute', left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
+  backBtn: { position: 'absolute', left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   
   // Content
   content: { padding: 20 },
-  title: { fontSize: 28, fontWeight: '800', color: C.text, marginBottom: 16 },
+  title: { fontSize: 26, fontWeight: '800', color: C.text, marginBottom: 16 },
   
   // Info Section
   infoSection: { marginBottom: 24 },
-  quickInfoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 16 },
-  quickInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  quickInfoText: { fontSize: 14, color: C.textSec, fontWeight: '500' },
-  
-  // Features
-  featuresRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  featureBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6 },
-  featureBadgeText: { fontSize: 12, color: C.textSec },
+  quickInfoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
+  quickInfoItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, gap: 6 },
+  quickInfoText: { color: C.text, fontSize: 14, fontWeight: '500' },
+  priceRange: { color: C.gold, fontSize: 16, fontWeight: '700' },
   
   // Detail Rows
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  detailLabel: { fontSize: 14, color: C.textMuted },
-  detailValue: { fontSize: 14, color: C.text, fontWeight: '500' },
-  
-  // Hours
-  hoursSection: { marginTop: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 12 },
-  hoursRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.cardLight },
-  dayText: { fontSize: 14, color: C.textSec },
-  hoursText: { fontSize: 14, color: C.text },
-  
-  // Menu
-  menuSection: { marginTop: 20 },
-  menuItem: { backgroundColor: C.card, padding: 16, borderRadius: 12, marginBottom: 12 },
-  menuItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  menuItemName: { fontSize: 15, fontWeight: '600', color: C.text },
-  menuItemPrice: { fontSize: 14, fontWeight: '600', color: C.gold },
-  menuItemDesc: { fontSize: 13, color: C.textSec },
-  
-  // Features List
-  featuresSection: { marginTop: 20 },
-  featuresList: { gap: 8 },
-  featureItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featureText: { fontSize: 14, color: C.textSec },
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
+  detailLabel: { color: C.textMuted, fontSize: 14 },
+  detailValue: { color: C.text, fontSize: 14, fontWeight: '500' },
   
   // Room Details
-  roomDetailsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 16, paddingVertical: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.cardLight },
+  roomDetailsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 16, paddingVertical: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.border },
   roomDetail: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roomDetailText: { fontSize: 14, color: C.textSec },
+  roomDetailText: { color: C.textSec, fontSize: 14 },
+  
+  // Features
+  featuresSection: { marginTop: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 12 },
+  featuresList: { gap: 10 },
+  featureItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  featureText: { color: C.textSec, fontSize: 14 },
   
   // Event
   eventDateBox: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 16 },
-  eventDateDay: { alignItems: 'center', justifyContent: 'center', paddingRight: 16, borderRightWidth: 1, borderRightColor: C.cardLight },
+  eventDateDay: { alignItems: 'center', paddingRight: 16, borderRightWidth: 1, borderRightColor: C.border },
   eventDayNumber: { fontSize: 32, fontWeight: '800', color: C.gold },
   eventMonth: { fontSize: 14, color: C.textSec, textTransform: 'uppercase' },
   eventDateDetails: { flex: 1, paddingLeft: 16, justifyContent: 'center' },
-  eventTime: { fontSize: 16, fontWeight: '600', color: C.text },
+  eventTime: { fontSize: 18, fontWeight: '700', color: C.text },
   eventVenue: { fontSize: 14, color: C.textSec, marginTop: 4 },
   eventAddress: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  categoryBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 16 },
-  categoryBadgeText: { fontSize: 12, fontWeight: '600' },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  priceLabel: { fontSize: 14, color: C.textSec },
-  priceValue: { fontSize: 20, fontWeight: '700', color: C.gold },
-  freeBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  freeText: { fontSize: 14, fontWeight: '600', color: C.success },
-  capacityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  capacityText: { fontSize: 14, color: C.textSec },
+  categoryBadge: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginBottom: 16 },
+  categoryBadgeText: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase' },
+  priceBox: { backgroundColor: C.card, borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 16 },
+  priceLabel: { fontSize: 12, color: C.textMuted },
+  priceAmount: { fontSize: 28, fontWeight: '800', color: C.gold, marginVertical: 4 },
+  priceNote: { fontSize: 12, color: C.textMuted },
   
   // Description
   descriptionSection: { marginBottom: 24 },
-  description: { fontSize: 15, color: C.textSec, lineHeight: 24 },
+  description: { color: C.textSec, fontSize: 15, lineHeight: 24 },
   
   // Location
   locationSection: { marginBottom: 24 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  locationText: { fontSize: 15, color: C.textSec },
+  locationText: { color: C.textSec, fontSize: 14, flex: 1 },
   
   // Contact
   contactSection: { marginBottom: 24 },
-  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  contactText: { fontSize: 15, color: C.text },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  contactText: { color: C.gold, fontSize: 14 },
   
   // Action Bar
-  actionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 16, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.cardLight, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 10 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 14 },
-  actionBtnText: { fontSize: 16, fontWeight: '700', color: C.bg },
+  actionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.border, paddingHorizontal: 20, paddingTop: 16 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12 },
+  actionBtnText: { color: C.bg, fontSize: 16, fontWeight: '700' },
   
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: C.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%', minHeight: '70%' },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.cardLight },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' },
+  modalContainer: { flex: 1, justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.border },
   modalTitle: { fontSize: 20, fontWeight: '700', color: C.text },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  modalBody: { flex: 1, padding: 20 },
-  modalFooter: { padding: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.cardLight, backgroundColor: C.bg },
+  modalClose: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  modalBody: { padding: 20 },
+  modalFooter: { padding: 20, borderTopWidth: 1, borderTopColor: C.border },
   
-  // Reservation Venue
-  reservationVenue: { flexDirection: 'row', backgroundColor: C.card, borderRadius: 12, padding: 12, marginBottom: 24 },
-  reservationVenueImage: { width: 60, height: 60, borderRadius: 8 },
-  reservationVenueInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
-  reservationVenueName: { fontSize: 16, fontWeight: '600', color: C.text },
-  reservationVenueType: { fontSize: 13, color: C.textSec, marginTop: 2 },
+  // Booking Summary
+  bookingSummary: { flexDirection: 'row', backgroundColor: C.bg, borderRadius: 12, padding: 12, marginBottom: 24 },
+  bookingImage: { width: 60, height: 60, borderRadius: 8 },
+  bookingInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
+  bookingName: { fontSize: 16, fontWeight: '600', color: C.text },
+  bookingType: { fontSize: 13, color: C.textMuted, marginTop: 2 },
   
   // Form
-  formGroup: { marginBottom: 20 },
-  formLabel: { fontSize: 13, fontWeight: '600', color: C.textMuted, marginBottom: 8 },
+  formSection: { marginBottom: 24 },
+  formLabel: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 12 },
+  formInput: { backgroundColor: C.bg, borderRadius: 12, padding: 14, fontSize: 15, color: C.text, marginBottom: 12, borderWidth: 1, borderColor: C.border },
   formRow: { flexDirection: 'row' },
-  sectionHeader: { fontSize: 16, fontWeight: '700', color: C.text, marginTop: 12, marginBottom: 16 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 14, gap: 10 },
-  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: C.text },
-  inputSimple: { backgroundColor: C.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: C.text },
-  textArea: { height: 80, textAlignVertical: 'top' },
+  textArea: { minHeight: 80, textAlignVertical: 'top' },
   
   // Time Slots
-  timeSlots: { marginTop: 8 },
-  timeSlot: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.card, borderRadius: 10, marginRight: 10, borderWidth: 1, borderColor: C.cardLight },
+  timeSlots: { flexDirection: 'row', gap: 8 },
+  timeSlot: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.bg, borderRadius: 20, borderWidth: 1, borderColor: C.border },
   timeSlotActive: { backgroundColor: C.gold, borderColor: C.gold },
-  timeSlotText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
-  timeSlotTextActive: { color: C.bg },
+  timeSlotText: { fontSize: 14, color: C.textSec },
+  timeSlotTextActive: { color: C.bg, fontWeight: '600' },
   
   // Guest Options
-  guestOptions: { marginTop: 8 },
-  guestOption: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', marginRight: 10, borderWidth: 1, borderColor: C.cardLight },
+  guestOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  guestOption: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg, borderRadius: 22, borderWidth: 1, borderColor: C.border },
   guestOptionActive: { backgroundColor: C.gold, borderColor: C.gold },
-  guestOptionText: { fontSize: 14, color: C.textSec, fontWeight: '600' },
-  guestOptionTextActive: { color: C.bg },
+  guestOptionText: { fontSize: 15, color: C.textSec },
+  guestOptionTextActive: { color: C.bg, fontWeight: '600' },
   
   // Occasion Options
-  occasionOptions: { marginTop: 8 },
-  occasionOption: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.card, borderRadius: 10, marginRight: 10, borderWidth: 1, borderColor: C.cardLight },
+  occasionOptions: { flexDirection: 'row', gap: 8 },
+  occasionOption: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.bg, borderRadius: 20, borderWidth: 1, borderColor: C.border },
   occasionOptionActive: { backgroundColor: C.gold, borderColor: C.gold },
-  occasionOptionText: { fontSize: 13, color: C.textSec, fontWeight: '500' },
-  occasionOptionTextActive: { color: C.bg },
+  occasionOptionText: { fontSize: 14, color: C.textSec },
+  occasionOptionTextActive: { color: C.bg, fontWeight: '600' },
   
-  // Confirm Button
-  confirmBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 14 },
-  confirmBtnText: { fontSize: 16, fontWeight: '700', color: C.bg },
+  // Book Button
+  bookBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12 },
+  bookBtnText: { color: C.bg, fontSize: 16, fontWeight: '700' },
 });

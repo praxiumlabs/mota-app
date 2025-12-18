@@ -4,7 +4,21 @@
  * With Image Upload Support
  */
 
+
+
+
+
+
+
+
+
+
 require('dotenv').config();
+console.log('=== SERVER STARTING ===');
+console.log('MONGO_URI:', process.env.MONGO_URI?.substring(0, 50) + '...');
+console.log('========================');
+
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -33,7 +47,7 @@ app.use((req, res, next) => {
 // ============================================
 // DATABASE CONNECTION
 // ============================================
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mota';
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/mota';
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
