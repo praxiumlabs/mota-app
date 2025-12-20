@@ -1191,14 +1191,14 @@ function AppContent() {
     setAccountDeletionVisible(false); 
   };
 
-  const getUpcomingEvents = () => {
-    if (!Array.isArray(events)) return [];
-    const now = new Date();
-    return events
-      .filter(e => new Date(e.date) >= now)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3);
-  };
+const getUpcomingEvents = () => {
+  if (!Array.isArray(events)) return [];
+  const now = new Date();
+  return events
+    .filter(e => new Date(e.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5); // Changed from 3 to 5
+};
 
 const getExploreData = () => {
     let data: any[] = [];
@@ -1270,103 +1270,367 @@ const getExploreData = () => {
   // HOME TAB
   // ============================================
   const renderHomeTab = () => (
-    <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
-      {/* Hero Slideshow */}
-      <View style={s.heroContainer}>
-        <FlatList 
-          ref={slideRef} 
-          data={slides} 
-          horizontal 
-          pagingEnabled 
-          showsHorizontalScrollIndicator={false} 
-          keyExtractor={(item, index) => item.id?.toString() || `slide-${index}`}
-          onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={s.heroSlide} activeOpacity={0.9} onPress={() => handleSlidePress(item)}>
-              <Image source={{ uri: item.imageUrl }} style={s.heroImage} />
-              <LinearGradient colors={['transparent', 'rgba(10,18,42,0.7)', C.bg]} style={s.heroOverlay} />
-              <View style={s.heroContent}>
-                <Text style={s.heroSubtitle}>{item.subtitle}</Text>
-                <Text style={s.heroTitle}>{item.title}</Text>
-                <Text style={s.heroDesc}>{item.description}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-        <View style={s.heroDots}>
-          {slides.map((_, i) => <View key={i} style={[s.heroDot, currentSlide === i && s.heroDotActive]} />)}
+  <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}>
+    {/* Hero Slideshow - Keep existing */}
+    <View style={s.heroContainer}>
+      <FlatList 
+        ref={slideRef} 
+        data={slides} 
+        horizontal 
+        pagingEnabled 
+        showsHorizontalScrollIndicator={false} 
+        keyExtractor={(item, index) => item.id?.toString() || `slide-${index}`}
+        onMomentumScrollEnd={(e) => setCurrentSlide(Math.round(e.nativeEvent.contentOffset.x / width))}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={s.heroSlide} activeOpacity={0.9} onPress={() => handleSlidePress(item)}>
+            <Image source={{ uri: item.imageUrl }} style={s.heroImage} />
+            <LinearGradient colors={['transparent', 'rgba(10,18,42,0.7)', C.bg]} style={s.heroOverlay} />
+            <View style={s.heroContent}>
+              <Text style={s.heroSubtitle}>{item.subtitle}</Text>
+              <Text style={s.heroTitle}>{item.title}</Text>
+              <Text style={s.heroDesc}>{item.description}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+      <View style={s.heroDots}>
+        {slides.map((_, i) => <View key={i} style={[s.heroDot, currentSlide === i && s.heroDotActive]} />)}
+      </View>
+    </View>
+    
+    {/* AI Search Bar - Rufus Style */}
+    <TouchableOpacity 
+      style={s.aiSearchContainer} 
+      onPress={() => setAiPopupVisible(true)}
+      activeOpacity={0.9}
+    >
+      <View style={s.aiSearchBar}>
+        <View style={s.aiSearchIconContainer}>
+          <LinearGradient colors={G.gold} style={s.aiSearchIcon}>
+            <Ionicons name="sparkles" size={18} color={C.bg} />
+          </LinearGradient>
+        </View>
+        <View style={s.aiSearchContent}>
+          <Text style={s.aiSearchPlaceholder}>Ask me anything...</Text>
+          <Text style={s.aiSearchHint}>Powered by MOTA AI</Text>
+        </View>
+        <View style={s.aiSearchMic}>
+          <Ionicons name="mic-outline" size={22} color={C.textMuted} />
         </View>
       </View>
-      
-      {/* AI Card */}
-      <TouchableOpacity style={s.aiCard} onPress={() => setAiPopupVisible(true)}>
-        <LinearGradient colors={G.gold} style={s.aiCardGradient}>
-          <View style={s.aiCardIcon}><Ionicons name="sparkles" size={24} color={C.bg} /></View>
-          <View style={s.aiCardContent}>
-            <Text style={s.aiCardTitle}>MOTA AI Assistant</Text>
-            <Text style={s.aiCardDesc}>Get personalized recommendations</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color={C.bg} />
-        </LinearGradient>
-      </TouchableOpacity>
-      
-      {/* Upcoming Events */}
-      <View style={s.sectionHeader}>
-        <Text style={s.sectionTitle}>Upcoming Events</Text>
-        <TouchableOpacity onPress={() => setActiveTab(2)}><Text style={s.sectionLink}>View All</Text></TouchableOpacity>
+      <View style={s.aiSearchSuggestions}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {['Best restaurants', 'Spa treatments', 'Activities today', 'Nightlife'].map((suggestion, i) => (
+            <TouchableOpacity key={i} style={s.aiSuggestionChip}>
+              <Text style={s.aiSuggestionText}>{suggestion}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.horizontalScroll}>
-        {getUpcomingEvents().map((event, index) => (
-            <TouchableOpacity key={event._id || `event-${index}`} style={s.eventCard}  onPress={() => openDetail(event, 'event')}>
-            <Image source={{ uri: event.images?.[0]?.url || PLACEHOLDER_IMAGE }} style={s.eventImage} />
-            <LinearGradient colors={G.overlay} style={s.eventOverlay} />
-            <View style={s.eventContent}>
-              <View style={s.eventDateBadge}>
-                <Text style={s.eventDateDay}>{new Date(event.date).getDate()}</Text>
-                <Text style={s.eventDateMonth}>{new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}</Text>
+    </TouchableOpacity>
+
+    {/* Quick Access Grid */}
+    <View style={s.quickAccessContainer}>
+      <View style={s.quickAccessGrid}>
+        <TouchableOpacity style={s.quickAccessItem} onPress={() => { setExploreCategory('Lodging'); setActiveTab(1); }}>
+          <LinearGradient colors={['#1E3A5F', '#0D1B2A']} style={s.quickAccessGradient}>
+            <Ionicons name="bed-outline" size={28} color={C.gold} />
+            <Text style={s.quickAccessLabel}>Stay</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.quickAccessItem} onPress={() => { setExploreCategory('Eateries'); setActiveTab(1); }}>
+          <LinearGradient colors={['#2D1810', '#1A0D08']} style={s.quickAccessGradient}>
+            <Ionicons name="restaurant-outline" size={28} color={C.gold} />
+            <Text style={s.quickAccessLabel}>Dine</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.quickAccessItem} onPress={() => { setExploreCategory('Experiences'); setActiveTab(1); }}>
+          <LinearGradient colors={['#0D3320', '#051A10']} style={s.quickAccessGradient}>
+            <Ionicons name="compass-outline" size={28} color={C.gold} />
+            <Text style={s.quickAccessLabel}>Explore</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.quickAccessItem} onPress={() => { setExploreCategory('Nightlife'); setActiveTab(1); }}>
+          <LinearGradient colors={['#2D1F3D', '#1A1025']} style={s.quickAccessGradient}>
+            <Ionicons name="moon-outline" size={28} color={C.gold} />
+            <Text style={s.quickAccessLabel}>Nightlife</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+    </View>
+
+    {/* Upcoming Events - Premium Design */}
+    <View style={s.sectionContainer}>
+      <View style={s.sectionHeaderPremium}>
+        <View>
+          <Text style={s.sectionLabel}>WHAT'S HAPPENING</Text>
+          <Text style={s.sectionTitlePremium}>Upcoming Events</Text>
+        </View>
+        <TouchableOpacity onPress={() => setActiveTab(2)} style={s.sectionViewAllBtn}>
+          <Text style={s.sectionViewAll}>View All</Text>
+          <Ionicons name="arrow-forward" size={14} color={C.gold} />
+        </TouchableOpacity>
+      </View>
+      
+      {getUpcomingEvents().length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.eventsScrollContent}>
+          {getUpcomingEvents().map((event, index) => (
+            <TouchableOpacity 
+              key={event._id || `event-${index}`} 
+              style={s.eventCardPremium}
+              onPress={() => openDetail(event, 'event')}
+              activeOpacity={0.9}
+            >
+              <Image source={{ uri: event.images?.[0]?.url || PLACEHOLDER_IMAGE }} style={s.eventCardImage} />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']} style={s.eventCardGradient} />
+              
+              {/* Date Badge */}
+              <View style={s.eventDateBadgePremium}>
+                <Text style={s.eventDateDayPremium}>{new Date(event.date).getDate()}</Text>
+                <Text style={s.eventDateMonthPremium}>{new Date(event.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}</Text>
               </View>
-              <Text style={s.eventName}>{event.name}</Text>
-              <Text style={s.eventLocation}>{event.location || 'MOTA Resort'}</Text>
+              
+              {/* Category Tag */}
+              <View style={s.eventCategoryTag}>
+                <Text style={s.eventCategoryText}>{event.category || 'Event'}</Text>
+              </View>
+              
+              {/* Content */}
+              <View style={s.eventCardContentPremium}>
+                <Text style={s.eventNamePremium} numberOfLines={2}>{event.name}</Text>
+                <View style={s.eventMetaRow}>
+                  <Ionicons name="time-outline" size={12} color={C.gold} />
+                  <Text style={s.eventMetaText}>{event.time || '7:00 PM'}</Text>
+                  <View style={s.eventMetaDot} />
+                  <Ionicons name="location-outline" size={12} color={C.gold} />
+                  <Text style={s.eventMetaText} numberOfLines={1}>{event.venue || 'MOTA Resort'}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={s.emptyEventsContainer}>
+          <Ionicons name="calendar-outline" size={40} color={C.textMuted} />
+          <Text style={s.emptyEventsText}>No upcoming events</Text>
+        </View>
+      )}
+    </View>
+
+    {/* Luxury Accommodations */}
+    <View style={s.sectionContainer}>
+      <View style={s.sectionHeaderPremium}>
+        <View>
+          <Text style={s.sectionLabel}>STAY IN PARADISE</Text>
+          <Text style={s.sectionTitlePremium}>Luxury Accommodations</Text>
+        </View>
+        <TouchableOpacity onPress={() => { setExploreCategory('Lodging'); setActiveTab(1); }} style={s.sectionViewAllBtn}>
+          <Text style={s.sectionViewAll}>View All</Text>
+          <Ionicons name="arrow-forward" size={14} color={C.gold} />
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accommodationsScrollContent}>
+        {lodging.slice(0, 5).map((item, index) => (
+          <TouchableOpacity 
+            key={item._id || `lodging-${index}`} 
+            style={s.accommodationCard}
+            onPress={() => openDetail(item, 'lodging')}
+            activeOpacity={0.9}
+          >
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.accommodationImage} />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.accommodationGradient} />
+            
+            {/* Featured Badge */}
+            {item.isFeatured && (
+              <View style={s.featuredBadge}>
+                <Ionicons name="star" size={10} color={C.bg} />
+                <Text style={s.featuredBadgeText}>FEATURED</Text>
+              </View>
+            )}
+            
+            {/* Amenity Icons */}
+            <View style={s.accommodationAmenities}>
+              {item.view === 'ocean' && <View style={s.amenityIconSmall}><Ionicons name="water-outline" size={12} color={C.gold} /></View>}
+              {item.dogFriendly && <View style={s.amenityIconSmall}><Ionicons name="paw-outline" size={12} color={C.gold} /></View>}
+              {item.kidsFriendly && <View style={s.amenityIconSmall}><Ionicons name="people-outline" size={12} color={C.gold} /></View>}
+            </View>
+            
+            <View style={s.accommodationContent}>
+              <Text style={s.accommodationName} numberOfLines={1}>{item.name}</Text>
+              <Text style={s.accommodationType}>{item.type}</Text>
+              <View style={s.accommodationFooter}>
+                <View style={s.accommodationPrice}>
+                  <Text style={s.accommodationPriceValue}>${item.price}</Text>
+                  <Text style={s.accommodationPriceUnit}>/{item.priceUnit || 'night'}</Text>
+                </View>
+                {item.rating && (
+                  <View style={s.accommodationRating}>
+                    <Ionicons name="star" size={12} color={C.gold} />
+                    <Text style={s.accommodationRatingText}>{item.rating}</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
-      
-      {/* Featured Dining */}
-      <View style={s.sectionHeader}>
-        <Text style={s.sectionTitle}>Featured Dining</Text>
-        <TouchableOpacity onPress={() => { setExploreCategory('Eateries'); setActiveTab(1); }}><Text style={s.sectionLink}>View All</Text></TouchableOpacity>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.horizontalScroll}>
-        {restaurants.slice(0, 5).map((item, index) => <ItemCard key={item._id || `restaurant-${index}`} item={item}onPress={() => openDetail(item, 'restaurant')} />)}
-      </ScrollView>
-      
-      {/* Adventures & Activities */}
-      <View style={s.sectionHeader}>
-        <Text style={s.sectionTitle}>Adventures & Activities</Text>
-        <TouchableOpacity onPress={() => { setExploreCategory('Experiences'); setActiveTab(1); }}><Text style={s.sectionLink}>View All</Text></TouchableOpacity>
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.horizontalScroll}>
-        {activities.slice(0, 5).map((item, index) => <ItemCard key={item._id || `activity-${index}`} item={item} onPress={() => openDetail(item, 'activity')} />)}
-      </ScrollView>
-      
-      {/* VIP Promo (non-investors only) */}
-      {!isInvestor && (
-        <TouchableOpacity style={s.vipPromoCard} onPress={() => setVipPromoVisible(true)}>
-          <LinearGradient colors={G.gold} style={s.vipPromoGradient}>
-            <Ionicons name="diamond" size={32} color={C.bg} />
-            <View style={s.vipPromoContent}>
-              <Text style={s.vipPromoTitle}>Become a VIP Investor</Text>
-              <Text style={s.vipPromoSubtitle}>Unlock exclusive benefits</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={24} color={C.bg} />
-          </LinearGradient>
+    </View>
+
+    {/* Featured Dining */}
+    <View style={s.sectionContainer}>
+      <View style={s.sectionHeaderPremium}>
+        <View>
+          <Text style={s.sectionLabel}>CULINARY EXCELLENCE</Text>
+          <Text style={s.sectionTitlePremium}>Featured Dining</Text>
+        </View>
+        <TouchableOpacity onPress={() => { setExploreCategory('Eateries'); setActiveTab(1); }} style={s.sectionViewAllBtn}>
+          <Text style={s.sectionViewAll}>View All</Text>
+          <Ionicons name="arrow-forward" size={14} color={C.gold} />
         </TouchableOpacity>
-      )}
+      </View>
       
-      <View style={{ height: 100 }} />
-    </ScrollView>
-  );
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.diningScrollContent}>
+        {restaurants.slice(0, 5).map((item, index) => (
+          <TouchableOpacity 
+            key={item._id || `restaurant-${index}`} 
+            style={s.diningCard}
+            onPress={() => openDetail(item, 'restaurant')}
+            activeOpacity={0.9}
+          >
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.diningImage} />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={s.diningGradient} />
+            
+            {/* Cuisine Tag */}
+            <View style={s.cuisineTag}>
+              <Text style={s.cuisineTagText}>{item.cuisine || 'Fine Dining'}</Text>
+            </View>
+            
+            <View style={s.diningContent}>
+              <Text style={s.diningName} numberOfLines={1}>{item.name}</Text>
+              <View style={s.diningMeta}>
+                {item.priceRange && <Text style={s.diningPrice}>{item.priceRange}</Text>}
+                {item.rating && (
+                  <View style={s.diningRating}>
+                    <Ionicons name="star" size={12} color={C.gold} />
+                    <Text style={s.diningRatingText}>{item.rating}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+
+    {/* Adventures & Experiences */}
+    <View style={s.sectionContainer}>
+      <View style={s.sectionHeaderPremium}>
+        <View>
+          <Text style={s.sectionLabel}>UNFORGETTABLE MOMENTS</Text>
+          <Text style={s.sectionTitlePremium}>Adventures & Experiences</Text>
+        </View>
+        <TouchableOpacity onPress={() => { setExploreCategory('Experiences'); setActiveTab(1); }} style={s.sectionViewAllBtn}>
+          <Text style={s.sectionViewAll}>View All</Text>
+          <Ionicons name="arrow-forward" size={14} color={C.gold} />
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.experiencesScrollContent}>
+        {activities.slice(0, 6).map((item, index) => (
+          <TouchableOpacity 
+            key={item._id || `activity-${index}`} 
+            style={s.experienceCard}
+            onPress={() => openDetail(item, 'activity')}
+            activeOpacity={0.9}
+          >
+            <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.experienceImage} />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={s.experienceGradient} />
+            
+            {/* Category Badge */}
+            <View style={s.experienceCategoryBadge}>
+              <Ionicons 
+                name={
+                  item.category?.toLowerCase().includes('water') ? 'water-outline' :
+                  item.category?.toLowerCase().includes('adventure') ? 'compass-outline' :
+                  item.category?.toLowerCase().includes('wellness') ? 'leaf-outline' :
+                  'star-outline'
+                } 
+                size={14} 
+                color={C.gold} 
+              />
+            </View>
+            
+            <View style={s.experienceContent}>
+              <Text style={s.experienceCategory}>{item.category || 'Experience'}</Text>
+              <Text style={s.experienceName} numberOfLines={2}>{item.name}</Text>
+              <View style={s.experienceFooter}>
+                {item.price && <Text style={s.experiencePrice}>From ${item.price}</Text>}
+                {item.duration && <Text style={s.experienceDuration}>{item.duration}</Text>}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+
+    {/* Nightlife Preview */}
+    {nightlife.length > 0 && (
+      <View style={s.sectionContainer}>
+        <View style={s.sectionHeaderPremium}>
+          <View>
+            <Text style={s.sectionLabel}>AFTER DARK</Text>
+            <Text style={s.sectionTitlePremium}>Nightlife & Entertainment</Text>
+          </View>
+          <TouchableOpacity onPress={() => { setExploreCategory('Nightlife'); setActiveTab(1); }} style={s.sectionViewAllBtn}>
+            <Text style={s.sectionViewAll}>View All</Text>
+            <Ionicons name="arrow-forward" size={14} color={C.gold} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={s.nightlifeGrid}>
+          {nightlife.slice(0, 2).map((item, index) => (
+            <TouchableOpacity 
+              key={item._id || `nightlife-${index}`} 
+              style={s.nightlifeCard}
+              onPress={() => openDetail(item, 'nightlife')}
+              activeOpacity={0.9}
+            >
+              <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.nightlifeImage} />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.9)']} style={s.nightlifeGradient} />
+              <View style={s.nightlifeContent}>
+                <Text style={s.nightlifeType}>{item.category || item.type || 'Lounge'}</Text>
+                <Text style={s.nightlifeName}>{item.name}</Text>
+                {item.hours && <Text style={s.nightlifeHours}>{item.hours}</Text>}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    )}
+
+    {/* VIP Promo (non-investors only) */}
+    {!isInvestor && (
+      <TouchableOpacity style={s.vipPromoCardPremium} onPress={() => setVipPromoVisible(true)} activeOpacity={0.9}>
+        <LinearGradient colors={['#D4AF37', '#B8952F', '#8B7025']} style={s.vipPromoGradientPremium} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <View style={s.vipPromoIconContainer}>
+            <Ionicons name="diamond" size={36} color="#FFF8E7" />
+          </View>
+          <View style={s.vipPromoContentPremium}>
+            <Text style={s.vipPromoTitlePremium}>Become a VIP Investor</Text>
+            <Text style={s.vipPromoSubtitlePremium}>Unlock exclusive benefits & rewards</Text>
+          </View>
+          <View style={s.vipPromoArrow}>
+            <Ionicons name="arrow-forward" size={24} color="#FFF8E7" />
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    )}
+    
+    <View style={{ height: 120 }} />
+  </ScrollView>
+);
+
 
 // ============================================
   // EXPLORE TAB - WITH DROPDOWN FILTERS
@@ -1407,144 +1671,129 @@ const getExploreData = () => {
   const hasActiveFilters = selectedPrices.length > 0 || selectedRatings.length > 0 || selectedAmenities.length > 0;
   const activeFilterCount = selectedPrices.length + selectedRatings.length + selectedAmenities.length;
 
+
   const renderExploreTab = () => (
     <View style={{ flex: 1 }}>
-      {/* Category Chips - Fixed Height */}
-      <View style={s.categoryContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+      {/* Category Tabs - Refined */}
+      <View style={s.exploreCategoryContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.exploreCategoryScroll}>
           {['Lodging', 'Eateries', 'Experiences', 'Nightlife'].map((cat) => (
             <TouchableOpacity 
               key={cat} 
-              style={[s.categoryChip, exploreCategory === cat && s.categoryChipActive]}
+              style={[s.exploreCategoryTab, exploreCategory === cat && s.exploreCategoryTabActive]}
               onPress={() => { setExploreCategory(cat); closeAllDropdowns(); }}
             >
-              <Text style={[s.categoryChipText, exploreCategory === cat && s.categoryChipTextActive]}>{cat}</Text>
+              <Text style={[s.exploreCategoryText, exploreCategory === cat && s.exploreCategoryTextActive]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
       
-      {/* Filter Row with Dropdowns */}
-      <View style={s.filterDropdownRow}>
-        <Text style={s.filterByText}>Filter by</Text>
-        
-        {/* Price Dropdown */}
-        <View style={[s.dropdownWrapper, { zIndex: 103 }]}>
-          <TouchableOpacity 
-            style={[s.dropdownBtn, selectedPrices.length > 0 && s.dropdownBtnActive]}
-            onPress={() => { setPriceDropdownOpen(!priceDropdownOpen); setRatingDropdownOpen(false); setAmenityDropdownOpen(false); }}
-          >
-            <Text style={[s.dropdownBtnText, selectedPrices.length > 0 && s.dropdownBtnTextActive]}>
-              {selectedPrices.length > 0 ? selectedPrices.join(' ') : 'Price'}
-            </Text>
-            <Ionicons name={priceDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedPrices.length > 0 ? C.bg : C.textSec} />
-          </TouchableOpacity>
-          
-          {priceDropdownOpen && (
-            <View style={s.dropdownMenu}>
-              {priceOptions.map((price) => (
-                <TouchableOpacity
-                  key={price}
-                  style={[s.dropdownItem, selectedPrices.includes(price) && s.dropdownItemActive]}
-                  onPress={() => togglePriceFilter(price)}
-                >
-                  <Text style={[s.dropdownItemText, selectedPrices.includes(price) && s.dropdownItemTextActive]}>{price}</Text>
-                  {selectedPrices.includes(price) && <Ionicons name="checkmark" size={16} color={C.gold} />}
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity style={s.dropdownDone} onPress={() => setPriceDropdownOpen(false)}>
-                <Text style={s.dropdownDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Filter Section - Two Lines */}
+      <View style={s.filterSection}>
+        {/* Line 1: "Filter by" label */}
+        <View style={s.filterLabelRow}>
+          <Text style={s.filterLabel}>Filter by</Text>
+          {hasActiveFilters && (
+            <TouchableOpacity onPress={clearAllFilters} style={s.clearFiltersBtn}>
+              <Text style={s.clearFiltersText}>Clear all</Text>
+            </TouchableOpacity>
           )}
         </View>
         
-        {/* Rating Dropdown */}
-        <View style={[s.dropdownWrapper, { zIndex: 102 }]}>
-          <TouchableOpacity 
-            style={[s.dropdownBtn, selectedRatings.length > 0 && s.dropdownBtnActive]}
-            onPress={() => { setRatingDropdownOpen(!ratingDropdownOpen); setPriceDropdownOpen(false); setAmenityDropdownOpen(false); }}
-          >
-            <Ionicons name="star" size={12} color={selectedRatings.length > 0 ? C.bg : C.gold} />
-            <Text style={[s.dropdownBtnText, selectedRatings.length > 0 && s.dropdownBtnTextActive]}>
-              {selectedRatings.length > 0 ? selectedRatings.join(', ') : 'Rating'}
-            </Text>
-            <Ionicons name={ratingDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedRatings.length > 0 ? C.bg : C.textSec} />
-          </TouchableOpacity>
-          
-          {ratingDropdownOpen && (
-            <View style={s.dropdownMenu}>
-              {ratingOptions.map((rating) => (
-                <TouchableOpacity
-                  key={rating}
-                  style={[s.dropdownItem, selectedRatings.includes(rating) && s.dropdownItemActive]}
-                  onPress={() => toggleRatingFilter(rating)}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Ionicons name="star" size={14} color={C.gold} />
-                    <Text style={[s.dropdownItemText, selectedRatings.includes(rating) && s.dropdownItemTextActive]}>{rating}</Text>
-                  </View>
-                  {selectedRatings.includes(rating) && <Ionicons name="checkmark" size={16} color={C.gold} />}
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity style={s.dropdownDone} onPress={() => setRatingDropdownOpen(false)}>
-                <Text style={s.dropdownDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-        
-        {/* Amenities Dropdown */}
-        <View style={[s.dropdownWrapper, { zIndex: 101 }]}>
-          <TouchableOpacity 
-            style={[s.dropdownBtn, selectedAmenities.length > 0 && s.dropdownBtnActive]}
-            onPress={() => { setAmenityDropdownOpen(!amenityDropdownOpen); setPriceDropdownOpen(false); setRatingDropdownOpen(false); }}
-          >
-            <Ionicons name="options" size={14} color={selectedAmenities.length > 0 ? C.bg : C.textSec} />
-            <Text style={[s.dropdownBtnText, selectedAmenities.length > 0 && s.dropdownBtnTextActive]}>
-              {selectedAmenities.length > 0 ? `${selectedAmenities.length} selected` : 'Amenities'}
-            </Text>
-            <Ionicons name={amenityDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} color={selectedAmenities.length > 0 ? C.bg : C.textSec} />
-          </TouchableOpacity>
-          
-          {amenityDropdownOpen && (
-            <View style={[s.dropdownMenu, s.dropdownMenuWide]}>
-              <ScrollView style={{ maxHeight: 250 }} showsVerticalScrollIndicator={false}>
+        {/* Line 2: Filter Dropdowns */}
+        <View style={s.filterButtonsRow}>
+          {/* Price Dropdown */}
+          <View style={[s.filterDropdownWrapper, { zIndex: 103 }]}>
+            <TouchableOpacity 
+              style={[s.filterDropdownBtn, selectedPrices.length > 0 && s.filterDropdownBtnActive]}
+              onPress={() => { setPriceDropdownOpen(!priceDropdownOpen); setRatingDropdownOpen(false); setAmenityDropdownOpen(false); }}
+            >
+              <Text style={[s.filterDropdownText, selectedPrices.length > 0 && s.filterDropdownTextActive]}>
+                {selectedPrices.length > 0 ? selectedPrices.join(' ') : 'Price'}
+              </Text>
+              <Ionicons name={priceDropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color={selectedPrices.length > 0 ? C.bg : C.textSec} />
+            </TouchableOpacity>
+            
+            {priceDropdownOpen && (
+              <View style={s.filterDropdownMenu}>
+                {priceOptions.map((price) => (
+                  <TouchableOpacity 
+                    key={price} 
+                    style={[s.filterDropdownItem, selectedPrices.includes(price) && s.filterDropdownItemActive]}
+                    onPress={() => togglePriceFilter(price)}
+                  >
+                    <Text style={[s.filterDropdownItemText, selectedPrices.includes(price) && s.filterDropdownItemTextActive]}>{price}</Text>
+                    {selectedPrices.includes(price) && <Ionicons name="checkmark" size={16} color={C.gold} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Rating Dropdown - NO STAR ICON */}
+          <View style={[s.filterDropdownWrapper, { zIndex: 102 }]}>
+            <TouchableOpacity 
+              style={[s.filterDropdownBtn, selectedRatings.length > 0 && s.filterDropdownBtnActive]}
+              onPress={() => { setRatingDropdownOpen(!ratingDropdownOpen); setPriceDropdownOpen(false); setAmenityDropdownOpen(false); }}
+            >
+              <Text style={[s.filterDropdownText, selectedRatings.length > 0 && s.filterDropdownTextActive]}>
+                {selectedRatings.length > 0 ? selectedRatings.join(', ') : 'Rating'}
+              </Text>
+              <Ionicons name={ratingDropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color={selectedRatings.length > 0 ? C.bg : C.textSec} />
+            </TouchableOpacity>
+            
+            {ratingDropdownOpen && (
+              <View style={s.filterDropdownMenu}>
+                {ratingOptions.map((rating) => (
+                  <TouchableOpacity 
+                    key={rating} 
+                    style={[s.filterDropdownItem, selectedRatings.includes(rating) && s.filterDropdownItemActive]}
+                    onPress={() => toggleRatingFilter(rating)}
+                  >
+                    <Text style={[s.filterDropdownItemText, selectedRatings.includes(rating) && s.filterDropdownItemTextActive]}>{rating}</Text>
+                    {selectedRatings.includes(rating) && <Ionicons name="checkmark" size={16} color={C.gold} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Amenities Dropdown - NO ICONS */}
+          <View style={[s.filterDropdownWrapper, { zIndex: 101 }]}>
+            <TouchableOpacity 
+              style={[s.filterDropdownBtn, selectedAmenities.length > 0 && s.filterDropdownBtnActive]}
+              onPress={() => { setAmenityDropdownOpen(!amenityDropdownOpen); setPriceDropdownOpen(false); setRatingDropdownOpen(false); }}
+            >
+              <Text style={[s.filterDropdownText, selectedAmenities.length > 0 && s.filterDropdownTextActive]}>
+                {selectedAmenities.length > 0 ? `${selectedAmenities.length} selected` : 'Amenities'}
+              </Text>
+              <Ionicons name={amenityDropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color={selectedAmenities.length > 0 ? C.bg : C.textSec} />
+            </TouchableOpacity>
+            
+            {amenityDropdownOpen && (
+              <View style={[s.filterDropdownMenu, s.filterDropdownMenuWide]}>
                 {amenityOptions.map((amenity) => (
-                  <TouchableOpacity
-                    key={amenity.id}
-                    style={[s.dropdownItem, selectedAmenities.includes(amenity.id) && s.dropdownItemActive]}
+                  <TouchableOpacity 
+                    key={amenity.id} 
+                    style={[s.filterDropdownItem, selectedAmenities.includes(amenity.id) && s.filterDropdownItemActive]}
                     onPress={() => toggleAmenityFilter(amenity.id)}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Ionicons name={amenity.icon as any} size={16} color={selectedAmenities.includes(amenity.id) ? C.gold : C.textSec} />
-                      <Text style={[s.dropdownItemText, selectedAmenities.includes(amenity.id) && s.dropdownItemTextActive]}>{amenity.label}</Text>
-                    </View>
+                    <Text style={[s.filterDropdownItemText, selectedAmenities.includes(amenity.id) && s.filterDropdownItemTextActive]}>
+                      {amenity.label}
+                    </Text>
                     {selectedAmenities.includes(amenity.id) && <Ionicons name="checkmark" size={16} color={C.gold} />}
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
-              <TouchableOpacity style={s.dropdownDone} onPress={() => setAmenityDropdownOpen(false)}>
-                <Text style={s.dropdownDoneText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+              </View>
+            )}
+          </View>
         </View>
-        
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <TouchableOpacity style={s.clearFiltersBtn} onPress={clearAllFilters}>
-            <View style={s.clearFiltersBadge}>
-              <Text style={s.clearFiltersBadgeText}>{activeFilterCount}</Text>
-            </View>
-            <Ionicons name="close-circle" size={20} color={C.error} />
-          </TouchableOpacity>
-        )}
       </View>
-      
+
       {/* Active Filters Pills */}
       {hasActiveFilters && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.activeFiltersRow} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.activeFiltersScroll} contentContainerStyle={s.activeFiltersContent}>
           {selectedPrices.map(price => (
             <TouchableOpacity key={price} style={s.activeFilterPill} onPress={() => togglePriceFilter(price)}>
               <Text style={s.activeFilterPillText}>{price}</Text>
@@ -1553,7 +1802,6 @@ const getExploreData = () => {
           ))}
           {selectedRatings.map(rating => (
             <TouchableOpacity key={rating} style={s.activeFilterPill} onPress={() => toggleRatingFilter(rating)}>
-              <Ionicons name="star" size={12} color={C.gold} />
               <Text style={s.activeFilterPillText}>{rating}</Text>
               <Ionicons name="close" size={14} color={C.text} />
             </TouchableOpacity>
@@ -1562,7 +1810,6 @@ const getExploreData = () => {
             const amenity = amenityOptions.find(a => a.id === amenityId);
             return amenity ? (
               <TouchableOpacity key={amenityId} style={s.activeFilterPill} onPress={() => toggleAmenityFilter(amenityId)}>
-                <Ionicons name={amenity.icon as any} size={12} color={C.gold} />
                 <Text style={s.activeFilterPillText}>{amenity.label}</Text>
                 <Ionicons name="close" size={14} color={C.text} />
               </TouchableOpacity>
@@ -1581,7 +1828,7 @@ const getExploreData = () => {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={s.exploreCard} 
-            onPress={() => { closeAllDropdowns(); openDetail(item, exploreCategory === 'Eateries' ? 'restaurant' : exploreCategory === 'Lodging' ? 'lodging' : 'activity'); }}
+            onPress={() => { closeAllDropdowns(); openDetail(item, exploreCategory === 'Eateries' ? 'restaurant' : exploreCategory === 'Lodging' ? 'lodging' : exploreCategory === 'Nightlife' ? 'nightlife' : 'activity'); }}
           >
             <Image source={{ uri: item.images?.[0]?.url || item.image || PLACEHOLDER_IMAGE }} style={s.exploreCardImage} />
             <LinearGradient colors={G.overlay} style={s.exploreCardOverlay} />
@@ -1600,6 +1847,7 @@ const getExploreData = () => {
               {(item.cuisine || item.category || item.type) && <Text style={s.exploreCardSub} numberOfLines={1}>{item.cuisine || item.category || item.type}</Text>}
               <View style={s.exploreCardFooter}>
                 {item.priceRange && <Text style={s.exploreCardPrice}>{item.priceRange}</Text>}
+                {item.price && !item.priceRange && <Text style={s.exploreCardPrice}>${item.price}</Text>}
                 {item.rating && (
                   <View style={s.exploreCardRating}>
                     <Ionicons name="star" size={12} color={C.gold} />
@@ -1620,8 +1868,6 @@ const getExploreData = () => {
       />
     </View>
   );
-
-
   // ============================================
   // EVENTS TAB - FIX #3: All events as fixed schedule
   // ============================================
@@ -2003,6 +2249,831 @@ export default function App() {
 // STYLES
 // ============================================
 const s = StyleSheet.create({
+
+  exploreCategoryContainer: { 
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.cardLight,
+  },
+  exploreCategoryScroll: { 
+    paddingHorizontal: 16 
+  },
+  exploreCategoryTab: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  exploreCategoryTabActive: { 
+    backgroundColor: C.gold,
+  },
+  exploreCategoryText: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: C.textSec 
+  },
+  exploreCategoryTextActive: { 
+    color: C.bg 
+  },
+
+  // Filter Section - Two Lines
+  filterSection: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    zIndex: 100,
+  },
+  filterLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  clearFiltersBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  clearFiltersText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.gold,
+  },
+  filterButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
+  // Filter Dropdown Buttons
+  filterDropdownWrapper: { 
+    position: 'relative',
+  },
+  filterDropdownBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 6, 
+    paddingHorizontal: 14, 
+    paddingVertical: 10, 
+    borderRadius: 8, 
+    backgroundColor: C.card, 
+    borderWidth: 1, 
+    borderColor: C.cardLight,
+  },
+  filterDropdownBtnActive: { 
+    backgroundColor: C.gold, 
+    borderColor: C.gold,
+  },
+  filterDropdownText: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: C.textSec,
+  },
+  filterDropdownTextActive: { 
+    color: C.bg,
+  },
+
+  // Dropdown Menu
+  filterDropdownMenu: { 
+    position: 'absolute', 
+    top: 44, 
+    left: 0, 
+    minWidth: 120, 
+    backgroundColor: C.card, 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    borderColor: C.cardLight, 
+    overflow: 'hidden', 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.3, 
+    shadowRadius: 8, 
+    elevation: 8,
+  },
+  filterDropdownMenuWide: {
+    minWidth: 160,
+  },
+  filterDropdownItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 14, 
+    paddingVertical: 12, 
+    borderBottomWidth: 1, 
+    borderBottomColor: C.cardLight,
+  },
+  filterDropdownItemActive: { 
+    backgroundColor: 'rgba(212,175,55,0.1)',
+  },
+  filterDropdownItemText: { 
+    fontSize: 14, 
+    color: C.text, 
+    fontWeight: '500',
+  },
+  filterDropdownItemTextActive: { 
+    color: C.gold, 
+    fontWeight: '600',
+  },
+
+  // Active Filters Pills
+  activeFiltersScroll: {
+    maxHeight: 44,
+    zIndex: 50,
+  },
+  activeFiltersContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  activeFilterPill: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: C.cardLight, 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16, 
+    gap: 6,
+    marginRight: 8,
+  },
+  activeFilterPillText: { 
+    fontSize: 12, 
+    color: C.text, 
+    fontWeight: '500',
+  },
+
+  // Explore Cards (keep existing or use these refined ones)
+  exploreCard: { 
+    flex: 1, 
+    margin: 6, 
+    height: 200, 
+    borderRadius: 16, 
+    overflow: 'hidden', 
+    backgroundColor: C.card,
+  },
+  exploreCardImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute',
+  },
+  exploreCardOverlay: { 
+    ...StyleSheet.absoluteFillObject,
+  },
+  favoriteBtn: { 
+    position: 'absolute', 
+    top: 10, 
+    right: 10, 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    backgroundColor: 'rgba(0,0,0,0.4)', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
+  amenityBadges: { 
+    position: 'absolute', 
+    top: 10, 
+    left: 10, 
+    flexDirection: 'row', 
+    gap: 4,
+  },
+  amenityBadge: { 
+    width: 24, 
+    height: 24, 
+    borderRadius: 12, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
+  exploreCardContent: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 12,
+  },
+  exploreCardName: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 2,
+  },
+  exploreCardSub: { 
+    fontSize: 11, 
+    color: C.textSec, 
+    marginBottom: 6,
+  },
+  exploreCardFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+  },
+  exploreCardPrice: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: C.gold,
+  },
+  exploreCardRating: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4,
+  },
+  exploreCardRatingText: { 
+    fontSize: 12, 
+    fontWeight: '600', 
+    color: C.text,
+  },
+
+  // Empty State
+  emptyContainer: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingTop: 60,
+  },
+  emptyTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginTop: 16,
+  },
+  emptySubtitle: { 
+    fontSize: 14, 
+    color: C.textMuted, 
+    marginTop: 4,
+  },
+
+
+aiSearchContainer: { 
+    marginHorizontal: 20, 
+    marginTop: -24, 
+    zIndex: 10 
+  },
+  aiSearchBar: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: C.card, 
+    borderRadius: 16, 
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.2)',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  aiSearchIconContainer: { 
+    marginRight: 12 
+  },
+  aiSearchIcon: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  aiSearchContent: { 
+    flex: 1 
+  },
+  aiSearchPlaceholder: { 
+    fontSize: 16, 
+    color: C.textSec, 
+    fontWeight: '500' 
+  },
+  aiSearchHint: { 
+    fontSize: 11, 
+    color: C.textMuted, 
+    marginTop: 2 
+  },
+  aiSearchMic: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    backgroundColor: C.cardLight, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  aiSearchSuggestions: { 
+    marginTop: 10 
+  },
+  aiSuggestionChip: { 
+    backgroundColor: C.cardLight, 
+    paddingHorizontal: 14, 
+    paddingVertical: 8, 
+    borderRadius: 20, 
+    marginRight: 8 
+  },
+  aiSuggestionText: { 
+    fontSize: 12, 
+    color: C.textSec, 
+    fontWeight: '500' 
+  },
+
+  // Quick Access Grid
+  quickAccessContainer: { 
+    paddingHorizontal: 20, 
+    marginTop: 24 
+  },
+  quickAccessGrid: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between' 
+  },
+  quickAccessItem: { 
+    width: (width - 60) / 4, 
+    aspectRatio: 1, 
+    borderRadius: 16, 
+    overflow: 'hidden' 
+  },
+  quickAccessGradient: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 8 
+  },
+  quickAccessLabel: { 
+    fontSize: 12, 
+    color: C.text, 
+    fontWeight: '600', 
+    marginTop: 6 
+  },
+
+  // Section Headers Premium
+  sectionContainer: { 
+    marginTop: 28 
+  },
+  sectionHeaderPremium: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-end', 
+    paddingHorizontal: 20, 
+    marginBottom: 16 
+  },
+  sectionLabel: { 
+    fontSize: 10, 
+    color: C.gold, 
+    fontWeight: '700', 
+    letterSpacing: 1.5, 
+    marginBottom: 4 
+  },
+  sectionTitlePremium: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: C.text 
+  },
+  sectionViewAllBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4 
+  },
+  sectionViewAll: { 
+    fontSize: 13, 
+    color: C.gold, 
+    fontWeight: '600' 
+  },
+
+  // Events Premium
+  eventsScrollContent: { 
+    paddingHorizontal: 20 
+  },
+  eventCardPremium: { 
+    width: 280, 
+    height: 180, 
+    marginRight: 16, 
+    borderRadius: 20, 
+    overflow: 'hidden', 
+    backgroundColor: C.card 
+  },
+  eventCardImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute' 
+  },
+  eventCardGradient: { 
+    ...StyleSheet.absoluteFillObject 
+  },
+  eventDateBadgePremium: { 
+    position: 'absolute', 
+    top: 12, 
+    right: 12, 
+    backgroundColor: C.gold, 
+    borderRadius: 12, 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    alignItems: 'center' 
+  },
+  eventDateDayPremium: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: C.bg, 
+    lineHeight: 24 
+  },
+  eventDateMonthPremium: { 
+    fontSize: 10, 
+    fontWeight: '700', 
+    color: C.bg, 
+    letterSpacing: 0.5 
+  },
+  eventCategoryTag: { 
+    position: 'absolute', 
+    top: 12, 
+    left: 12, 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    paddingHorizontal: 10, 
+    paddingVertical: 4, 
+    borderRadius: 8 
+  },
+  eventCategoryText: { 
+    fontSize: 10, 
+    color: C.text, 
+    fontWeight: '600', 
+    textTransform: 'uppercase', 
+    letterSpacing: 0.5 
+  },
+  eventCardContentPremium: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 16 
+  },
+  eventNamePremium: { 
+    fontSize: 17, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 8 
+  },
+  eventMetaRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 6 
+  },
+  eventMetaText: { 
+    fontSize: 12, 
+    color: C.textSec, 
+    fontWeight: '500' 
+  },
+  eventMetaDot: { 
+    width: 3, 
+    height: 3, 
+    borderRadius: 1.5, 
+    backgroundColor: C.textMuted 
+  },
+  emptyEventsContainer: { 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 40, 
+    marginHorizontal: 20, 
+    backgroundColor: C.card, 
+    borderRadius: 16 
+  },
+  emptyEventsText: { 
+    fontSize: 14, 
+    color: C.textMuted, 
+    marginTop: 12 
+  },
+
+  // Accommodations
+  accommodationsScrollContent: { 
+    paddingHorizontal: 20 
+  },
+  accommodationCard: { 
+    width: 200, 
+    height: 260, 
+    marginRight: 14, 
+    borderRadius: 18, 
+    overflow: 'hidden', 
+    backgroundColor: C.card 
+  },
+  accommodationImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute' 
+  },
+  accommodationGradient: { 
+    ...StyleSheet.absoluteFillObject 
+  },
+  featuredBadge: { 
+    position: 'absolute', 
+    top: 12, 
+    left: 12, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: C.gold, 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    borderRadius: 6, 
+    gap: 4 
+  },
+  featuredBadgeText: { 
+    fontSize: 9, 
+    fontWeight: '700', 
+    color: C.bg, 
+    letterSpacing: 0.5 
+  },
+  accommodationAmenities: { 
+    position: 'absolute', 
+    top: 12, 
+    right: 12, 
+    flexDirection: 'row', 
+    gap: 4 
+  },
+  amenityIconSmall: { 
+    width: 24, 
+    height: 24, 
+    borderRadius: 12, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  accommodationContent: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 14 
+  },
+  accommodationName: { 
+    fontSize: 16, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 2 
+  },
+  accommodationType: { 
+    fontSize: 12, 
+    color: C.textSec, 
+    marginBottom: 10 
+  },
+  accommodationFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  accommodationPrice: { 
+    flexDirection: 'row', 
+    alignItems: 'baseline' 
+  },
+  accommodationPriceValue: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: C.gold 
+  },
+  accommodationPriceUnit: { 
+    fontSize: 12, 
+    color: C.textMuted, 
+    marginLeft: 2 
+  },
+  accommodationRating: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4 
+  },
+  accommodationRatingText: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: C.text 
+  },
+
+  // Dining
+  diningScrollContent: { 
+    paddingHorizontal: 20 
+  },
+  diningCard: { 
+    width: 170, 
+    height: 220, 
+    marginRight: 12, 
+    borderRadius: 16, 
+    overflow: 'hidden', 
+    backgroundColor: C.card 
+  },
+  diningImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute' 
+  },
+  diningGradient: { 
+    ...StyleSheet.absoluteFillObject 
+  },
+  cuisineTag: { 
+    position: 'absolute', 
+    top: 12, 
+    left: 12, 
+    backgroundColor: 'rgba(212,175,55,0.9)', 
+    paddingHorizontal: 10, 
+    paddingVertical: 4, 
+    borderRadius: 8 
+  },
+  cuisineTagText: { 
+    fontSize: 10, 
+    fontWeight: '700', 
+    color: C.bg, 
+    textTransform: 'uppercase', 
+    letterSpacing: 0.5 
+  },
+  diningContent: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 12 
+  },
+  diningName: { 
+    fontSize: 15, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 6 
+  },
+  diningMeta: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  diningPrice: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: C.gold 
+  },
+  diningRating: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4 
+  },
+  diningRatingText: { 
+    fontSize: 12, 
+    fontWeight: '600', 
+    color: C.text 
+  },
+
+  // Experiences
+  experiencesScrollContent: { 
+    paddingHorizontal: 20 
+  },
+  experienceCard: { 
+    width: 160, 
+    height: 200, 
+    marginRight: 12, 
+    borderRadius: 16, 
+    overflow: 'hidden', 
+    backgroundColor: C.card 
+  },
+  experienceImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute' 
+  },
+  experienceGradient: { 
+    ...StyleSheet.absoluteFillObject 
+  },
+  experienceCategoryBadge: { 
+    position: 'absolute', 
+    top: 10, 
+    right: 10, 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  experienceContent: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 12 
+  },
+  experienceCategory: { 
+    fontSize: 10, 
+    fontWeight: '600', 
+    color: C.gold, 
+    textTransform: 'uppercase', 
+    letterSpacing: 0.5, 
+    marginBottom: 4 
+  },
+  experienceName: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 8, 
+    lineHeight: 18 
+  },
+  experienceFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center' 
+  },
+  experiencePrice: { 
+    fontSize: 13, 
+    fontWeight: '700', 
+    color: C.gold 
+  },
+  experienceDuration: { 
+    fontSize: 11, 
+    color: C.textMuted 
+  },
+
+  // Nightlife
+  nightlifeGrid: { 
+    flexDirection: 'row', 
+    paddingHorizontal: 20, 
+    gap: 12 
+  },
+  nightlifeCard: { 
+    flex: 1, 
+    height: 140, 
+    borderRadius: 16, 
+    overflow: 'hidden', 
+    backgroundColor: C.card 
+  },
+  nightlifeImage: { 
+    width: '100%', 
+    height: '100%', 
+    position: 'absolute' 
+  },
+  nightlifeGradient: { 
+    ...StyleSheet.absoluteFillObject 
+  },
+  nightlifeContent: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    padding: 12 
+  },
+  nightlifeType: { 
+    fontSize: 10, 
+    fontWeight: '600', 
+    color: C.gold, 
+    textTransform: 'uppercase', 
+    letterSpacing: 0.5, 
+    marginBottom: 2 
+  },
+  nightlifeName: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    color: C.text, 
+    marginBottom: 2 
+  },
+  nightlifeHours: { 
+    fontSize: 11, 
+    color: C.textSec 
+  },
+
+  // VIP Promo Premium
+  vipPromoCardPremium: { 
+    marginHorizontal: 20, 
+    marginTop: 28, 
+    borderRadius: 20, 
+    overflow: 'hidden', 
+    shadowColor: '#D4AF37', 
+    shadowOffset: { width: 0, height: 6 }, 
+    shadowOpacity: 0.3, 
+    shadowRadius: 12, 
+    elevation: 10 
+  },
+  vipPromoGradientPremium: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 20 
+  },
+  vipPromoIconContainer: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 30, 
+    backgroundColor: 'rgba(0,0,0,0.2)', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  vipPromoContentPremium: { 
+    flex: 1, 
+    marginLeft: 16 
+  },
+  vipPromoTitlePremium: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#FFF8E7' 
+  },
+  vipPromoSubtitlePremium: { 
+    fontSize: 13, 
+    color: 'rgba(255,248,231,0.8)', 
+    marginTop: 2 
+  },
+  vipPromoArrow: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: 'rgba(0,0,0,0.15)', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+
+
+  
   container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: C.textSec, marginTop: 16, fontSize: 14 },

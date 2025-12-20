@@ -20,7 +20,7 @@ const Content = require('./models/Content');
 const FundingRound = require('./models/FundingRound');
 const Notification = require('./models/Notification');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mota';
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/mota';
 
 // ============================================
 // USERS
