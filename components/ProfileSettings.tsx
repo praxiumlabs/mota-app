@@ -150,7 +150,7 @@ export const FavoritesSection = ({
   onViewItem?: (item: any) => void;
 }) => {
   const groupedFavorites = favorites.reduce((acc: any, fav: any) => {
-    const type = fav.type || 'other';
+    const type = fav.itemType || fav.type || 'other';
     if (!acc[type]) acc[type] = [];
     acc[type].push(fav);
     return acc;

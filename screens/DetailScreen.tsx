@@ -7,16 +7,13 @@
 import React, { useState, useRef } from 'react';
 import {
   StyleSheet, View, Text, TouchableOpacity, Image, ScrollView,
-  KeyboardAvoidingView, Platform, TextInput, Alert, ActivityIndicator,
-  Dimensions, FlatList, Modal
+  Dimensions, Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { C, G, PLACEHOLDER_IMAGE } from '../constants/theme';
-import api from '../services/api';
-import { CalendarGrid } from '../components/BookingComponents';
 import ImageGrid from '../components/ImageGrid';
 
 const { width } = Dimensions.get('window');
@@ -25,39 +22,12 @@ interface Props {
   item: any;
   type: 'restaurant' | 'event' | 'activity' | 'lodging' | 'nightlife';
   onBack: () => void;
+  onBook: (item: any, type: string, isFixed: boolean) => void;
 }
 
-// Time slot options
-const TIME_SLOTS = [
-  '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM',
-  '1:00 PM', '1:30 PM', '2:00 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
-  '8:30 PM', '9:00 PM', '9:30 PM', '10:00 PM'
-];
-
-// Guest count options
-const GUEST_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'];
-
-// Occasion options
-const OCCASIONS = ['None', 'Birthday', 'Anniversary', 'Date Night', 'Business Meal', 'Celebration', 'Other'];
-
-export default function DetailScreen({ item, type, onBack }: Props) {
+export default function DetailScreen({ item, type, onBack, onBook }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [showBooking, setShowBooking] = useState(false);
-  const [loading, setLoading] = useState(false);
-  
-  // Booking form state
-  const [date, setDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [guests, setGuests] = useState('2');
-  const [occasion, setOccasion] = useState('None');
-  const [specialRequests, setSpecialRequests] = useState('');
-  const [dietaryRequirements, setDietaryRequirements] = useState('');
-  const [firstName, setFirstName] = useState(user?.name?.split(' ')[0] || '');
-  const [lastName, setLastName] = useState(user?.name?.split(' ').slice(1).join(' ') || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
 
   // Get all images - format for ImageGrid
   const getImages = () => {
@@ -72,61 +42,6 @@ export default function DetailScreen({ item, type, onBack }: Props) {
   };
 
   const images = getImages();
-
-  const handleBook = async () => {
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to make a reservation.');
-      return;
-    }
-
-    if (!date) {
-      Alert.alert('Date Required', 'Please select a date for your reservation.');
-      return;
-    }
-
-    if (type !== 'event' && !selectedTime) {
-      Alert.alert('Time Required', 'Please select a time for your reservation.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const bookingData = {
-        itemType: type,
-        itemId: item._id,
-        itemName: item.name,
-        date: date,
-        time: type === 'event' ? item.time : selectedTime,
-        guestCount: parseInt(guests) || 1,
-        occasion: occasion !== 'None' ? occasion : null,
-        bookingDetails: {
-          name: `${firstName} ${lastName}`.trim(),
-          email,
-          phone,
-          specialRequests: `${specialRequests}${dietaryRequirements ? '\nDietary: ' + dietaryRequirements : ''}`
-        },
-        isFixedEvent: type === 'event'
-      };
-
-      const response = await api.post('/reservations', bookingData);
-      
-      Alert.alert(
-        'Reservation Confirmed! 🎉',
-        `Your ${type} reservation has been confirmed.\n\nConfirmation #: ${response.data.confirmationNumber || 'Pending'}`,
-        [{ text: 'Done', onPress: () => setShowBooking(false) }]
-      );
-      
-      // Reset form
-      setDate('');
-      setSelectedTime('');
-      setSpecialRequests('');
-      setDietaryRequirements('');
-    } catch (error: any) {
-      Alert.alert('Booking Failed', error.response?.data?.error || 'Unable to complete your reservation. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Render restaurant-specific info
   const renderRestaurantInfo = () => (
@@ -319,7 +234,7 @@ export default function DetailScreen({ item, type, onBack }: Props) {
 
     if (type === 'event') {
       return (
-        <TouchableOpacity onPress={() => setShowBooking(true)} activeOpacity={0.85}>
+        <TouchableOpacity onPress={() => onBook(item, type, true)} activeOpacity={0.85}>
           <LinearGradient colors={G.gold} style={styles.actionBtn}>
             <Ionicons name="calendar-outline" size={18} color={C.bg} style={{ marginRight: 8 }} />
             <Text style={styles.actionBtnText}>RSVP Now</Text>
@@ -329,7 +244,7 @@ export default function DetailScreen({ item, type, onBack }: Props) {
     }
 
     return (
-      <TouchableOpacity onPress={() => setShowBooking(true)} activeOpacity={0.85}>
+      <TouchableOpacity onPress={() => onBook(item, type, false)} activeOpacity={0.85}>
         <LinearGradient colors={G.gold} style={styles.actionBtn}>
           <Ionicons name="bookmark-outline" size={18} color={C.bg} style={{ marginRight: 8 }} />
           <Text style={styles.actionBtnText}>
@@ -339,194 +254,6 @@ export default function DetailScreen({ item, type, onBack }: Props) {
       </TouchableOpacity>
     );
   };
-
-  // Render booking modal
-  const renderBookingModal = () => (
-    <Modal visible={showBooking} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContainer}>
-          <LinearGradient colors={G.card} style={styles.modalContent}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {type === 'event' ? 'RSVP' : type === 'restaurant' ? 'Reserve Table' : 'Book Now'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowBooking(false)} style={styles.modalClose}>
-                <Ionicons name="close" size={24} color={C.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {/* Item Summary */}
-              <View style={styles.bookingSummary}>
-                <Image source={{ uri: images[0]?.url || PLACEHOLDER_IMAGE }} style={styles.bookingImage} />
-                <View style={styles.bookingInfo}>
-                  <Text style={styles.bookingName}>{item.name}</Text>
-                  <Text style={styles.bookingType}>{type.charAt(0).toUpperCase() + type.slice(1)}</Text>
-                </View>
-              </View>
-
-              {/* Date Selection */}
-              <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Select Date</Text>
-                <CalendarGrid 
-                  selectedDate={date} 
-                  onSelectDate={setDate}
-                  minDate={new Date().toISOString().split('T')[0]}
-                />
-              </View>
-
-              {/* Time Selection (not for events) */}
-              {type !== 'event' && (
-                <View style={styles.formSection}>
-                  <Text style={styles.formLabel}>Select Time</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={styles.timeSlots}>
-                      {TIME_SLOTS.map((time) => (
-                        <TouchableOpacity
-                          key={time}
-                          style={[styles.timeSlot, selectedTime === time && styles.timeSlotActive]}
-                          onPress={() => setSelectedTime(time)}
-                        >
-                          <Text style={[styles.timeSlotText, selectedTime === time && styles.timeSlotTextActive]}>
-                            {time}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </ScrollView>
-                </View>
-              )}
-
-              {/* Guest Count */}
-              <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Number of Guests</Text>
-                <View style={styles.guestOptions}>
-                  {GUEST_OPTIONS.map((num) => (
-                    <TouchableOpacity
-                      key={num}
-                      style={[styles.guestOption, guests === num && styles.guestOptionActive]}
-                      onPress={() => setGuests(num)}
-                    >
-                      <Text style={[styles.guestOptionText, guests === num && styles.guestOptionTextActive]}>
-                        {num}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Occasion (for restaurants) */}
-              {type === 'restaurant' && (
-                <View style={styles.formSection}>
-                  <Text style={styles.formLabel}>Occasion (Optional)</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={styles.occasionOptions}>
-                      {OCCASIONS.map((occ) => (
-                        <TouchableOpacity
-                          key={occ}
-                          style={[styles.occasionOption, occasion === occ && styles.occasionOptionActive]}
-                          onPress={() => setOccasion(occ)}
-                        >
-                          <Text style={[styles.occasionOptionText, occasion === occ && styles.occasionOptionTextActive]}>
-                            {occ}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </ScrollView>
-                </View>
-              )}
-
-              {/* Contact Info */}
-              <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Contact Information</Text>
-                <View style={styles.formRow}>
-                  <TextInput
-                    style={[styles.formInput, { flex: 1, marginRight: 8 }]}
-                    placeholder="First Name"
-                    placeholderTextColor={C.textMuted}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                  />
-                  <TextInput
-                    style={[styles.formInput, { flex: 1 }]}
-                    placeholder="Last Name"
-                    placeholderTextColor={C.textMuted}
-                    value={lastName}
-                    onChangeText={setLastName}
-                  />
-                </View>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Email"
-                  placeholderTextColor={C.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Phone"
-                  placeholderTextColor={C.textMuted}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              {/* Special Requests */}
-              <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Special Requests (Optional)</Text>
-                <TextInput
-                  style={[styles.formInput, styles.textArea]}
-                  placeholder="Any special requests..."
-                  placeholderTextColor={C.textMuted}
-                  value={specialRequests}
-                  onChangeText={setSpecialRequests}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-
-              {/* Dietary Requirements (for restaurants) */}
-              {type === 'restaurant' && (
-                <View style={styles.formSection}>
-                  <Text style={styles.formLabel}>Dietary Requirements (Optional)</Text>
-                  <TextInput
-                    style={styles.formInput}
-                    placeholder="e.g., Vegetarian, Gluten-free, Allergies..."
-                    placeholderTextColor={C.textMuted}
-                    value={dietaryRequirements}
-                    onChangeText={setDietaryRequirements}
-                  />
-                </View>
-              )}
-
-              <View style={{ height: 100 }} />
-            </ScrollView>
-
-            {/* Book Button */}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity onPress={handleBook} disabled={loading} activeOpacity={0.85}>
-                <LinearGradient colors={G.gold} style={styles.bookBtn}>
-                  {loading ? (
-                    <ActivityIndicator color={C.bg} />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle" size={20} color={C.bg} style={{ marginRight: 8 }} />
-                      <Text style={styles.bookBtnText}>Confirm Reservation</Text>
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
-  );
 
   return (
     <LinearGradient colors={G.dark} style={styles.container}>
@@ -609,9 +336,6 @@ export default function DetailScreen({ item, type, onBack }: Props) {
       <View style={[styles.actionBar, { paddingBottom: insets.bottom + 16 }]}>
         {getActionButton()}
       </View>
-
-      {/* Booking Modal */}
-      {renderBookingModal()}
     </LinearGradient>
   );
 }
@@ -700,53 +424,4 @@ const styles = StyleSheet.create({
   actionBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.border, paddingHorizontal: 20, paddingTop: 16 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12 },
   actionBtnText: { color: C.bg, fontSize: 16, fontWeight: '700' },
-  
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' },
-  modalContainer: { flex: 1, justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%' },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.border },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: C.text },
-  modalClose: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  modalBody: { padding: 20 },
-  modalFooter: { padding: 20, borderTopWidth: 1, borderTopColor: C.border },
-  
-  // Booking Summary
-  bookingSummary: { flexDirection: 'row', backgroundColor: C.bg, borderRadius: 12, padding: 12, marginBottom: 24 },
-  bookingImage: { width: 60, height: 60, borderRadius: 8 },
-  bookingInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
-  bookingName: { fontSize: 16, fontWeight: '600', color: C.text },
-  bookingType: { fontSize: 13, color: C.textMuted, marginTop: 2 },
-  
-  // Form
-  formSection: { marginBottom: 24 },
-  formLabel: { fontSize: 14, fontWeight: '600', color: C.text, marginBottom: 12 },
-  formInput: { backgroundColor: C.bg, borderRadius: 12, padding: 14, fontSize: 15, color: C.text, marginBottom: 12, borderWidth: 1, borderColor: C.border },
-  formRow: { flexDirection: 'row' },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
-  
-  // Time Slots
-  timeSlots: { flexDirection: 'row', gap: 8 },
-  timeSlot: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.bg, borderRadius: 20, borderWidth: 1, borderColor: C.border },
-  timeSlotActive: { backgroundColor: C.gold, borderColor: C.gold },
-  timeSlotText: { fontSize: 14, color: C.textSec },
-  timeSlotTextActive: { color: C.bg, fontWeight: '600' },
-  
-  // Guest Options
-  guestOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  guestOption: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg, borderRadius: 22, borderWidth: 1, borderColor: C.border },
-  guestOptionActive: { backgroundColor: C.gold, borderColor: C.gold },
-  guestOptionText: { fontSize: 15, color: C.textSec },
-  guestOptionTextActive: { color: C.bg, fontWeight: '600' },
-  
-  // Occasion Options
-  occasionOptions: { flexDirection: 'row', gap: 8 },
-  occasionOption: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: C.bg, borderRadius: 20, borderWidth: 1, borderColor: C.border },
-  occasionOptionActive: { backgroundColor: C.gold, borderColor: C.gold },
-  occasionOptionText: { fontSize: 14, color: C.textSec },
-  occasionOptionTextActive: { color: C.bg, fontWeight: '600' },
-  
-  // Book Button
-  bookBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 12 },
-  bookBtnText: { color: C.bg, fontSize: 16, fontWeight: '700' },
 });

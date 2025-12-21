@@ -61,8 +61,9 @@ export default function ReservationsScreen({ onBack }: Props) {
 
   const loadReservations = useCallback(async () => {
     try {
-      const response = await api.get('/reservations/my');
-      setReservations(response.data.reservations || []);
+    const response = await api.get('/reservations/my');
+    const data = response.data?.reservations || response.data || [];
+    setReservations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.log('Error loading reservations:', err);
     } finally {
