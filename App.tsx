@@ -92,83 +92,111 @@ const AIUseCases = [
 // ============================================
 const ConciergeServices = {
   standard: [
-    { icon: 'restaurant-outline', title: 'Dining', desc: 'Reserve tables at any restaurant', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80', color: '#FF6B6B',
+    { 
+      icon: 'restaurant-outline', 
+      title: 'Dining', 
+      desc: 'Reserve tables at any restaurant', 
+      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80', 
+      color: '#FF6B6B',
       options: [
-        { name: 'Ocean Pearl', type: 'Fine Dining', cuisine: 'Seafood', price: '$$$$', rating: 4.9, image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80' },
-        { name: 'Jade Garden', type: 'Asian Fusion', cuisine: 'Pan-Asian', price: '$$$', rating: 4.7, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&q=80' },
-        { name: 'The Steakhouse', type: 'Steakhouse', cuisine: 'American', price: '$$$$', rating: 4.8, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80' },
+        { _id: 'concierge-dining-1', name: 'Ocean Pearl', type: 'Fine Dining', cuisine: 'Seafood', price: '$$$$', rating: 4.9, image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=80' }], description: 'Premier seafood restaurant with ocean views' },
+        { _id: 'concierge-dining-2', name: 'Jade Garden', type: 'Asian Fusion', cuisine: 'Pan-Asian', price: '$$$', rating: 4.7, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&q=80' }], description: 'Elegant Pan-Asian cuisine' },
+        { _id: 'concierge-dining-3', name: 'The Steakhouse', type: 'Steakhouse', cuisine: 'American', price: '$$$$', rating: 4.8, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80' }], description: 'Premium aged steaks and fine wines' },
       ]
     },
-    { icon: 'bed-outline', title: 'Lodging', desc: 'Book suites and villas', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80', color: '#4ECDC4',
+    { 
+      icon: 'bed-outline', 
+      title: 'Lodging', 
+      desc: 'Book suites and villas', 
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80', 
+      color: '#4ECDC4',
       options: [
-        { name: 'Royal Suite', type: 'Suite', beds: 'King', sqft: '1,200', price: '$899/night', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80' },
-        { name: 'Ocean Villa', type: 'Villa', beds: '2 King', sqft: '2,500', price: '$1,599/night', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80' },
-        { name: 'Penthouse', type: 'Penthouse', beds: '3 King', sqft: '4,000', price: '$2,999/night', image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=400&q=80' },
+        { _id: 'concierge-lodging-1', name: 'Royal Suite', type: 'Suite', beds: 'King', sqft: '1,200', price: '$899/night', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80' }], description: 'Luxurious suite with king bed' },
+        { _id: 'concierge-lodging-2', name: 'Ocean Villa', type: 'Villa', beds: '2 King', sqft: '2,500', price: '$1,899/night', image: 'https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?w=400&q=80' }], description: 'Spacious villa with ocean views' },
+        { _id: 'concierge-lodging-3', name: 'Beach Bungalow', type: 'Bungalow', beds: 'Queen', sqft: '800', price: '$599/night', image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&q=80' }], description: 'Cozy beachfront bungalow' },
       ]
     },
-    { icon: 'calendar-outline', title: 'Events', desc: 'VIP event access', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=80', color: '#9B59B6',
+    { 
+      icon: 'fitness-outline', 
+      title: 'Spa & Wellness', 
+      desc: 'Rejuvenate mind and body', 
+      image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80', 
+      color: '#9B59B6',
       options: [
-        { name: 'Gala Night', type: 'Formal Event', date: 'Dec 31', price: '$500/person', image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=400&q=80' },
-        { name: 'Wine Tasting', type: 'Social', date: 'Weekly', price: '$150/person', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&q=80' },
-        { name: 'Live Concert', type: 'Entertainment', date: 'Sat nights', price: '$200/person', image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80' },
+        { _id: 'concierge-spa-1', name: 'Signature Massage', type: 'Massage', duration: '90 min', price: '$250', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80' }], description: 'Full body relaxation massage' },
+        { _id: 'concierge-spa-2', name: 'Couples Retreat', type: 'Package', duration: '3 hours', price: '$599', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80' }], description: 'Romantic spa experience for two' },
+        { _id: 'concierge-spa-3', name: 'Facial Treatment', type: 'Facial', duration: '60 min', price: '$180', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' }], description: 'Rejuvenating facial treatment' },
       ]
     },
-    { icon: 'car-sport-outline', title: 'Transportation', desc: 'Vehicle & shuttle service', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80', color: '#3498DB',
+    { 
+      icon: 'car-sport-outline', 
+      title: 'Transportation', 
+      desc: 'Airport & local transfers', 
+      image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80', 
+      color: '#3498DB',
       options: [
-        { name: 'Airport Pick Up/Drop Off', type: 'Shuttle', vehicle: 'Mercedes Sprinter', price: '$75', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&q=80' },
-        { name: 'Rent Standard Vehicle', type: 'Car Rental', vehicle: 'Toyota Camry / Honda Accord', price: '$85/day', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80' },
-        { name: 'Luxury Vehicle Experiences', type: 'Luxury Rental', vehicle: 'Mercedes S-Class / BMW 7 Series', price: '$350/day', image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80' },
+        { _id: 'concierge-transport-1', name: 'Airport Transfer', type: 'Transfer', vehicle: 'Luxury SUV', price: '$150', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&q=80' }], description: 'Private airport pickup/dropoff' },
+        { _id: 'concierge-transport-2', name: 'Island Tour', type: 'Tour', duration: 'Full Day', price: '$350', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&q=80' }], description: 'Guided island exploration' },
+        { _id: 'concierge-transport-3', name: 'Private Chauffeur', type: 'Service', duration: '8 hours', price: '$500', image: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1563720360172-67b8f3dce741?w=400&q=80' }], description: 'Full day private chauffeur service' },
       ]
     },
-    { icon: 'fitness-outline', title: 'Wellness', desc: 'Spa and fitness booking', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80', color: '#1ABC9C',
+    { 
+      icon: 'ticket-outline', 
+      title: 'Entertainment', 
+      desc: 'Shows, events & nightlife', 
+      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80', 
+      color: '#E74C3C',
       options: [
-        { name: 'Signature Massage', type: 'Spa', duration: '90 min', price: '$200', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80' },
-        { name: 'Couples Retreat', type: 'Package', duration: '3 hours', price: '$500', image: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=400&q=80' },
-        { name: 'Personal Training', type: 'Fitness', duration: '1 hour', price: '$100', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80' },
+        { _id: 'concierge-entertainment-1', name: 'Live Music Night', type: 'Show', time: '8:00 PM', price: '$75', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80' }], description: 'Live entertainment evening' },
+        { _id: 'concierge-entertainment-2', name: 'VIP Nightclub', type: 'Nightlife', access: 'All Night', price: '$200', image: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400&q=80' }], description: 'VIP nightclub access' },
+        { _id: 'concierge-entertainment-3', name: 'Casino Access', type: 'Gaming', chips: '$500 included', price: '$500', image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=400&q=80' }], description: 'Casino gaming package' },
       ]
     },
-    { icon: 'golf-outline', title: 'Recreation', desc: 'Golf, tennis, and more', image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400&q=80', color: '#27AE60',
+    { 
+      icon: 'boat-outline', 
+      title: 'Water Activities', 
+      desc: 'Diving, snorkeling & more', 
+      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80', 
+      color: '#1ABC9C',
       options: [
-        { name: 'Golf Round', type: 'Golf', holes: '18', price: '$250', image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400&q=80' },
-        { name: 'Tennis Court', type: 'Tennis', duration: '1 hour', price: '$50', image: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400&q=80' },
-        { name: 'Scuba Diving', type: 'Water Sports', duration: '2 hours', price: '$150', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80' },
+        { _id: 'concierge-water-1', name: 'Scuba Diving', type: 'Adventure', duration: '3 hours', price: '$180', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80' }], description: 'Guided scuba diving experience' },
+        { _id: 'concierge-water-2', name: 'Sunset Cruise', type: 'Cruise', duration: '2 hours', price: '$120', image: 'https://images.unsplash.com/photo-1500514966906-fe245eea9344?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1500514966906-fe245eea9344?w=400&q=80' }], description: 'Romantic sunset sailing' },
+        { _id: 'concierge-water-3', name: 'Jet Ski Rental', type: 'Rental', duration: '1 hour', price: '$150', image: 'https://images.unsplash.com/photo-1605281317010-fe5ece3098e8?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1605281317010-fe5ece3098e8?w=400&q=80' }], description: 'Jet ski rental with guide' },
       ]
     },
   ],
   vip: [
-    { icon: 'airplane', title: 'Private Aviation', desc: 'Charter jets and helicopters', tier: 'gold', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80',
+    { icon: 'airplane', title: 'Private Aviation', desc: 'Jets & helicopters on demand', tier: 'platinum', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80',
       options: [
-        { name: 'Helicopter Tour', type: 'Charter', duration: '1 hour', price: 'From $2,500', image: 'https://images.unsplash.com/photo-1534786626903-3d8a5c8f0b07?w=400&q=80' },
-        { name: 'Private Jet', type: 'Charter', route: 'Regional', price: 'From $15,000', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80' },
-        { name: 'Island Hopper', type: 'Charter', islands: '3 stops', price: 'From $8,000', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80' },
+        { _id: 'vip-aviation-1', name: 'Helicopter Tour', type: 'Tour', duration: '1 hour', price: 'From $2,500', image: 'https://images.unsplash.com/photo-1534321238895-da3ab632df3e?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1534321238895-da3ab632df3e?w=400&q=80' }], description: 'Scenic helicopter tour' },
+        { _id: 'vip-aviation-2', name: 'Private Jet', type: 'Charter', range: 'Caribbean', price: 'From $15,000', image: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&q=80' }], description: 'Private jet charter' },
+        { _id: 'vip-aviation-3', name: 'Airport VIP', type: 'Service', access: 'Full', price: 'From $500', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80' }], description: 'VIP airport services' },
       ]
     },
-    { icon: 'boat', title: 'Yacht Charter', desc: 'Luxury vessels and crews', tier: 'gold', image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80',
+    { icon: 'boat', title: 'Yacht Charter', desc: 'Luxury vessels for any occasion', tier: 'gold', image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80',
       options: [
-        { name: 'Day Cruise', type: 'Charter', duration: '8 hours', price: 'From $5,000', image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80' },
-        { name: 'Sunset Sail', type: 'Charter', duration: '4 hours', price: 'From $2,000', image: 'https://images.unsplash.com/photo-1540946485063-a40da27545f8?w=400&q=80' },
-        { name: 'Week Charter', type: 'Charter', duration: '7 days', price: 'From $50,000', image: 'https://images.unsplash.com/photo-1605281317010-fe5ece3098e8?w=400&q=80' },
+        { _id: 'vip-yacht-1', name: 'Day Charter', type: 'Charter', duration: 'Full day', price: 'From $2,000', image: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=400&q=80' }], description: 'Full day yacht charter' },
+        { _id: 'vip-yacht-2', name: 'Week Charter', type: 'Charter', duration: '7 days', price: 'From $50,000', image: 'https://images.unsplash.com/photo-1605281317010-fe5ece3098e8?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1605281317010-fe5ece3098e8?w=400&q=80' }], description: 'Week-long yacht experience' },
       ]
     },
     { icon: 'diamond', title: 'Bespoke Experiences', desc: 'Custom curated journeys', tier: 'platinum', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80',
       options: [
-        { name: 'Private Island', type: 'Exclusive', duration: 'Full day', price: 'From $25,000', image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&q=80' },
-        { name: 'Chef\'s Table', type: 'Culinary', guests: 'Up to 8', price: 'From $5,000', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80' },
-        { name: 'VIP Safari', type: 'Adventure', duration: '3 days', price: 'From $15,000', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80' },
+        { _id: 'vip-bespoke-1', name: 'Private Island', type: 'Exclusive', duration: 'Full day', price: 'From $25,000', image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&q=80' }], description: 'Private island experience' },
+        { _id: 'vip-bespoke-2', name: 'Chef\'s Table', type: 'Culinary', guests: 'Up to 8', price: 'From $5,000', image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80' }], description: 'Exclusive chef\'s table dining' },
+        { _id: 'vip-bespoke-3', name: 'VIP Safari', type: 'Adventure', duration: '3 days', price: 'From $15,000', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80' }], description: 'Luxury safari adventure' },
       ]
     },
     { icon: 'people', title: 'Personal Staff', desc: 'Dedicated service team', tier: 'platinum', image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80',
       options: [
-        { name: 'Personal Butler', type: 'Service', availability: '24/7', price: '$1,000/day', image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80' },
-        { name: 'Private Chef', type: 'Service', meals: 'All day', price: '$800/day', image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80' },
-        { name: 'Security Detail', type: 'Service', team: '2 agents', price: '$2,000/day', image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=400&q=80' },
+        { _id: 'vip-staff-1', name: 'Personal Butler', type: 'Service', availability: '24/7', price: '$1,000/day', image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=400&q=80' }], description: 'Personal butler service' },
+        { _id: 'vip-staff-2', name: 'Private Chef', type: 'Service', meals: 'All day', price: '$800/day', image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80' }], description: 'Personal chef service' },
+        { _id: 'vip-staff-3', name: 'Security Detail', type: 'Service', team: '2 agents', price: '$2,000/day', image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=400&q=80' }], description: 'Personal security team' },
       ]
     },
     { icon: 'videocam', title: 'Media Production', desc: 'Film and photo services', tier: 'diamond', image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80',
       options: [
-        { name: 'Photo Shoot', type: 'Media', duration: 'Half day', price: 'From $5,000', image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&q=80' },
-        { name: 'Film Production', type: 'Media', crew: 'Full team', price: 'From $50,000', image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80' },
-        { name: 'Private Concert', type: 'Entertainment', artists: 'Your choice', price: 'From $250,000', image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80' },
+        { _id: 'vip-media-1', name: 'Photo Shoot', type: 'Media', duration: 'Half day', price: 'From $5,000', image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&q=80' }], description: 'Professional photo shoot' },
+        { _id: 'vip-media-2', name: 'Film Production', type: 'Media', crew: 'Full team', price: 'From $50,000', image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80', images: [{ url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&q=80' }], description: 'Professional film production' },
       ]
     },
   ],
@@ -177,56 +205,57 @@ const ConciergeServices = {
 // ============================================
 // HERO SLIDES
 // ============================================
+
 const DefaultSlides = [
   { 
     id: 1, 
-    title: 'Luxury Retreats', 
-    subtitle: 'WHERE PARADISE MEETS PERFECTION', 
-    description: 'World-class accommodations with breathtaking Caribbean views', 
-    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80',
+    title: 'Welcome to MOTA', 
+    subtitle: 'Luxury Redefined', 
+    description: 'Experience world-class hospitality',
+    imageUrl: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=1200',
     linkType: 'tab',
-    linkTarget: 'Lodging',
-    linkTab: 1,
+    linkTab: 0,
+    linkTarget: null,
   },
   { 
     id: 2, 
-    title: 'World-Class Gaming', 
-    subtitle: 'THE ULTIMATE ENTERTAINMENT', 
-    description: 'Premier casino experience with exclusive VIP lounges', 
-    imageUrl: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&q=80',
-    linkType: 'tab',
-    linkTarget: 'Nightlife',
-    linkTab: 1,
+    title: 'Exotic Fleet', 
+    subtitle: 'PCH Exotics', 
+    description: 'Luxury cars & yachts',
+    imageUrl: 'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200',
+    linkType: 'screen',
+    linkTab: null,
+    linkTarget: 'fleet',
   },
   { 
     id: 3, 
-    title: 'Adventure Awaits', 
-    subtitle: 'EXPLORE THE UNTAMED BEAUTY', 
-    description: 'From pristine beaches to lush jungles, discover Belize', 
-    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80',
+    title: 'Fine Dining', 
+    subtitle: 'Culinary Excellence', 
+    description: 'World-renowned restaurants',
+    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200',
     linkType: 'tab',
-    linkTarget: 'Experiences',
     linkTab: 1,
+    linkTarget: 'Eateries',
   },
   { 
     id: 4, 
-    title: 'Exquisite Dining', 
-    subtitle: 'A FEAST FOR THE SENSES', 
-    description: 'Exquisite cuisines crafted by world-renowned chefs', 
-    imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+    title: 'Experiences', 
+    subtitle: 'Adventures Await', 
+    description: 'Curated activities',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
     linkType: 'tab',
-    linkTarget: 'Eateries',
     linkTab: 1,
+    linkTarget: 'Experiences',
   },
   { 
     id: 5, 
-    title: 'Unforgettable Events', 
-    subtitle: 'WHERE THE NIGHT COMES ALIVE', 
-    description: 'Exclusive clubs, lounges, and entertainment venues', 
-    imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1200&q=80',
+    title: 'Luxury Lodging', 
+    subtitle: 'Suites & Villas', 
+    description: 'Your perfect retreat',
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200',
     linkType: 'tab',
-    linkTarget: null,
-    linkTab: 2,
+    linkTab: 1,
+    linkTarget: 'Lodging',
   },
 ];
 
@@ -501,62 +530,1193 @@ const VIPPromoModal = ({ visible, onClose }: any) => (
 // ============================================
 // AI ASSISTANT POPUP
 // ============================================
+
 const AIAssistantPopup = ({ visible, onClose }: any) => {
-  const [query, setQuery] = useState('');
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={s.aiPopupOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={s.aiPopupContent}>
-                <View style={s.aiPopupHeader}>
-                  <LinearGradient colors={G.gold} style={s.aiPopupIcon}>
-                    <Ionicons name="sparkles" size={24} color={C.bg} />
-                  </LinearGradient>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={s.aiPopupTitle}>MOTA AI Assistant</Text>
-                    <Text style={s.aiPopupSubtitle}>How can I help you today?</Text>
-                  </View>
-                  <TouchableOpacity onPress={onClose}>
-                    <Ionicons name="close" size={24} color={C.textMuted} />
-                  </TouchableOpacity>
+    <Modal visible={visible} transparent animationType="fade">
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={s.aiPopupOverlay}>
+          <TouchableWithoutFeedback>
+            <View style={s.aiPopupContent}>
+              {/* Header */}
+              <View style={s.aiPopupHeader}>
+                <LinearGradient colors={G.gold} style={s.aiPopupIcon}>
+                  <Ionicons name="sparkles" size={24} color={C.bg} />
+                </LinearGradient>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={s.aiPopupTitle}>MOTA AI Assistant</Text>
+                  <Text style={s.aiPopupSubtitle}>Upcoming Feature</Text>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.aiUseCases}>
-                  {AIUseCases.map((uc) => (
-                    <TouchableOpacity key={uc.id} style={s.aiUseCaseCard} onPress={() => setQuery(uc.title)}>
-                      <Image source={{ uri: uc.image }} style={s.aiUseCaseImage} />
-                      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.aiUseCaseOverlay} />
-                      <View style={s.aiUseCaseContent}>
-                        <Text style={s.aiUseCaseTitle}>{uc.title}</Text>
-                        <Text style={s.aiUseCaseDesc}>{uc.desc}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                <View style={s.aiInputContainer}>
-                  <TextInput 
-                    style={s.aiInput} 
-                    placeholder="Ask me anything about MOTA..." 
-                    placeholderTextColor={C.textMuted} 
-                    value={query} 
-                    onChangeText={setQuery} 
-                    multiline 
-                  />
-                  <TouchableOpacity style={s.aiSendBtn}>
-                    <LinearGradient colors={G.gold} style={s.aiSendBtnGrad}>
-                      <Ionicons name="send" size={18} color={C.bg} />
-                    </LinearGradient>
-                  </TouchableOpacity>
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={24} color={C.textMuted} />
+                </TouchableOpacity>
+              </View>
+              
+              {/* Soon Message */}
+              <View style={s.aiSoonContainer}>
+                <Text style={s.aiSoonTitle}>Soon you will be able to</Text>
+              </View>
+              
+              {/* 2x2 Grid */}
+              <View style={s.aiGridContainer}>
+                <View style={s.aiGridRow}>
+                  {/* Plan Your Stay */}
+                  <View style={s.aiGridItem}>
+                    <Image 
+                      source={{ uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=60' }} 
+                      style={s.aiGridImage} 
+                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.aiGridOverlay} />
+                    <View style={s.aiGridContent}>
+                      <Text style={s.aiGridTitle}>Plan your stay</Text>
+                    </View>
+                  </View>
+                  
+                  {/* Book Experiences */}
+                  <View style={s.aiGridItem}>
+                    <Image 
+                      source={{ uri: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=60' }} 
+                      style={s.aiGridImage} 
+                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.aiGridOverlay} />
+                    <View style={s.aiGridContent}>
+                      <Text style={s.aiGridTitle}>Book experiences</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={s.aiGridRow}>
+                  {/* Make Reservations */}
+                  <View style={s.aiGridItem}>
+                    <Image 
+                      source={{ uri: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=60' }} 
+                      style={s.aiGridImage} 
+                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.aiGridOverlay} />
+                    <View style={s.aiGridContent}>
+                      <Text style={s.aiGridTitle}>Make reservations</Text>
+                    </View>
+                  </View>
+                  
+                  {/* Personalized Recommendations */}
+                  <View style={s.aiGridItem}>
+                    <Image 
+                      source={{ uri: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=60' }} 
+                      style={s.aiGridImage} 
+                    />
+                    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={s.aiGridOverlay} />
+                    <View style={s.aiGridContent}>
+                      <Text style={s.aiGridTitle}>Get personalized recommendations</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+              
+              {/* Bottom Message */}
+              <View style={s.aiBottomMessage}>
+                <Ionicons name="time-outline" size={16} color={C.gold} />
+                <Text style={s.aiBottomText}>AI-powered features launching soon</Text>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
+
+
+
+
+
+
+
+
+// ============================================
+// PAYMENT METHODS SCREEN
+// ============================================
+const PaymentMethodsScreen = ({ onBack }: { onBack: () => void }) => {
+  const insets = useSafeAreaInsets();
+  const { user, isInvestor } = useAuth();
+  const [selectedDefault, setSelectedDefault] = useState('card-1');
+  
+  const savedCards = [
+    { id: 'card-1', type: 'visa', last4: '4242', expiry: '12/26', isDefault: true },
+    { id: 'card-2', type: 'mastercard', last4: '8888', expiry: '09/25', isDefault: false },
+  ];
+  
+  const getCardIcon = (type: string) => {
+    switch (type) {
+      case 'visa': return 'card';
+      case 'mastercard': return 'card-outline';
+      case 'amex': return 'card';
+      default: return 'card-outline';
+    }
+  };
+  
+  const getCardColor = (type: string) => {
+    switch (type) {
+      case 'visa': return '#1A1F71';
+      case 'mastercard': return '#EB001B';
+      case 'amex': return '#006FCF';
+      default: return C.gold;
+    }
+  };
+
+  return (
+    <LinearGradient colors={G.dark} style={{ flex: 1 }}>
+      {/* Header */}
+      <View style={[paymentStyles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity style={paymentStyles.backBtn} onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color={C.text} />
+        </TouchableOpacity>
+        <Text style={paymentStyles.headerTitle}>Payment Methods</Text>
+        <View style={{ width: 40 }} />
+      </View>
+      
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
+        {/* Saved Cards Section */}
+        <Text style={paymentStyles.sectionTitle}>Saved Cards</Text>
+        
+        {savedCards.map((card) => (
+          <TouchableOpacity 
+            key={card.id}
+            style={[paymentStyles.cardItem, selectedDefault === card.id && paymentStyles.cardItemSelected]}
+            onPress={() => setSelectedDefault(card.id)}
+          >
+            <View style={[paymentStyles.cardIconWrap, { backgroundColor: getCardColor(card.type) }]}>
+              <Ionicons name={getCardIcon(card.type) as any} size={24} color="#fff" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={paymentStyles.cardType}>{card.type.toUpperCase()}</Text>
+              <Text style={paymentStyles.cardNumber}>•••• •••• •••• {card.last4}</Text>
+              <Text style={paymentStyles.cardExpiry}>Expires {card.expiry}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              {selectedDefault === card.id && (
+                <View style={paymentStyles.defaultBadge}>
+                  <Text style={paymentStyles.defaultBadgeText}>DEFAULT</Text>
+                </View>
+              )}
+              <View style={[paymentStyles.radioOuter, selectedDefault === card.id && paymentStyles.radioOuterSelected]}>
+                {selectedDefault === card.id && <View style={paymentStyles.radioInner} />}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+        
+        {/* Add New Card */}
+        <TouchableOpacity 
+          style={paymentStyles.addCardBtn}
+          onPress={() => Alert.alert('Coming Soon', 'Add new card functionality will be available soon.')}
+        >
+          <View style={paymentStyles.addCardIcon}>
+            <Ionicons name="add" size={24} color={C.gold} />
+          </View>
+          <Text style={paymentStyles.addCardText}>Add New Card</Text>
+          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        {/* MOTA Credit Section (Investors Only) */}
+        {isInvestor && (
+          <>
+            <Text style={[paymentStyles.sectionTitle, { marginTop: 30 }]}>MOTA Credit</Text>
+            
+            <View style={paymentStyles.creditCard}>
+              <LinearGradient 
+                colors={user?.investorTier === 'diamond' ? ['#B9F2FF', '#89CFF0', '#00BFFF'] : 
+                        user?.investorTier === 'platinum' ? ['#E5E4E2', '#A0A0A0', '#71706E'] :
+                        ['#FFD700', '#FFA500', '#B8860B']} 
+                style={paymentStyles.creditCardGradient}
+              >
+                <View style={paymentStyles.creditCardHeader}>
+                  <Text style={paymentStyles.creditCardLabel}>MOTA CREDIT LINE</Text>
+                  <Ionicons name="diamond" size={20} color={C.bg} />
+                </View>
+                <Text style={paymentStyles.creditCardAmount}>
+                  {user?.investorTier === 'diamond' ? '$1,000,000' : 
+                   user?.investorTier === 'platinum' ? '$250,000' : '$50,000'}
+                </Text>
+                <View style={paymentStyles.creditCardFooter}>
+                  <View>
+                    <Text style={paymentStyles.creditCardFooterLabel}>Available</Text>
+                    <Text style={paymentStyles.creditCardFooterValue}>
+                      {user?.investorTier === 'diamond' ? '$847,500' : 
+                       user?.investorTier === 'platinum' ? '$198,750' : '$42,500'}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={paymentStyles.creditCardFooterLabel}>Used</Text>
+                    <Text style={paymentStyles.creditCardFooterValue}>
+                      {user?.investorTier === 'diamond' ? '$152,500' : 
+                       user?.investorTier === 'platinum' ? '$51,250' : '$7,500'}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+            
+            <TouchableOpacity 
+              style={paymentStyles.creditHistoryBtn}
+              onPress={() => Alert.alert('Coming Soon', 'Credit history will be available soon.')}
+            >
+              <Ionicons name="time-outline" size={20} color={C.gold} />
+              <Text style={paymentStyles.creditHistoryText}>View Credit History</Text>
+              <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+            </TouchableOpacity>
+          </>
+          
+        )}
+        
+        {/* Other Payment Options */}
+        <Text style={[paymentStyles.sectionTitle, { marginTop: 30 }]}>Other Options</Text>
+        
+        <TouchableOpacity 
+          style={paymentStyles.otherOption}
+          onPress={() => Alert.alert('Coming Soon', 'Apple Pay setup will be available soon.')}
+        >
+          <View style={[paymentStyles.otherOptionIcon, { backgroundColor: '#000' }]}>
+            <Ionicons name="logo-apple" size={22} color="#fff" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 14 }}>
+            <Text style={paymentStyles.otherOptionTitle}>Apple Pay</Text>
+            <Text style={paymentStyles.otherOptionDesc}>Not configured</Text>
+          </View>
+          <Text style={paymentStyles.setupText}>Setup</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={paymentStyles.otherOption}
+          onPress={() => Alert.alert('Coming Soon', 'Google Pay setup will be available soon.')}
+        >
+          <View style={[paymentStyles.otherOptionIcon, { backgroundColor: '#4285F4' }]}>
+            <Ionicons name="logo-google" size={22} color="#fff" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 14 }}>
+            <Text style={paymentStyles.otherOptionTitle}>Google Pay</Text>
+            <Text style={paymentStyles.otherOptionDesc}>Not configured</Text>
+          </View>
+          <Text style={paymentStyles.setupText}>Setup</Text>
+        </TouchableOpacity>
+        
+      </ScrollView>
+    </LinearGradient>
+  );
+};
+
+const paymentStyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.cardLight,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.text,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  cardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  cardItemSelected: {
+    borderColor: C.gold,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+  },
+  cardIconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardType: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: C.textMuted,
+    letterSpacing: 0.5,
+  },
+  cardNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: C.text,
+    marginTop: 2,
+  },
+  cardExpiry: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  defaultBadge: {
+    backgroundColor: C.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  defaultBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: C.bg,
+    letterSpacing: 0.5,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: C.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOuterSelected: {
+    borderColor: C.gold,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: C.gold,
+  },
+  addCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: C.cardLight,
+    borderStyle: 'dashed',
+  },
+  addCardIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: 'rgba(212,175,55,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCardText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.gold,
+    marginLeft: 14,
+  },
+  creditCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  creditCardGradient: {
+    padding: 20,
+  },
+  creditCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  creditCardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: C.bg,
+    letterSpacing: 1,
+  },
+  creditCardAmount: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: C.bg,
+    marginBottom: 20,
+  },
+  creditCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  creditCardFooterLabel: {
+    fontSize: 10,
+    color: 'rgba(0,0,0,0.5)',
+    marginBottom: 2,
+  },
+  creditCardFooterValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.bg,
+  },
+  creditHistoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  creditHistoryText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+  },
+  otherOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  otherOptionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otherOptionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+  },
+  otherOptionDesc: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  setupText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.gold,
+  },
+});
+
+
+// ============================================
+// INVESTOR DASHBOARD - Full Portfolio View
+// ============================================
+const InvestorDashboard = ({ user }: { user: any }) => {
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  
+  const investmentAmount = user?.investmentAmount || 2500000;
+  const portfolioValue = user?.portfolioValue || 2875000;
+  const totalDividends = user?.totalDividends || 0;
+  const netGain = (portfolioValue - investmentAmount) + totalDividends;
+  const netGainPercent = investmentAmount > 0 ? ((netGain / investmentAmount) * 100).toFixed(1) : '0';
+  const isPositive = netGain >= 0;
+  
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1000000) return '$' + (amount / 1000000).toFixed(2) + 'M';
+    if (amount >= 1000) return '$' + (amount / 1000).toFixed(0) + 'K';
+    return '$' + amount.toLocaleString();
+  };
+
+  const phases = [
+    { id: 1, name: 'Infrastructure Development', period: '2023-2025', status: 'completed', investment: null },
+    { id: 2, name: 'Mahogany Bay Resort', period: '2026-2028', status: 'current', investment: '$2,500,000', date: 'Nov 2025' },
+    { id: 3, name: 'Secret Beach Development', period: '2027-2031', status: 'upcoming', investment: null },
+    { id: 4, name: 'Crown Jewel Casino Resort', period: '2031-2035', status: 'upcoming', investment: null },
+    { id: 5, name: 'Full Destination Launch', period: '2036-2045', status: 'upcoming', investment: null },
+  ];
+
+  const conversionTriggers = [
+    { title: 'Mahogany Bay Opens', target: 'Target: 2028', desc: 'Opens for business in any capacity', multiplier: '4×', value: '$10.0M equity' },
+    { title: 'Phase 3 Funding Closes', target: 'Target: 2027-2031', desc: 'Upon closing of funding round', multiplier: '4×', value: '$10.0M equity' },
+    { title: 'Company-Elected Early Conversion', target: 'Subject to Board approval', desc: 'Discretionary timing', multiplier: '4×', value: '$10.0M equity' },
+  ];
+
+  const liquidityOptions = [
+    { phase: 'Phase 3 BuyBack', available: 'Available from Q2 2026', return: '1.8X' },
+    { phase: 'Phase 4 BuyBack Option', available: 'Available from Q1 2031', return: '4.2X' },
+  ];
+
+  return (
+    <View style={invStyles.container}>
+      {/* Portfolio Summary Card */}
+      <View style={invStyles.summaryCard}>
+        <Text style={invStyles.summaryTitle}>Portfolio Overview</Text>
+        <Text style={invStyles.summarySubtitle}>Your investment journey and returns</Text>
+        
+        <View style={invStyles.statsRow}>
+          <View style={invStyles.statItem}>
+            <Text style={invStyles.statLabel}>Invested</Text>
+            <Text style={invStyles.statValue}>{formatCurrency(investmentAmount)}</Text>
+          </View>
+          <View style={invStyles.statItem}>
+            <Text style={invStyles.statLabel}>Current Value</Text>
+            <Text style={invStyles.statValue}>{formatCurrency(portfolioValue)}</Text>
+          </View>
+          <View style={invStyles.statItem}>
+            <Text style={invStyles.statLabel}>Net Gain</Text>
+            <Text style={[invStyles.statValue, { color: isPositive ? '#48BB78' : C.error }]}>
+              {isPositive ? '+' : ''}{formatCurrency(netGain)}
+            </Text>
+            <Text style={[invStyles.statPercent, { color: isPositive ? '#48BB78' : C.error }]}>
+              {isPositive ? '+' : ''}{netGainPercent}%
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Investment Timeline */}
+      <View style={invStyles.sectionCard}>
+        <TouchableOpacity 
+          style={invStyles.sectionHeader}
+          onPress={() => setActiveSection(activeSection === 'timeline' ? null : 'timeline')}
+        >
+          <View style={invStyles.sectionHeaderLeft}>
+            <Ionicons name="git-branch-outline" size={22} color={C.gold} />
+            <Text style={invStyles.sectionTitle}>Investment Timeline</Text>
+          </View>
+          <Ionicons name={activeSection === 'timeline' ? 'chevron-up' : 'chevron-down'} size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        {activeSection === 'timeline' && (
+          <View style={invStyles.timelineContainer}>
+            {phases.map((phase, index) => (
+              <View key={phase.id} style={invStyles.timelineItem}>
+                <View style={invStyles.timelineLine}>
+                  <View style={[
+                    invStyles.timelineDot,
+                    phase.status === 'completed' && invStyles.timelineDotCompleted,
+                    phase.status === 'current' && invStyles.timelineDotCurrent,
+                  ]}>
+                    {phase.status === 'completed' && <Ionicons name="checkmark" size={12} color={C.bg} />}
+                    {phase.status === 'current' && <View style={invStyles.timelineDotInner} />}
+                  </View>
+                  {index < phases.length - 1 && (
+                    <View style={[
+                      invStyles.timelineConnector,
+                      phase.status === 'completed' && invStyles.timelineConnectorCompleted,
+                    ]} />
+                  )}
+                </View>
+                <View style={invStyles.timelineContent}>
+                  <View style={invStyles.timelineHeader}>
+                    <Text style={invStyles.phaseName}>Phase {phase.id}</Text>
+                    {phase.status === 'completed' && (
+                      <View style={invStyles.completedBadge}>
+                        <Text style={invStyles.completedBadgeText}>Completed</Text>
+                      </View>
+                    )}
+                    {phase.status === 'current' && (
+                      <View style={invStyles.currentBadge}>
+                        <Text style={invStyles.currentBadgeText}>Current</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={invStyles.phaseTitle}>{phase.name}</Text>
+                  <Text style={invStyles.phasePeriod}>{phase.period}</Text>
+                  {phase.investment && (
+                    <View style={invStyles.phaseInvestment}>
+                      <Text style={invStyles.phaseInvestmentAmount}>{phase.investment}</Text>
+                      <Text style={invStyles.phaseInvestmentDate}>{phase.date}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Dividends */}
+      <View style={invStyles.sectionCard}>
+        <TouchableOpacity 
+          style={invStyles.sectionHeader}
+          onPress={() => setActiveSection(activeSection === 'dividends' ? null : 'dividends')}
+        >
+          <View style={invStyles.sectionHeaderLeft}>
+            <Ionicons name="cash-outline" size={22} color={C.gold} />
+            <Text style={invStyles.sectionTitle}>Dividends</Text>
+          </View>
+          <Ionicons name={activeSection === 'dividends' ? 'chevron-up' : 'chevron-down'} size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        {activeSection === 'dividends' && (
+          <View style={invStyles.dividendsContent}>
+            <View style={invStyles.dividendInfo}>
+              <Ionicons name="information-circle-outline" size={18} color={C.textMuted} />
+              <Text style={invStyles.dividendInfoText}>
+                Dividends will be paid out quarterly following completion of Phase 3
+              </Text>
+            </View>
+            <View style={invStyles.nextDividend}>
+              <Text style={invStyles.nextDividendLabel}>Next Expected</Text>
+              <Text style={invStyles.nextDividendAmount}>$216,000</Text>
+              <Text style={invStyles.nextDividendDate}>Q1 2031</Text>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Conversion to Equity */}
+      <View style={invStyles.sectionCard}>
+        <TouchableOpacity 
+          style={invStyles.sectionHeader}
+          onPress={() => setActiveSection(activeSection === 'conversion' ? null : 'conversion')}
+        >
+          <View style={invStyles.sectionHeaderLeft}>
+            <Ionicons name="swap-horizontal-outline" size={22} color={C.gold} />
+            <Text style={invStyles.sectionTitle}>Conversion to Equity (4×)</Text>
+          </View>
+          <Ionicons name={activeSection === 'conversion' ? 'chevron-up' : 'chevron-down'} size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        {activeSection === 'conversion' && (
+          <View style={invStyles.conversionContent}>
+            <Text style={invStyles.conversionSubtitle}>Automatic Conversion Triggers</Text>
+            <Text style={invStyles.conversionDesc}>
+              Any of the following milestones triggers automatic 4× equity conversion
+            </Text>
+            
+            {conversionTriggers.map((trigger, index) => (
+              <View key={index} style={invStyles.triggerCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={invStyles.triggerTitle}>{trigger.title}</Text>
+                  <Text style={invStyles.triggerTarget}>{trigger.target}</Text>
+                  <Text style={invStyles.triggerDesc}>{trigger.desc}</Text>
+                </View>
+                <View style={invStyles.triggerValue}>
+                  <Text style={invStyles.triggerMultiplier}>{trigger.multiplier}</Text>
+                  <Text style={invStyles.triggerEquity}>{trigger.value}</Text>
+                </View>
+              </View>
+            ))}
+            
+            <View style={invStyles.autoConversionNote}>
+              <Ionicons name="checkmark-circle" size={18} color="#48BB78" />
+              <Text style={invStyles.autoConversionText}>
+                Automatic Conversion - No action required. Your investment seamlessly converts to equity in Macau Of The Americas, INC at any qualifying milestone.
+              </Text>
+            </View>
+            
+            {/* Alternative Path */}
+            <View style={invStyles.alternativePath}>
+              <Text style={invStyles.alternativeTitle}>Alternative Path (2.5×)</Text>
+              <Text style={invStyles.alternativeDesc}>
+                Available only if no 4× equity conversion has occurred by December 31, 2031
+              </Text>
+              <View style={invStyles.alternativeOption}>
+                <Text style={invStyles.alternativeOptionText}>
+                  2.5× notional value in PCH Exotics equity at then-current market value
+                </Text>
+                <View style={invStyles.alternativeValue}>
+                  <Text style={invStyles.alternativeEquity}>$6.3M equity in PCH Exotics</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Early Liquidity */}
+      <View style={invStyles.sectionCard}>
+        <TouchableOpacity 
+          style={invStyles.sectionHeader}
+          onPress={() => setActiveSection(activeSection === 'liquidity' ? null : 'liquidity')}
+        >
+          <View style={invStyles.sectionHeaderLeft}>
+            <Ionicons name="trending-up-outline" size={22} color={C.gold} />
+            <Text style={invStyles.sectionTitle}>Early Liquidity Opportunities</Text>
+          </View>
+          <Ionicons name={activeSection === 'liquidity' ? 'chevron-up' : 'chevron-down'} size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        {activeSection === 'liquidity' && (
+          <View style={invStyles.liquidityContent}>
+            {liquidityOptions.map((option, index) => (
+              <View key={index} style={invStyles.liquidityCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={invStyles.liquidityPhase}>{option.phase}</Text>
+                  <Text style={invStyles.liquidityAvailable}>{option.available}</Text>
+                </View>
+                <View style={invStyles.liquidityReturn}>
+                  <Text style={invStyles.liquidityReturnText}>Estimated</Text>
+                  <Text style={invStyles.liquidityReturnValue}>{option.return} return</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Quick Links */}
+      <View style={invStyles.quickLinks}>
+        <TouchableOpacity 
+          style={invStyles.quickLinkItem}
+          onPress={() => Alert.alert('Document Vault', 'Access your investment documents and agreements.')}
+        >
+          <View style={invStyles.quickLinkIcon}>
+            <Ionicons name="folder-outline" size={22} color={C.gold} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={invStyles.quickLinkTitle}>Document Vault</Text>
+            <Text style={invStyles.quickLinkDesc}>Investment documents & agreements</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={invStyles.quickLinkItem}
+          onPress={() => Alert.alert('Project Updates', 'Latest development progress and milestones.')}
+        >
+          <View style={invStyles.quickLinkIcon}>
+            <Ionicons name="newspaper-outline" size={22} color={C.gold} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={invStyles.quickLinkTitle}>Project Updates</Text>
+            <Text style={invStyles.quickLinkDesc}>Latest progress & milestones</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={invStyles.quickLinkItem}
+          onPress={() => Alert.alert('Required Forms', 'Complete KYC and investor agreements.')}
+        >
+          <View style={invStyles.quickLinkIcon}>
+            <Ionicons name="document-text-outline" size={22} color={C.gold} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={invStyles.quickLinkTitle}>Required Forms</Text>
+            <Text style={invStyles.quickLinkDesc}>KYC & investor agreements</Text>
+          </View>
+          <View style={invStyles.formsBadge}>
+            <Text style={invStyles.formsBadgeText}>2</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const invStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  summaryCard: {
+    backgroundColor: C.card,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+  },
+  summaryTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: C.text,
+  },
+  summarySubtitle: {
+    fontSize: 13,
+    color: C.textMuted,
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: C.textMuted,
+    marginBottom: 6,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.text,
+  },
+  statPercent: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  sectionCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: C.text,
+  },
+  timelineContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+  },
+  timelineLine: {
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  timelineDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: C.cardLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: C.textMuted,
+  },
+  timelineDotCompleted: {
+    backgroundColor: '#48BB78',
+    borderColor: '#48BB78',
+  },
+  timelineDotCurrent: {
+    backgroundColor: C.gold,
+    borderColor: C.gold,
+  },
+  timelineDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.bg,
+  },
+  timelineConnector: {
+    width: 2,
+    height: 60,
+    backgroundColor: C.cardLight,
+    marginVertical: 4,
+  },
+  timelineConnectorCompleted: {
+    backgroundColor: '#48BB78',
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 24,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  phaseName: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: C.gold,
+    letterSpacing: 0.5,
+  },
+  completedBadge: {
+    backgroundColor: 'rgba(72,187,120,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  completedBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#48BB78',
+  },
+  currentBadge: {
+    backgroundColor: 'rgba(212,175,55,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  currentBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: C.gold,
+  },
+  phaseTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+  },
+  phasePeriod: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  phaseInvestment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    backgroundColor: C.cardLight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  phaseInvestmentAmount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.gold,
+  },
+  phaseInvestmentDate: {
+    fontSize: 11,
+    color: C.textMuted,
+  },
+  dividendsContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  dividendInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: C.cardLight,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  dividendInfoText: {
+    flex: 1,
+    fontSize: 13,
+    color: C.textSec,
+    lineHeight: 18,
+  },
+  nextDividend: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.gold,
+  },
+  nextDividendLabel: {
+    fontSize: 12,
+    color: C.textMuted,
+  },
+  nextDividendAmount: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: C.gold,
+    marginTop: 8,
+  },
+  nextDividendDate: {
+    fontSize: 14,
+    color: C.textSec,
+    marginTop: 4,
+  },
+  conversionContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  conversionSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.text,
+    marginBottom: 4,
+  },
+  conversionDesc: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginBottom: 16,
+  },
+  triggerCard: {
+    flexDirection: 'row',
+    backgroundColor: C.cardLight,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  triggerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.text,
+  },
+  triggerTarget: {
+    fontSize: 11,
+    color: C.gold,
+    marginTop: 2,
+  },
+  triggerDesc: {
+    fontSize: 11,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  triggerValue: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  triggerMultiplier: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#48BB78',
+  },
+  triggerEquity: {
+    fontSize: 11,
+    color: C.textSec,
+  },
+  autoConversionNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: 'rgba(72,187,120,0.1)',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  autoConversionText: {
+    flex: 1,
+    fontSize: 12,
+    color: C.textSec,
+    lineHeight: 18,
+  },
+  alternativePath: {
+    backgroundColor: C.cardLight,
+    borderRadius: 12,
+    padding: 14,
+  },
+  alternativeTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.text,
+    marginBottom: 4,
+  },
+  alternativeDesc: {
+    fontSize: 11,
+    color: C.textMuted,
+    marginBottom: 12,
+  },
+  alternativeOption: {
+    backgroundColor: C.card,
+    borderRadius: 8,
+    padding: 12,
+  },
+  alternativeOptionText: {
+    fontSize: 12,
+    color: C.textSec,
+    marginBottom: 8,
+  },
+  alternativeValue: {
+    alignItems: 'flex-end',
+  },
+  alternativeEquity: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.gold,
+  },
+  liquidityContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  liquidityCard: {
+    flexDirection: 'row',
+    backgroundColor: C.cardLight,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  liquidityPhase: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.text,
+  },
+  liquidityAvailable: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  liquidityReturn: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  liquidityReturnText: {
+    fontSize: 10,
+    color: C.textMuted,
+  },
+  liquidityReturnValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#48BB78',
+  },
+  quickLinks: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  quickLinkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.cardLight,
+  },
+  quickLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: C.cardLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  quickLinkTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+  },
+  quickLinkDesc: {
+    fontSize: 12,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  formsBadge: {
+    backgroundColor: C.error,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  formsBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
+  },
+});
 
 // ============================================
 // CONCIERGE SERVICE DETAIL MODAL
@@ -640,9 +1800,41 @@ const BookingModal = ({ visible, item, itemType, isFixedEvent = false, onClose, 
   useEffect(() => { 
     if (selectedDate && !isFixed) loadTimeSlots(); 
   }, [selectedDate]);
-
   const loadTimeSlots = async () => {
     if (!item?._id) return;
+    
+    // Skip API call for:
+    // - Concierge items (string IDs, not MongoDB ObjectIds)
+    // - Lodging (check-in times, not time slots)
+    // - Nightlife (no specific time slots)
+    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(item._id);
+    const skipApiTypes = ['concierge', 'lodging', 'nightlife'];
+    
+    if (!isValidObjectId || skipApiTypes.includes(itemType)) {
+      // For lodging, show check-in times
+      if (itemType === 'lodging') {
+        setAvailableSlots([
+          { time: '2:00 PM', available: true, spotsLeft: 10 },
+          { time: '3:00 PM', available: true, spotsLeft: 10 },
+          { time: '4:00 PM', available: true, spotsLeft: 10 },
+          { time: '5:00 PM', available: true, spotsLeft: 10 },
+          { time: '6:00 PM', available: true, spotsLeft: 10 },
+        ]);
+      } else {
+        // For concierge/nightlife/other
+        setAvailableSlots([
+          { time: '6:00 PM', available: true, spotsLeft: 5 },
+          { time: '6:30 PM', available: true, spotsLeft: 3 },
+          { time: '7:00 PM', available: true, spotsLeft: 8 },
+          { time: '7:30 PM', available: true, spotsLeft: 2 },
+          { time: '8:00 PM', available: true, spotsLeft: 6 },
+          { time: '8:30 PM', available: true, spotsLeft: 4 },
+          { time: '9:00 PM', available: true, spotsLeft: 10 },
+        ]);
+      }
+      return;
+    }
+    
     setLoadingSlots(true);
     try {
       const dateStr = selectedDate?.toISOString().split('T')[0];
@@ -777,8 +1969,35 @@ const BookingModal = ({ visible, item, itemType, isFixedEvent = false, onClose, 
                       <FixedEventBookingInfo event={item} />
                     ) : (
                       <>
-                        {console.log('Rendering CalendarGrid, isFixed:', isFixed)}
-                        <CalendarGrid selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+                        {/* Date Selection - Collapsible */}
+                        {selectedDate ? (
+                          <TouchableOpacity 
+                            style={s.selectedDateDisplay} 
+                            onPress={() => setSelectedDate(null)}
+                          >
+                            <View style={s.selectedDateContent}>
+                              <Ionicons name="calendar" size={20} color={C.gold} />
+                              <View style={{ marginLeft: 12 }}>
+                                <Text style={s.selectedDateLabel}>Selected Date</Text>
+                                <Text style={s.selectedDateValue}>
+                                  {selectedDate.toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={s.changeDateBtn}>
+                              <Text style={s.changeDateText}></Text>
+                              <Ionicons name="chevron-down" size={16} color={C.gold} />
+                            </View>
+                          </TouchableOpacity>
+                        ) : (
+                          <CalendarGrid selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+                        )}
+                        
                         {selectedDate && (
                           <TimeSlotSelector 
                             selectedTime={selectedTime} 
@@ -1022,35 +2241,57 @@ function AppContent() {
   const [amenityDropdownOpen, setAmenityDropdownOpen] = useState(false);
   useEffect(() => { loadData(); }, []);
 
-  const loadData = async () => {
-    try {
-      const [slidesRes, restaurantsRes, eventsRes, activitiesRes, lodgingRes, nightlifeRes, notificationsRes] = await Promise.all([
-        api.get('/content/homepage_slideshow').catch(() => ({ data: { slides: DefaultSlides } })),
-        api.get('/restaurants').catch(() => ({ data: [] })),
-        api.get('/events').catch(() => ({ data: [] })),
-        api.get('/activities').catch(() => ({ data: [] })),
-        api.get('/lodging').catch(() => ({ data: [] })),
-        api.get('/restaurants?category=nightlife').catch(() => ({ data: [] })),
-        api.get('/notifications/unread-count').catch(() => ({ data: { count: 0 } })),
-      ]);
-      setSlides(slidesRes.data?.slides?.length > 0 ? slidesRes.data.slides : DefaultSlides);
-      setRestaurants(restaurantsRes.data?.restaurants || restaurantsRes.data || []);
-      setEvents(eventsRes.data?.events || eventsRes.data || []);
-      setActivities(activitiesRes.data?.activities || activitiesRes.data || []);
-      setLodging(lodgingRes.data?.lodging || lodgingRes.data || []);
-      setNightlife(nightlifeRes.data?.restaurants || nightlifeRes.data || []);
-      setNotificationCount(notificationsRes.data?.count || 0);
-      if (user) { 
-        const favRes = await api.get('/favorites').catch(() => ({ data: [] })); 
-        setFavorites(favRes.data?.favorites || favRes.data || []); 
-      }
-    } catch (error) { 
-      console.error('Load data error:', error); 
-    } finally { 
-      setLoading(false); 
-      setRefreshing(false); 
+const loadData = async () => {
+  try {
+    const [slidesRes, restaurantsRes, eventsRes, activitiesRes, lodgingRes, nightlifeRes, notificationsRes] = await Promise.all([
+      api.get('/content/homepage_slideshow').catch(() => ({ data: { slides: DefaultSlides } })),
+      api.get('/restaurants').catch(() => ({ data: [] })),
+      api.get('/events').catch(() => ({ data: [] })),
+      api.get('/activities').catch(() => ({ data: [] })),
+      api.get('/lodging').catch(() => ({ data: [] })),
+      api.get('/restaurants?category=nightlife').catch(() => ({ data: [] })),
+      api.get('/notifications/unread-count').catch(() => ({ data: { count: 0 } })),
+    ]);
+    
+    // Merge API slides with DefaultSlides link configurations
+    const apiSlides = slidesRes.data?.slides || [];
+    if (apiSlides.length > 0) {
+      const mergedSlides = apiSlides.map((slide: any, index: number) => {
+        // If API slide has valid linkType, use it
+        if (slide.linkType && slide.linkType !== 'none' && slide.linkType !== '') {
+          return slide;
+        }
+        // Fallback to DefaultSlides configuration for navigation
+        const defaultConfig = DefaultSlides[index] || DefaultSlides[0];
+        return {
+          ...slide,
+          linkType: defaultConfig.linkType,
+          linkTab: defaultConfig.linkTab,
+          linkTarget: defaultConfig.linkTarget,
+        };
+      });
+      setSlides(mergedSlides);
+    } else {
+      setSlides(DefaultSlides);
     }
-  };
+    
+    setRestaurants(restaurantsRes.data?.restaurants || restaurantsRes.data || []);
+    setEvents(eventsRes.data?.events || eventsRes.data || []);
+    setActivities(activitiesRes.data?.activities || activitiesRes.data || []);
+    setLodging(lodgingRes.data?.lodging || lodgingRes.data || []);
+    setNightlife(nightlifeRes.data?.restaurants || nightlifeRes.data || []);
+    setNotificationCount(notificationsRes.data?.count || 0);
+    if (user) { 
+      const favRes = await api.get('/favorites').catch(() => ({ data: [] })); 
+      setFavorites(favRes.data?.favorites || favRes.data || []); 
+    }
+  } catch (error) { 
+    console.error('Load data error:', error); 
+  } finally { 
+    setLoading(false); 
+    setRefreshing(false); 
+  }
+};
 
   const onRefresh = () => { setRefreshing(true); loadData(); };
 
@@ -1073,45 +2314,87 @@ function AppContent() {
     setCurrentScreen('detail'); 
   };
 
-  const openBookingModal = (item: any, type: string, isFixed: boolean = false) => {
-    if (!user) { 
-      Alert.alert('Sign In Required', 'Please sign in to make a reservation.', [
-        { text: 'Cancel', style: 'cancel' }, 
-        { text: 'Sign In', onPress: () => setCurrentScreen('login') }
-      ]); 
-      return; 
-    }
-    setBookingItem(item); 
-    setBookingItemType(type); 
-    setIsFixedEventBooking(isFixed); 
-    setBookingModalVisible(true);
-  };
+    const openBookingModal = (item: any, type: string, isFixed: boolean = false) => {
+      if (!user) { 
+        Alert.alert('Sign In Required', 'Please sign in to make a reservation.', [
+          { text: 'Cancel', style: 'cancel' }, 
+          { text: 'Sign In', onPress: () => setCurrentScreen('login') }
+        ]); 
+        return; 
+      }
+      
+      // Force close first if already open (edge case)
+      if (bookingModalVisible) {
+        setBookingModalVisible(false);
+      }
+      
+      // Update all state atomically
+      setBookingItem(item);
+      setBookingItemType(type);
+      setIsFixedEventBooking(isFixed);
+      
+      // Force a micro-task to ensure state is committed
+      Promise.resolve().then(() => {
+        setBookingModalVisible(true);
+      });
+    };
+
 
   // FIX #2: Hero slideshow deep linking with debug logging
-  const handleSlidePress = (slide: any) => {
-    console.log('=== SLIDE PRESSED ===');
-    console.log('Title:', slide.title);
-    console.log('linkType:', slide.linkType);
-    console.log('linkTab:', slide.linkTab);
-    console.log('linkTarget:', slide.linkTarget);
-    
-    if (!slide.linkType || slide.linkType === 'none') return;
-    
-    switch (slide.linkType) {
-      case 'tab':
-        setActiveTab(slide.linkTab);
-        if (slide.linkTarget && slide.linkTab === 1) {
-          setTimeout(() => setExploreCategory(slide.linkTarget), 100);
-        }
-        break;
-      case 'screen':
-        if (slide.linkTarget) setCurrentScreen(slide.linkTarget);
-        break;
-      case 'external':
-        if (slide.linkTarget) Linking.openURL(slide.linkTarget);
-        break;
+const handleSlidePress = (slide: any) => {
+  console.log('=== SLIDE PRESSED ===');
+  console.log('Title:', slide.title);
+  console.log('linkType:', slide.linkType);
+  console.log('linkTab:', slide.linkTab);
+  console.log('linkTarget:', slide.linkTarget);
+  
+  // If no linkType, try to determine action from slide content
+  if (!slide.linkType || slide.linkType === 'none') {
+    // Fallback: check slide title/content to determine action
+    const title = (slide.title || '').toLowerCase();
+    if (title.includes('fleet') || title.includes('exotic') || title.includes('car') || title.includes('yacht')) {
+      setCurrentScreen('fleet');
+      return;
     }
-  };
+    if (title.includes('dining') || title.includes('restaurant') || title.includes('eateries')) {
+      setActiveTab(1);
+      setTimeout(() => setExploreCategory('Eateries'), 100);
+      return;
+    }
+    if (title.includes('experience') || title.includes('adventure') || title.includes('activities')) {
+      setActiveTab(1);
+      setTimeout(() => setExploreCategory('Experiences'), 100);
+      return;
+    }
+    if (title.includes('nightlife') || title.includes('night') || title.includes('club')) {
+      setActiveTab(1);
+      setTimeout(() => setExploreCategory('Nightlife'), 100);
+      return;
+    }
+    if (title.includes('lodging') || title.includes('stay') || title.includes('suite') || title.includes('villa')) {
+      setActiveTab(1);
+      setTimeout(() => setExploreCategory('Lodging'), 100);
+      return;
+    }
+    // Default: stay on home
+    return;
+  }
+  
+  switch (slide.linkType) {
+    case 'tab':
+      setActiveTab(slide.linkTab ?? 0);
+      if (slide.linkTarget && slide.linkTab === 1) {
+        setTimeout(() => setExploreCategory(slide.linkTarget), 100);
+      }
+      break;
+    case 'screen':
+      if (slide.linkTarget) setCurrentScreen(slide.linkTarget);
+      break;
+    case 'external':
+      if (slide.linkTarget) Linking.openURL(slide.linkTarget);
+      break;
+  }
+};
 
   const handleConciergeServicePress = (service: any) => {
     setConciergeServiceDetail(service);
@@ -1125,8 +2408,21 @@ function AppContent() {
   const handleBookingConfirm = async (bookingData: any) => {
     try {
       const isFixed = bookingData.isFixedEvent || bookingData.itemType === 'event';
+      
+      // Map frontend itemTypes to backend-compatible types
+      const itemTypeMap: Record<string, string> = {
+        'lodging': 'activity',      // Backend doesn't have 'lodging'
+        'nightlife': 'activity',    // Backend doesn't have 'nightlife'
+        'concierge': 'activity',    // Backend doesn't have 'concierge'
+        'restaurant': 'restaurant',
+        'event': 'event',
+        'activity': 'activity',
+      };
+      
+      const backendItemType = itemTypeMap[bookingData.itemType] || 'activity';
+      
       const response = await api.post('/reservations', {
-        itemType: bookingData.itemType,
+        itemType: backendItemType,
         itemId: bookingData.item._id,
         itemName: bookingData.item.name,
         date: isFixed ? bookingData.item.date : bookingData.date,
@@ -1136,6 +2432,8 @@ function AppContent() {
         dietaryRestrictions: bookingData.dietaryRestrictions || [],
         paymentMethod: bookingData.paymentMethod || 'card',
         isFixedEvent: isFixed,
+        // Store original type in notes for reference
+        notes: `Original type: ${bookingData.itemType}`,
       });
       Alert.alert(
         'Booking Confirmed! 🎉', 
@@ -1212,6 +2510,19 @@ const getExploreData = () => {
     // Apply price filter
     if (selectedPrices.length > 0) {
       data = data.filter(item => {
+        // For Lodging with numeric price
+        if (exploreCategory === 'Lodging' && item.price) {
+          const price = parseFloat(item.price) || 0;
+          return selectedPrices.some(p => {
+            if (p === '$') return price < 250;
+            if (p === '$$') return price >= 250 && price < 350;
+            if (p === '$$$') return price >= 350 && price < 450;
+            if (p === '$$$$') return price >= 450;
+            return false;
+          });
+        }
+        
+        // For Eateries/Nightlife with priceRange ($$, $$$, etc)
         const priceRange = item.priceRange || '';
         const itemPriceLevel = (priceRange.match(/\$/g) || []).length;
         return selectedPrices.some(p => p.length === itemPriceLevel);
@@ -1263,8 +2574,31 @@ const getExploreData = () => {
   if (currentScreen === 'favorites') return <FavoritesScreen onBack={() => setCurrentScreen('main')} onOpenDetail={(item, type) => { setSelectedItem(item); setSelectedItemType(type); setCurrentScreen('detail'); }} />;
   if (currentScreen === 'settings') return <SettingsScreen onBack={() => setCurrentScreen('main')} />;
   if (currentScreen === 'help') return <HelpScreen onBack={() => setCurrentScreen('main')} />;
-  if (currentScreen === 'detail' && selectedItem) return <DetailScreen item={selectedItem} type={selectedItemType as any} onBack={() => { setCurrentScreen('main'); setSelectedItem(null); }} onBook={(item: any, type: string, isFixed: boolean) => openBookingModal(item, type, isFixed)} />;
-
+  if (currentScreen === 'payments') return <PaymentMethodsScreen onBack={() => setCurrentScreen('main')} />;
+  if (currentScreen === 'detail' && selectedItem) return (
+    <>
+      <DetailScreen 
+        item={selectedItem} 
+        type={selectedItemType as any} 
+        onBack={() => { setCurrentScreen('main'); setSelectedItem(null); }} 
+        onBook={(item: any, type: string, isFixed: boolean) => openBookingModal(item, type, isFixed)} 
+      />
+      <BookingModal
+        visible={bookingModalVisible}
+        item={bookingItem}
+        itemType={bookingItemType}
+        isFixedEvent={isFixedEventBooking}
+        onClose={() => {
+          setBookingModalVisible(false);
+          setBookingItem(null);
+          setBookingItemType('');
+          setIsFixedEventBooking(false);
+        }}
+        onConfirm={handleBookingConfirm}
+        user={user}
+      />
+    </>
+  );
   // ============================================
   // HOME TAB
   // ============================================
@@ -1688,6 +3022,22 @@ const getExploreData = () => {
         </ScrollView>
       </View>
       
+      {/* ===== FIX 2: AI Search Bar for Explore ===== */}
+      <TouchableOpacity 
+        style={s.exploreAiSearchContainer}
+        onPress={() => setAiPopupVisible(true)}
+        activeOpacity={0.8}
+      >
+        <View style={s.exploreAiSearchBar}>
+          <LinearGradient colors={G.gold} style={s.exploreAiSearchIcon}>
+            <Ionicons name="sparkles" size={16} color={C.bg} />
+          </LinearGradient>
+          <Text style={s.exploreAiSearchText}>Tell me what you are looking for...</Text>
+          <Ionicons name="arrow-forward-circle" size={24} color={C.gold} />
+        </View>
+      </TouchableOpacity>
+
+      
       {/* Filter Section - Two Lines */}
       <View style={s.filterSection}>
         {/* Line 1: "Filter by" label */}
@@ -2084,11 +3434,37 @@ const getExploreData = () => {
           )}
         </View>
         
-        {/* INVESTOR COMPONENTS - KEPT EXACTLY AS ORIGINAL */}
-        {isInvestor && user.investorTier && <MOTACard tier={user.investorTier} user={user} />}
-        {isInvestor && user.investorTier && <View style={{ paddingHorizontal: 20 }}><TierBenefitsCard tier={user.investorTier} /></View>}
-        {isInvestor && user.investorTier && <PortfolioOverview user={user} />}
-        
+              {/* INVESTOR COMPONENTS - KEPT EXACTLY AS ORIGINAL */}
+      {isInvestor && user.investorTier && (
+        <>
+          <MOTACard tier={user.investorTier} user={user} />
+          
+          {/* Add MOTA Card to Wallet Button */}
+          <View style={{ paddingHorizontal: 20, marginTop: -10, marginBottom: 20 }}>
+            <TouchableOpacity 
+              style={s.addToWalletBtn}
+              onPress={() => Alert.alert(
+                'Add to Wallet', 
+                'Your MOTA Card will be added to your digital wallet for easy access.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Add to Apple Wallet', onPress: () => Alert.alert('Coming Soon', 'Apple Wallet integration will be available soon.') },
+                  { text: 'Add to Google Wallet', onPress: () => Alert.alert('Coming Soon', 'Google Wallet integration will be available soon.') },
+                ]
+              )}
+            >
+              <LinearGradient colors={G.gold} style={s.addToWalletGradient}>
+                <Ionicons name="wallet" size={20} color={C.bg} />
+                <Text style={s.addToWalletText}>Add MOTA Card to Wallet</Text>
+                <Ionicons name="add-circle" size={20} color={C.bg} />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={{ paddingHorizontal: 20 }}><TierBenefitsCard tier={user.investorTier} /></View>
+          <InvestorDashboard user={user} />
+        </>
+      )}     
         {/* Favorites Section */}
         {favorites.length > 0 && (
           <FavoritesSection 
@@ -2206,8 +3582,8 @@ const getExploreData = () => {
         onClose={() => setConciergeServiceDetail(null)}
         onBook={handleBookOption}
       />
-      
       <BookingModal
+        key={`booking-${bookingItem?._id || bookingItem?.name || 'modal'}`}
         visible={bookingModalVisible}
         item={bookingItem}
         itemType={bookingItemType}
@@ -2215,6 +3591,8 @@ const getExploreData = () => {
         onClose={() => {
           setBookingModalVisible(false);
           setBookingItem(null);
+          setBookingItemType('');
+          setIsFixedEventBooking(false);
         }}
         onConfirm={handleBookingConfirm}
         user={user}
@@ -2250,7 +3628,154 @@ export default function App() {
 // STYLES
 // ============================================
 const s = StyleSheet.create({
+// Add to Wallet Button (Profile Section)
+  addToWalletBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  addToWalletGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  addToWalletText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.bg,
+  },
 
+  // Selected Date Display (collapsed calendar)
+  selectedDateDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: C.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: C.gold,
+  },
+  selectedDateContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedDateLabel: {
+    fontSize: 11,
+    color: C.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  selectedDateValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: C.text,
+    marginTop: 2,
+  },
+  changeDateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  changeDateText: {
+    fontSize: 13,
+    color: C.gold,
+    fontWeight: '600',
+  },
+aiSoonContainer: {
+  paddingHorizontal: 20,
+  paddingTop: 10,
+  paddingBottom: 16,
+},
+aiSoonTitle: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: C.textSec,
+},
+aiGridContainer: {
+  paddingHorizontal: 16,
+  gap: 12,
+},
+aiGridRow: {
+  flexDirection: 'row',
+  gap: 12,
+},
+aiGridItem: {
+  flex: 1,
+  height: 120,
+  borderRadius: 12,
+  overflow: 'hidden',
+},
+aiGridImage: {
+  width: '100%',
+  height: '100%',
+  position: 'absolute',
+},
+aiGridOverlay: {
+  ...StyleSheet.absoluteFillObject,
+},
+aiGridContent: {
+  position: 'absolute',
+  bottom: 10,
+  left: 10,
+  right: 10,
+},
+aiGridTitle: {
+  fontSize: 14,
+  fontWeight: '700',
+  color: C.text,
+},
+aiGridDesc: {
+  fontSize: 11,
+  color: C.textSec,
+  marginTop: 2,
+},
+aiBottomMessage: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  paddingVertical: 20,
+  borderTopWidth: 1,
+  borderTopColor: C.cardLight,
+  marginTop: 16,
+  marginHorizontal: 20,
+},
+aiBottomText: {
+  fontSize: 13,
+  color: C.textSec,
+},
+
+// FIX 2: Explore Tab AI Search Bar Styles
+exploreAiSearchContainer: {
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+},
+exploreAiSearchBar: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: C.card,
+  borderRadius: 12,
+  padding: 12,
+  borderWidth: 1,
+  borderColor: C.cardLight,
+},
+exploreAiSearchIcon: {
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+exploreAiSearchText: {
+  flex: 1,
+  marginLeft: 12,
+  fontSize: 14,
+  color: C.textMuted,
+},
   exploreCategoryContainer: { 
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -2316,29 +3841,32 @@ const s = StyleSheet.create({
   filterDropdownWrapper: { 
     position: 'relative',
   },
-  filterDropdownBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 6, 
-    paddingHorizontal: 14, 
-    paddingVertical: 10, 
-    borderRadius: 8, 
-    backgroundColor: C.card, 
-    borderWidth: 1, 
-    borderColor: C.cardLight,
-  },
-  filterDropdownBtnActive: { 
-    backgroundColor: C.gold, 
-    borderColor: C.gold,
-  },
-  filterDropdownText: { 
-    fontSize: 13, 
-    fontWeight: '600', 
-    color: C.textSec,
-  },
-  filterDropdownTextActive: { 
-    color: C.bg,
-  },
+filterDropdownBtn: { 
+  flexDirection: 'row', 
+  alignItems: 'center', 
+  gap: 6, 
+  paddingHorizontal: 14, 
+  paddingVertical: 10, 
+  borderRadius: 8, 
+  backgroundColor: C.card, 
+  borderWidth: 1.5, 
+  borderColor: C.cardLight,
+},
+filterDropdownBtnActive: { 
+  backgroundColor: 'rgba(212,175,55,0.2)', 
+  borderColor: C.gold,
+  borderWidth: 1.5,
+},
+
+filterDropdownText: { 
+  fontSize: 13, 
+  fontWeight: '600', 
+  color: C.textSec,
+},
+filterDropdownTextActive: { 
+  color: C.gold,
+  fontWeight: '700',
+},
 
   // Dropdown Menu
   filterDropdownMenu: { 
@@ -2383,30 +3911,34 @@ const s = StyleSheet.create({
   },
 
   // Active Filters Pills
-  activeFiltersScroll: {
-    maxHeight: 44,
-    zIndex: 50,
-  },
-  activeFiltersContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 8,
-  },
-  activeFilterPill: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: C.cardLight, 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
-    borderRadius: 16, 
-    gap: 6,
-    marginRight: 8,
-  },
-  activeFilterPillText: { 
-    fontSize: 12, 
-    color: C.text, 
-    fontWeight: '500',
-  },
+activeFiltersScroll: {
+  minHeight: 44,
+  maxHeight: 50,
+  backgroundColor: C.bg,
+},
+activeFiltersContent: {
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+activeFilterPill: { 
+  flexDirection: 'row', 
+  alignItems: 'center', 
+  backgroundColor: 'rgba(212,175,55,0.2)', 
+  borderWidth: 1,
+  borderColor: C.gold,
+  paddingHorizontal: 12, 
+  paddingVertical: 6, 
+  borderRadius: 16, 
+  gap: 6,
+  marginRight: 8,
+},
+activeFilterPillText: { 
+  fontSize: 12, 
+  color: C.gold, 
+  fontWeight: '600',
+},
 
   // Explore Cards (keep existing or use these refined ones)
   exploreCard: { 
@@ -3331,8 +4863,8 @@ aiSearchContainer: {
   vipTierBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   vipTierName: { fontSize: 13, fontWeight: '700', color: C.bg },
   vipTierAmount: { fontSize: 14, fontWeight: '600', color: C.text },
-  aiPopupOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'flex-end' },
-  aiPopupContent: { backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '80%' },
+  aiPopupOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  aiPopupContent: { backgroundColor: C.card, borderRadius: 20, maxHeight: '70%', width: '100%', maxWidth: 400 },
   aiPopupHeader: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: C.cardLight },
   aiPopupIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   aiPopupTitle: { fontSize: 18, fontWeight: '700', color: C.text },

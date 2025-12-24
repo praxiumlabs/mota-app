@@ -36,11 +36,11 @@ const G = {
 
 // Demo accounts data
 const DEMO_ACCOUNTS = [
-  { email: 'demo@mota.com', password: 'demo123', label: 'Member', icon: 'person', color: '#4299E1' },
-  { email: 'guest@mota.com', password: 'guest123', label: 'Guest', icon: 'eye', color: '#A0AEC0' },
-  { email: 'gold@mota.com', password: 'gold123', label: 'Gold', icon: 'trophy', color: '#D4AF37' },
-  { email: 'platinum@mota.com', password: 'platinum123', label: 'Platinum', icon: 'medal', color: '#E5E4E2' },
-  { email: 'diamond@mota.com', password: 'diamond123', label: 'Diamond', icon: 'diamond', color: '#81D4FA' },
+  { email: 'demo@demo.com', password: 'demo123', label: 'Member', icon: 'person', color: '#4299E1' },
+  { email: 'guest@demo.com', password: 'demo123', label: 'Guest', icon: 'eye', color: '#A0AEC0' },
+  { email: 'investor@demo.com', password: 'demo123', label: 'Gold', icon: 'trophy', color: '#D4AF37' },
+  { email: 'platinum@demo.com', password: 'demo123', label: 'Platinum', icon: 'medal', color: '#E5E4E2' },
+  { email: 'diamond@demo.com', password: 'demo123', label: 'Diamond', icon: 'diamond', color: '#81D4FA' },
 ];
 
 interface Props {

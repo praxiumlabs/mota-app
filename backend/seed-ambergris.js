@@ -1,6 +1,7 @@
 /**
  * MOTA Database Seed - Ambergris Caye Real Listings
  * Authentic Belize businesses for Hotels, Restaurants, Nightlife, Wellness
+ * With GPS Coordinates for all listings
  * Run: node seed-ambergris.js
  */
 
@@ -40,6 +41,7 @@ const restaurants = [
     phone: '+501-226-2404',
     email: 'reservations@elviskitchen.com',
     location: { building: 'Pescador Drive', floor: 1, address: 'Pescador Drive, San Pedro Town' },
+    coordinates: { lat: 17.9178, lng: -87.9571 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: false,
@@ -66,6 +68,7 @@ const restaurants = [
     phone: '+501-226-4111',
     email: 'reservations@hiddentreasurebelize.com',
     location: { building: 'South Ambergris', floor: 1, address: '2 Miles South, San Pedro' },
+    coordinates: { lat: 17.8989, lng: -87.9612 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: false,
@@ -92,6 +95,7 @@ const restaurants = [
     phone: '+501-226-3347',
     email: 'info@bluewatergrill-bz.com',
     location: { building: 'SunBreeze Hotel', floor: 1, address: 'Coconut Drive, San Pedro' },
+    coordinates: { lat: 17.9175, lng: -87.9568 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: true,
@@ -117,6 +121,7 @@ const restaurants = [
     phone: '+501-226-2019',
     email: '',
     location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
+    coordinates: { lat: 17.9186, lng: -87.9564 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: true,
@@ -142,6 +147,7 @@ const restaurants = [
     phone: '+501-206-2121',
     email: '',
     location: { building: 'Trigger Fish Street', floor: 1, address: 'Trigger Fish Street, San Pedro' },
+    coordinates: { lat: 17.9145, lng: -87.9589 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -168,6 +174,7 @@ const restaurants = [
     phone: '+501-226-3663',
     email: 'info@truckstopbz.com',
     location: { building: 'North San Pedro', floor: 1, address: '1.5 Miles North, San Pedro' },
+    coordinates: { lat: 17.9289, lng: -87.9523 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: true,
@@ -192,6 +199,7 @@ const restaurants = [
     phone: '+501-610-1892',
     email: '',
     location: { building: 'South San Pedro', floor: 1, address: 'South Ambergris Caye' },
+    coordinates: { lat: 17.9023, lng: -87.9598 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: true,
@@ -217,6 +225,7 @@ const restaurants = [
     phone: '+501-226-2859',
     email: '',
     location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
+    coordinates: { lat: 17.9182, lng: -87.9567 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -243,6 +252,7 @@ const restaurants = [
     phone: '+501-226-4726',
     email: '',
     location: { building: 'Grand Caribe', floor: 3, address: '2 Miles North, San Pedro' },
+    coordinates: { lat: 17.9378, lng: -87.9489 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: false,
@@ -269,6 +279,7 @@ const restaurants = [
     phone: '+501-226-2067',
     email: 'palmilla@victoria-house.com',
     location: { building: 'Victoria House Resort', floor: 1, address: '22 Coconut Drive, San Pedro' },
+    coordinates: { lat: 17.9119, lng: -87.9583 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: false,
@@ -295,6 +306,7 @@ const restaurants = [
     phone: '+501-226-3111',
     email: 'info@palapabarandgrill.com',
     location: { building: 'Boca Del Rio', floor: 1, address: 'Boca Del Rio, San Pedro' },
+    coordinates: { lat: 17.9234, lng: -87.9545 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: true,
@@ -320,6 +332,7 @@ const restaurants = [
     phone: '+501-226-2870',
     email: '',
     location: { building: 'Lagoon Side', floor: 1, address: 'Lagoon Side, San Pedro' },
+    coordinates: { lat: 17.9156, lng: -87.9612 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: true,
@@ -345,6 +358,7 @@ const restaurants = [
     phone: '+501-226-2662',
     email: '',
     location: { building: 'San Pedro Town', floor: 1, address: 'San Pedro Town' },
+    coordinates: { lat: 17.9189, lng: -87.9562 },
     isAvailable: true,
     isFeatured: true,
     dogFriendly: false,
@@ -369,6 +383,7 @@ const restaurants = [
     phone: '+501-226-2650',
     email: '',
     location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
+    coordinates: { lat: 17.9179, lng: -87.9566 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -394,6 +409,7 @@ const restaurants = [
     phone: '+501-226-3739',
     email: '',
     location: { building: 'Bella Vista Resort', floor: 1, address: 'South Ambergris Caye' },
+    coordinates: { lat: 17.9023, lng: -87.9601 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -419,6 +435,7 @@ const restaurants = [
     phone: '+501-226-4321',
     email: '',
     location: { building: 'Pescador Drive', floor: 1, address: 'Pescador Drive, San Pedro' },
+    coordinates: { lat: 17.9167, lng: -87.9578 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -443,6 +460,7 @@ const restaurants = [
     phone: '+501-226-4341',
     email: '',
     location: { building: 'SunBreeze Suites', floor: 1, address: 'San Pedro Town' },
+    coordinates: { lat: 17.9178, lng: -87.9566 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -467,6 +485,7 @@ const restaurants = [
     phone: '+501-226-3015',
     email: '',
     location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
+    coordinates: { lat: 17.9183, lng: -87.9565 },
     isAvailable: true,
     isFeatured: false,
     dogFriendly: false,
@@ -476,11 +495,12 @@ const restaurants = [
 
 // ============================================
 // LODGING - Real Ambergris Caye Hotels/Resorts
+// Valid types: Villa, Bungalow, Suite, Penthouse, Cottage
 // ============================================
 const lodgings = [
   {
     name: 'Victoria House Resort & Spa',
-    type: 'Luxury Resort',
+    type: 'Villa',
     description: 'Award-winning boutique resort offering 42 luxurious rooms including casitas, suites, and private villas. Features infinity pool, full-service spa, Palmilla Restaurant, and private beach. Located 2 miles south of San Pedro Town. British colonial elegance meets Caribbean relaxation.',
     shortDescription: 'Award-winning boutique resort',
     images: [
@@ -503,14 +523,12 @@ const lodgings = [
     reviewCount: 1234,
     isAvailable: true,
     isFeatured: true,
-    location: { building: '22 Coconut Drive', floor: 1, address: '22 Coconut Drive, San Pedro' },
-    phone: '+501-226-2067',
-    email: 'info@victoria-house.com',
-    website: 'victoria-house.com'
+    location: { building: '22 Coconut Drive', floor: 1 },
+    coordinates: { lat: 17.9119, lng: -87.9583 }
   },
   {
     name: "Ramon's Village Resort",
-    type: 'Beachfront Resort',
+    type: 'Bungalow',
     description: "Tahitian-style resort with authentic palm-thatched cabanas set in tropical gardens. Features lagoon-style pool, dive center, Pineapples Restaurant, and pristine beach. One of the oldest resorts on the island, opened in 1982. Steps from downtown San Pedro.",
     shortDescription: 'Tahitian-style beach cabanas',
     images: [
@@ -532,14 +550,12 @@ const lodgings = [
     reviewCount: 987,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Coconut Drive', floor: 1, address: 'Coconut Drive, San Pedro Town' },
-    phone: '+501-226-2071',
-    email: 'einer@ramons.com.bz',
-    website: 'ramons.com'
+    location: { building: 'Coconut Drive', floor: 1 },
+    coordinates: { lat: 17.9183, lng: -87.9567 }
   },
   {
     name: 'Mahogany Bay Resort & Beach Club',
-    type: 'Luxury Resort',
+    type: 'Villa',
     description: 'Curio Collection by Hilton resort featuring chic beach cottages and villas. Includes The Sanctuary Spa with 8 treatment rooms, private beach, and pool. Located 15 minutes by golf cart from San Pedro Town.',
     shortDescription: 'Hilton Curio Collection resort',
     images: [
@@ -561,14 +577,12 @@ const lodgings = [
     reviewCount: 567,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'South Ambergris', floor: 1, address: 'South Ambergris Caye' },
-    phone: '+501-226-3800',
-    email: '',
-    website: 'mahoganybayvillage.com'
+    location: { building: 'South Ambergris', floor: 1 },
+    coordinates: { lat: 17.8956, lng: -87.9612 }
   },
   {
     name: 'Matachica Resort & Spa',
-    type: 'Adults Only Boutique',
+    type: 'Bungalow',
     description: 'Adults-only boutique resort with colorful beach casitas and villas. Features Mambo Restaurant, full-service spa, and Danny\'s Tree Bar. Perfect for couples seeking romantic seclusion. 5 miles north of San Pedro.',
     shortDescription: 'Adults-only romantic retreat',
     images: [
@@ -590,14 +604,12 @@ const lodgings = [
     reviewCount: 456,
     isAvailable: true,
     isFeatured: true,
-    location: { building: '5 Miles North', floor: 1, address: '5 Miles North, San Pedro' },
-    phone: '+501-220-5010',
-    email: '',
-    website: 'matachica.com'
+    location: { building: '5 Miles North', floor: 1 },
+    coordinates: { lat: 17.9589, lng: -87.9389 }
   },
   {
     name: 'The Phoenix Resort',
-    type: 'Luxury Condos',
+    type: 'Penthouse',
     description: 'Luxury beachfront condominiums with fully equipped kitchens. Features rooftop pool with stunning views, on-site dining, and prime downtown location. Perfect for families and extended stays.',
     shortDescription: 'Luxury beachfront condos',
     images: [
@@ -619,14 +631,12 @@ const lodgings = [
     reviewCount: 789,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
-    phone: '+501-226-2083',
-    email: '',
-    website: 'thephoenixbelize.com'
+    location: { building: 'Barrier Reef Drive', floor: 1 },
+    coordinates: { lat: 17.9195, lng: -87.9558 }
   },
   {
     name: 'Grand Caribe Belize',
-    type: 'Luxury Condos',
+    type: 'Penthouse',
     description: 'Upscale beachfront resort with spacious condos and villas. Features multiple pools, full-service spa and salon, Rain Restaurant, and private pier. 2 miles north of San Pedro.',
     shortDescription: 'Upscale beachfront condos',
     images: [
@@ -648,14 +658,12 @@ const lodgings = [
     reviewCount: 567,
     isAvailable: true,
     isFeatured: true,
-    location: { building: '2 Miles North', floor: 1, address: '2 Miles North, San Pedro' },
-    phone: '+501-226-4726',
-    email: '',
-    website: 'grandcaribebelize.com'
+    location: { building: '2 Miles North', floor: 1 },
+    coordinates: { lat: 17.9378, lng: -87.9489 }
   },
   {
     name: 'SunBreeze Hotel',
-    type: 'Beachfront Hotel',
+    type: 'Suite',
     description: 'Popular beachfront hotel in downtown San Pedro featuring Blue Water Grill restaurant. Walking distance to shops, restaurants, and attractions. Perfect location for exploring the island.',
     shortDescription: 'Downtown beachfront hotel',
     images: [
@@ -676,14 +684,12 @@ const lodgings = [
     reviewCount: 678,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'Coconut Drive', floor: 1, address: 'Coconut Drive, San Pedro Town' },
-    phone: '+501-226-2191',
-    email: '',
-    website: 'sunbreeze.net'
+    location: { building: 'Coconut Drive', floor: 1 },
+    coordinates: { lat: 17.9175, lng: -87.9569 }
   },
   {
     name: 'Alaia Belize, Autograph Collection',
-    type: 'Luxury Resort',
+    type: 'Suite',
     description: 'Marriott Autograph Collection luxury resort with modern architecture and beach chic aesthetic. Features Vista Rooftop Pool & Lounge, Sea Salt Restaurant, and full-service spa. South of San Pedro.',
     shortDescription: 'Marriott luxury resort',
     images: [
@@ -705,14 +711,12 @@ const lodgings = [
     reviewCount: 345,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'South Ambergris', floor: 1, address: 'South Ambergris Caye' },
-    phone: '+501-280-5000',
-    email: '',
-    website: 'alaiabelize.com'
+    location: { building: 'South Ambergris', floor: 1 },
+    coordinates: { lat: 17.9023, lng: -87.9601 }
   },
   {
     name: 'The Watermark Belize Hotel',
-    type: 'Boutique Hotel',
+    type: 'Suite',
     description: "New 70-room boutique hotel with rooftop pool and Skyview Lounge. Features Gusto's Mediterranean restaurant and spa services. Part of Muy'Ono Resorts. Tres Cocos area.",
     shortDescription: 'New boutique with rooftop pool',
     images: [
@@ -733,14 +737,12 @@ const lodgings = [
     reviewCount: 234,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'Tres Cocos', floor: 1, address: 'Tres Cocos Area, San Pedro' },
-    phone: '+501-226-4800',
-    email: '',
-    website: 'thewatermarkbelize.com'
+    location: { building: 'Tres Cocos', floor: 1 },
+    coordinates: { lat: 17.9267, lng: -87.9534 }
   },
   {
     name: 'Coco Beach Resort',
-    type: 'Family Resort',
+    type: 'Suite',
     description: 'Family-friendly resort with Spanish Colonial design. Features two large free-form pools with swim-up bar, water slide, and beachfront location. 3.5 miles north of San Pedro.',
     shortDescription: 'Family resort with pools',
     images: [
@@ -761,14 +763,12 @@ const lodgings = [
     reviewCount: 456,
     isAvailable: true,
     isFeatured: false,
-    location: { building: '3.5 Miles North', floor: 1, address: '3.5 Miles North, Ambergris Caye' },
-    phone: '+501-226-3739',
-    email: '',
-    website: 'cocobeachbelize.com'
+    location: { building: '3.5 Miles North', floor: 1 },
+    coordinates: { lat: 17.9456, lng: -87.9445 }
   },
   {
     name: 'Blue Tang Inn',
-    type: 'Boutique Hotel',
+    type: 'Suite',
     description: 'Charming boutique hotel with well-appointed rooms near downtown San Pedro. Features pool, complimentary breakfast, and friendly staff. Great value.',
     shortDescription: 'Charming downtown boutique',
     images: [
@@ -788,14 +788,12 @@ const lodgings = [
     reviewCount: 345,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'San Pedro Town', floor: 1, address: 'San Pedro Town' },
-    phone: '+501-226-2326',
-    email: '',
-    website: 'bluetanginn.com'
+    location: { building: 'San Pedro Town', floor: 1 },
+    coordinates: { lat: 17.9201, lng: -87.9561 }
   },
   {
     name: 'Portofino Beach Resort',
-    type: 'Boutique Resort',
+    type: 'Cottage',
     description: 'Secluded boutique resort nestled among palm trees with beachside spa hut. Offers complimentary breakfast, snorkeling gear, and kayaks. 6 miles north of San Pedro.',
     shortDescription: 'Secluded boutique retreat',
     images: [
@@ -816,10 +814,8 @@ const lodgings = [
     reviewCount: 234,
     isAvailable: true,
     isFeatured: false,
-    location: { building: '6 Miles North', floor: 1, address: '6 Miles North, San Pedro' },
-    phone: '+501-678-5096',
-    email: '',
-    website: 'portofinobelize.com'
+    location: { building: '6 Miles North', floor: 1 },
+    coordinates: { lat: 17.9634, lng: -87.9367 }
   }
 ];
 
@@ -846,12 +842,12 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
-    phone: '+501-226-4077'
+    location: { building: 'Barrier Reef Drive', floor: 1 },
+    coordinates: { lat: 17.9181, lng: -87.9569 }
   },
   {
     name: "Fido's Courtyard & Pier",
-    type: 'Bar & Live Music',
+    type: 'Lounge',
     description: "San Pedro's oldest bar under the largest thatch palapa in Belize. Live entertainment nightly starting at 8 PM with different genres each night. A must-visit institution.",
     shortDescription: 'Iconic live music venue',
     images: [
@@ -868,8 +864,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Barrier Reef Drive', floor: 1, address: 'Barrier Reef Drive, San Pedro' },
-    phone: '+501-226-3176'
+    location: { building: 'Barrier Reef Drive', floor: 1 },
+    coordinates: { lat: 17.9185, lng: -87.9565 }
   },
   {
     name: 'Palapa Bar & Grill',
@@ -890,8 +886,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Boca Del Rio', floor: 1, address: 'Boca Del Rio, San Pedro' },
-    phone: '+501-226-3111'
+    location: { building: 'Boca Del Rio', floor: 1 },
+    coordinates: { lat: 17.9234, lng: -87.9545 }
   },
   {
     name: "Wayo's Beach Bar",
@@ -911,8 +907,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'Boca Del Rio', floor: 1, address: 'Boca Del Rio, San Pedro' },
-    phone: '+501-226-2056'
+    location: { building: 'Boca Del Rio', floor: 1 },
+    coordinates: { lat: 17.9228, lng: -87.9549 }
   },
   {
     name: "Pedro's Club",
@@ -932,12 +928,12 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'South San Pedro', floor: 1, address: 'South San Pedro' },
-    phone: '+501-226-2198'
+    location: { building: 'South San Pedro', floor: 1 },
+    coordinates: { lat: 17.9145, lng: -87.9592 }
   },
   {
     name: 'Sunset Lounge',
-    type: 'Rooftop Lounge',
+    type: 'Rooftop Bar',
     description: 'Trendy rooftop spot with stunning sunset views above Sidelines Sports Bar. Popular with locals for Instagram-worthy sunset shots. Open Wednesday to Saturday.',
     shortDescription: 'Rooftop sunset views',
     images: [
@@ -953,8 +949,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Above Sidelines', floor: 2, address: 'San Pedro Town' },
-    phone: ''
+    location: { building: 'Above Sidelines', floor: 2 },
+    coordinates: { lat: 17.9176, lng: -87.9574 }
   },
   {
     name: "Crazy Canuck's Beach Bar",
@@ -974,8 +970,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'South San Pedro', floor: 1, address: 'South San Pedro' },
-    phone: '+501-670-8001'
+    location: { building: 'South San Pedro', floor: 1 },
+    coordinates: { lat: 17.9078, lng: -87.9601 }
   },
   {
     name: 'Sandy Toes Beach Bar & Grill',
@@ -995,12 +991,12 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'North San Pedro', floor: 1, address: 'North San Pedro' },
-    phone: ''
+    location: { building: 'North San Pedro', floor: 1 },
+    coordinates: { lat: 17.9267, lng: -87.9534 }
   },
   {
     name: "Average Joe's",
-    type: 'Sports Bar',
+    type: 'Lounge',
     description: 'Popular sports bar known for live band events, karaoke nights, and watching major sporting events on big screens.',
     shortDescription: 'Sports bar with live events',
     images: [
@@ -1016,8 +1012,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: false,
-    location: { building: 'South Ambergris', floor: 1, address: 'South Ambergris Caye' },
-    phone: ''
+    location: { building: 'South Ambergris', floor: 1 },
+    coordinates: { lat: 17.9034, lng: -87.9605 }
   },
   {
     name: "Wahoo's Lounge",
@@ -1037,12 +1033,12 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'Corona del Mar', floor: 1, address: 'Corona del Mar, South San Pedro' },
-    phone: ''
+    location: { building: 'Corona del Mar', floor: 1 },
+    coordinates: { lat: 17.9012, lng: -87.9608 }
   },
   {
     name: 'Secret Beach',
-    type: 'Beach Club District',
+    type: 'Beach Bar',
     description: 'Multiple beach bars on the lagoon side of the island. Full day experience with swimming in crystal clear water. Thursday through Sunday recommended. 40 minutes from San Pedro.',
     shortDescription: 'Beach bar district on lagoon',
     images: [
@@ -1059,8 +1055,8 @@ const nightlife = [
     reservationRequired: false,
     isAvailable: true,
     isFeatured: true,
-    location: { building: 'West Side', floor: 1, address: 'Secret Beach, West Ambergris Caye' },
-    phone: ''
+    location: { building: 'West Side', floor: 1 },
+    coordinates: { lat: 17.9456, lng: -87.9823 }
   }
 ];
 
@@ -1089,8 +1085,7 @@ const wellnessActivities = [
     isFeatured: true,
     rating: 4.8,
     reviewCount: 234,
-    location: { address: 'Mahogany Bay Resort, South Ambergris Caye' },
-    phone: '+501-226-3800'
+    coordinates: { lat: 17.8956, lng: -87.9612 }
   },
   {
     name: 'Black Orchid Spa',
@@ -1111,8 +1106,7 @@ const wellnessActivities = [
     isFeatured: true,
     rating: 4.7,
     reviewCount: 189,
-    location: { address: 'San Pedro Town' },
-    phone: '+501-226-3455'
+    coordinates: { lat: 17.9172, lng: -87.9576 }
   },
   {
     name: "Magda's Inspire Dream Spa",
@@ -1133,8 +1127,7 @@ const wellnessActivities = [
     isFeatured: false,
     rating: 4.9,
     reviewCount: 156,
-    location: { address: 'Near Farm House Market, San Pedro' },
-    phone: '+501-630-8892'
+    coordinates: { lat: 17.9245, lng: -87.9538 }
   },
   {
     name: 'Grand Caribe Spa & Salon',
@@ -1155,8 +1148,7 @@ const wellnessActivities = [
     isFeatured: false,
     rating: 4.6,
     reviewCount: 123,
-    location: { address: 'Grand Caribe, 2 Miles North, San Pedro' },
-    phone: '+501-226-4726'
+    coordinates: { lat: 17.9378, lng: -87.9489 }
   },
   {
     name: 'Heavens Hair and Nails Salon',
@@ -1177,8 +1169,7 @@ const wellnessActivities = [
     isFeatured: false,
     rating: 4.8,
     reviewCount: 234,
-    location: { address: 'Jade Street, San Pedro' },
-    phone: '+501-226-2509'
+    coordinates: { lat: 17.9165, lng: -87.9582 }
   },
   {
     name: 'Victoria House Spa',
@@ -1199,8 +1190,7 @@ const wellnessActivities = [
     isFeatured: true,
     rating: 4.7,
     reviewCount: 178,
-    location: { address: 'Victoria House Resort, 22 Coconut Drive' },
-    phone: '+501-226-2067'
+    coordinates: { lat: 17.9119, lng: -87.9583 }
   },
   {
     name: 'Matachica Spa',
@@ -1221,8 +1211,7 @@ const wellnessActivities = [
     isFeatured: false,
     rating: 4.8,
     reviewCount: 145,
-    location: { address: 'Matachica Resort, 5 Miles North' },
-    phone: '+501-220-5010'
+    coordinates: { lat: 17.9589, lng: -87.9389 }
   }
 ];
 
@@ -1234,13 +1223,11 @@ async function seedAmbergrisCaye() {
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB');
     
-    console.log('\n🗑️  Clearing existing Ambergris Caye data...');
-    // Only clear if you want to replace all data
-    // Comment these out if you want to ADD to existing data
+    console.log('\n🗑️  Clearing existing data...');
     await Restaurant.deleteMany({});
     await Lodging.deleteMany({});
     await Nightlife.deleteMany({});
-    // Don't delete all activities - only wellness ones if needed
+    await Activity.deleteMany({ category: 'Wellness' });
     
     console.log('🍽️  Seeding restaurants...');
     await Restaurant.insertMany(restaurants);
@@ -1268,6 +1255,7 @@ async function seedAmbergrisCaye() {
       nightlife.reduce((a, n) => a + n.images.length, 0) +
       wellnessActivities.reduce((a, w) => a + w.images.length, 0)
     }`);
+    console.log(`   📍 All listings include GPS coordinates`);
     console.log('═'.repeat(60) + '\n');
     
     process.exit(0);
@@ -1277,5 +1265,4 @@ async function seedAmbergrisCaye() {
   }
 }
 
-// Run the seed
 seedAmbergrisCaye();
